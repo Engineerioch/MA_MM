@@ -1,0 +1,30 @@
+Solver command line: ['C:\\gurobi900\\win64\\bin\\gurobi.bat']
+
+Using license file c:\gurobi900\gurobi.lic
+Academic license - for non-commercial use only
+Read LP format model from file C:\Users\lma-mma\AppData\Local\Temp\tmp5u47lmn_.pyomo.lp
+Reading time = 0.00 seconds
+x842: 697 rows, 674 columns, 2733 nonzeros
+Gurobi Optimizer version 9.0.0 build v9.0.0rc2 (win64)
+Optimize a model with 697 rows, 674 columns and 2733 nonzeros
+Model fingerprint: 0xed71fd0e
+Model has 24 quadratic constraints
+Variable types: 578 continuous, 96 integer (96 binary)
+Coefficient statistics:
+  Matrix range     [3e-03, 3e+02]
+  QMatrix range    [1e+00, 1e+00]
+  QLMatrix range   [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+04]
+  RHS range        [6e-02, 1e+05]
+Presolve removed 138 rows and 162 columns
+Presolve time: 0.00s
+
+Explored 0 nodes (0 simplex iterations) in 0.00 seconds
+Thread count was 1 (of 6 available processors)
+
+Solution count 0
+
+Model is infeasible or unbounded
+Best objective -, best bound -, gap -
+
