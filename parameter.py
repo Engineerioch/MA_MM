@@ -27,10 +27,10 @@ def load_params(params):
     devs = {
     # Set Heat Storage parameter
         'Sto'   : {
-            'T_Sto_min' : 18 +273.15,                   # [K] Minimum temperature of storage
+            'T_Sto_min' : 18 + 273.15,                   # [K] Minimum temperature of storage
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
-            'T_Sto_Init': 35 + 273.15,                  # [K] initial Storage Temperature for Optimization
+            'T_Sto_Init': 70 + 273.15,                  # [K] initial Storage Temperature for Optimization
             'Volume'    : 0.3,                          # [m³] Volume of thermal Storage Set in Dymola
             'U_Sto'     : 30,                           # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
@@ -93,7 +93,7 @@ def load_time_series(params, options):
 
         # Electrical Load Data (Time steps = 1h)
 # [W] Simulierter Bedarf an elektrischer Energie
-    time_series['P_EL_Dem']     = np.loadtxt('D:/lma-mma/MA_MM_Python/input_data/ELHour.txt') * 1000
+    time_series['P_EL_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/ELHour.txt') * 1000
 
 
 
@@ -104,7 +104,7 @@ def load_time_series(params, options):
         #  dann wird die Summe der Zeilen gebildet (sum)
     time_series['Q_Hou_Dem'] = []
     if options['WeatherData']['TRY']    == 'cold':
-            dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_cold.csv")
+            dQ = pd.read_csv("D:/lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_cold.csv")
     elif options['WeatherData']['TRY']  == 'normal':
             dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_normal.csv")
     elif options['WeatherData']['TRY']  == 'warm':

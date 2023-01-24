@@ -70,10 +70,14 @@ def run_MPC(params, options, eco, time_series, devs, end):
     Q_HP_Min            =   devs['HP']['Q_HP_Min']                      # [W] Minimum Power of Heat Pump
     T_HP_VL_1           =   devs['HP']['T_HP_VL_1']                     # [K] Vorlauftemperatur der Wärmepumpe im Modus 1, = 70°C
     T_HP_VL_2           =   devs['HP']['T_HP_VL_2']                     # [K] VOrlauftemperatur der Wärmepumpe im Modus 2, = 35°C
+    T_HP_VL_Init        =   options['Initial']['T_HP_VL_Init']
+
 
 # Set Natural Parameters
     c_w_water           =   devs['Nature']['c_w_water']
     T_Input             =   time_series['T_Air']  + 273.15            # [K]  Außentemperatur
+#Test BigM
+    BigM                = 1000
 
 
 #######################---Set initial values---#######################
@@ -83,7 +87,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
         'P_EL'      : P_EL_Dem[params['start_time']] - P_PV[params['start_time']],
         'P_EL_HP'   : 0,
         'P_EL_Dem'  : P_EL_Dem[start_time],
-        'P_PV'      : P_PV[params['start_time']],
+        'P_PV'      : P_PV[start_time],
         'Q_Sto'     : m_Sto_water * c_w_water * T_Sto_Init,
         'Q_HP'      : 0,
         'Q_HP_Out'  : 0,
@@ -91,8 +95,8 @@ def run_MPC(params, options, eco, time_series, devs, end):
         'Q_Hou_In'  : m_flow_Hou * c_w_water * (T_Sto_Init + 2.0),
         'Q_Hou_Out' : m_flow_Hou * c_w_water * (T_Sto_Init + 2.0) - Q_Hou_Dem[params['start_time']],
         'Q_Sto_Loss': U_Sto * A_Sto * (T_Sto_Init - T_Sto_Env),
-        'Q_Hou'     : Q_Hou_Dem[params['start_time']],
-        'T_HP_VL'   : 35.0 + 273.15,
+        'Q_Hou'     : Q_Hou_Dem[start_time],
+        'T_HP_VL'   : T_HP_VL_Init,
         'T_HP_RL'   : 33.0 + 273.15,
         'T_Hou_VL'  : T_Sto_Init + 2.0,
         'T_Hou_RL'  : (T_Sto_Init + 2.0) - Q_Hou_Dem[params['start_time']] / (m_flow_Hou * c_w_water * 1000),
@@ -204,9 +208,6 @@ def run_MPC(params, options, eco, time_series, devs, end):
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Einführen der Nebenbedingungen
 # Add Constraints to model
-#######################---Balances of Power and Heat---#######################
-# todo Einheiten überprüfen
-
 #######################---1. Import of PV- and Q_Hou_Dem Data and write that Data in Model Variables---#######################
 ###     1.1 Import of PV-Data -> [W]
     def Import_PV(m, t):
@@ -215,7 +216,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     1.2 Import of House Heat Demand -> [W]
     def Heat_to_House_equals_Demand(m, t):
-        return (m.Q_Hou[t] == Q_Hou_Dem[t + end])
+        return (m.Q_Hou[t] >= Q_Hou_Dem[t + end])
     model.Heat_to_House_equals_Demand = Constraint(time, rule=Heat_to_House_equals_Demand, name=Heat_to_House_equals_Demand)
 
 ###     1.3 Import of Electrical Power Demand of House Power -> [W]
@@ -228,41 +229,43 @@ def run_MPC(params, options, eco, time_series, devs, end):
         return(m.T_Air[t] == T_Input[t + end])
     model.Temp_Outside = Constraint(time, rule= Temp_Outside, name='Temp_Outside')
 
+#####################################################################################################
 #######################---2. Equations to describe the storage-system (Sto)---#######################
-###     2.1 Content of Heat-Energy in the storage -> [J] == [kg] * [Ws/kgK] * [K] * [s]
+###     2.1 Content of Heat-Energy in the storage -> [W] == [kg] * [Ws/kgK] * [K] * [s]
     def Q_Content_Sto(m,t):
-        return(m.Q_Sto[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - T_Kalt) * delta_t)
+        return(m.Q_Sto[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - T_Kalt) / delta_t)
     model.Q_Content_Sto = Constraint(time, rule= Q_Content_Sto, name= 'Q_Content_Sto')
 
 ###     2.2 Storage Heat Balance -> [W] = ([W] - [W] - [W] + [W] - [W])
             # Wärme die vom Speicher an die Wärmepumpe (RL) zurückfließt und an das Haus abgegeben wird als Minus, Wärme die von der Wärmepumpe und aus dem Haus an den Speicher fließt als plus
     def storage_balance(m,t):
-        return(m.Q_Sto[t] == (m.Q_HP_Out[t] - m.Q_HP_In[t] - m.Q_Hou_In[t] + m.Q_Hou_Out[t] - m.Q_Sto_Loss[t]))
+        return(value(m.Q_Sto[t]) == (m.Q_HP_Out[t] - m.Q_HP_In[t] - m.Q_Hou_In[t] + m.Q_Hou_Out[t] - m.Q_Sto_Loss[t]))
     model.storage_balance = Constraint(time, rule = storage_balance, name = 'storage_balance')
 
 ###     2.3 Temperature in Storage -> [K] = [W] * [s] + [kg] * [Ws/kgK] * [K] + [W/m²K] * [m²] * [K] * [s] / [kg] * [Ws/kgK] + [W/m²K] * [m²] [s]
 #[K] = [Ws] / [Ws/K] -> [K]
-    def easy_storage_test(m, t):
-        if t == 0:
-            return (m.T_Sto[t] == 35 + 273.15)
-        else:
-            return (m.T_Sto[t] == ((m.Q_HP[t] - m.Q_Hou[t]) * delta_t + m_Sto_water * c_w_water * m.T_Sto[
-                t - 1] + U_Sto * A_Sto * T_Sto_Env * delta_t) / (m_Sto_water * c_w_water + U_Sto * A_Sto * delta_t))
-    model.easy_storage_test = Constraint(time, rule=easy_storage_test, name='easy_storage_test')
+ #   def easy_storage_test(m, t):
+ #       if t == 0:
+ #           return (m.T_Sto[t] == 35 + 273.15)
+ #       else:
+ #           return (m.T_Sto[t] == ((m.Q_HP[t] - m.Q_Hou[t]) * delta_t + m_Sto_water * c_w_water * m.T_Sto[
+ #               t - 1] + U_Sto * A_Sto * T_Sto_Env * delta_t) / (m_Sto_water * c_w_water + U_Sto * A_Sto * delta_t))
+ #   model.easy_storage_test = Constraint(time, rule=easy_storage_test, name='easy_storage_test')
 
 ###     2.4 Definition of Storagetemperature -> [W] = [kg] * [Ws/kgK] * [K]
     def Q_Sto_Temp (m, t):
         if t >= 1:
-            return(m.Q_Sto[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - value(m.T_Sto[t-1])) * delta_t)
+            return(m.Q_Sto[t] == m_Sto_water * c_w_water * (value(m.T_Sto[t]) - value(m.T_Sto[t-1])) / delta_t)
         else:
             return(m.Q_Sto[t] == 0)
     model.Q_Sto_Temp = Constraint(time, rule = Q_Sto_Temp, name = 'Q_Sto_Temp')
 
 ###    2.5 Loss of Storage to Environment in House (No Heating Power resuls from this) -> [W] = [W/m²K] * [m²] * [K]
     def Storage_Loss(m, t):
-        return (m.Q_Sto_Loss[t] == U_Sto * A_Sto * (m.T_Sto[t] - T_Sto_Env))
+        return (m.Q_Sto_Loss[t] == U_Sto * A_Sto * (value(m.T_Sto[t]) - T_Sto_Env))
     model.Storage_Loss = Constraint(time, rule=Storage_Loss, name='Storage_Loss')
 
+######################################################################################################
 #######################---3. Equations to describe the Heat Pump-System (HP)---#######################
 
 ###     3.1 Heat balance of Heat Pump depending on the Current mode -> [W] = [kg/s] * [Ws/kgK] * [K]
@@ -283,25 +286,20 @@ def run_MPC(params, options, eco, time_series, devs, end):
         return (m.T_HP_VL[t] == T_HP_VL_1 * m.HP_mode1[t] + T_HP_VL_2 * m.HP_mode2[t] + 0 * m.HP_off[t])
     model.Temp_VL_HP = Constraint(time, rule=Temp_VL_HP, name='Temp_VL_HP')
 
-###     3.4 Power of Heatpumo -> [W] = [kg/s] * [Ws/kgK] * [K]
-    def HP_Heat_Power(m, t):
-        return (m.Q_HP[t] == m_flow_HP * c_w_water * (value(m.T_HP_VL[t]) - value(m.T_HP_RL[t])))
-    model.HP_Heat_Power = Constraint(time, rule=HP_Heat_Power, name='HP_Heat_Power')
-
-###     3.5 Power demand of HP -> [W]
+###     3.4 Power demand of HP -> [W]
     def Power_for_HP(m, t):
         if value(m.HP_off[t]) != 0.0:
-            return(m.P_EL_HP[t] == m.Q_HP[t] / 1) #m.COP_HP[t])
+            return(m.P_EL_HP[t] == m.Q_HP[t] / 1) #m.COP_HP[t]) #todo COP_HP reinbekommen
         else:
             return(m.P_EL_HP[t] == 0.0)
     model.Power_for_HP = Constraint(time, rule = Power_for_HP, name = 'Power_for_HP')
 
-###     3.6 Coefficient of Performance of HP -> [-]
+###     3.5 Coefficient of Performance of HP -> [-]
     def CoP_HP(m, t):
         return(m.COP_HP[t]  == m.COP_Carnot[t] * eta_HP)
     model.CoP_HP = Constraint(time, rule = CoP_HP, name = 'CoP_HP')
 
-###     3.7 Coefficient of Performance Carnot -> [-]
+###     3.6 Coefficient of Performance Carnot -> [-]
     def CoP_Carnot(m, t):
         if value(m.HP_off[t]) == 1:
             return (m.COP_Carnot[t] == 1)
@@ -309,12 +307,12 @@ def run_MPC(params, options, eco, time_series, devs, end):
             return(m.COP_Carnot[t] == m.T_HP_VL[t] / (m.T_HP_VL[t] - m.T_Air[t]))
     model.CoP_Carnot = Constraint(time, rule = CoP_Carnot, name = 'CoP_Carnot')
 
-###     3.8 Modell temperature from Storage to HP -> [K]
+###     3.7 Modell temperature from Storage to HP -> [K]
     def Back_to_HP(m, t):
         return(m.T_HP_RL[t] == m.T_Sto[t] - 2)
     model.Back_to_HP = Constraint(time, rule = Back_to_HP, name = 'Back_to_HP')
 
-###     3.9 Wärmestrom, der der HP vom Speicher zugeführt wird -> [W] = [kg/s] * [Ws/kgK] * [K]
+###     3.8 Wärmestrom, der der HP vom Speicher zugeführt wird -> [W] = [kg/s] * [Ws/kgK] * [K]
     def Q_to_HP(m, t):
         if value(m.HP_off[t]) != 0:
             return(m.Q_HP_In[t] == m_flow_HP * c_w_water * value(m.T_HP_RL[t]))
@@ -322,7 +320,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
             return(m.Q_HP_In[t] == 0)
     model.Q_to_HP = Constraint(time, rule = Q_to_HP, name = 'Q_to_HP')
 
-###     3.10 Wärmestrom, der von der HP an den Speicher abgegeben wird -> [W] = [kg/s] * [Ws/kgK] * [K]
+###     3.9 Wärmestrom, der von der HP an den Speicher abgegeben wird -> [W] = [kg/s] * [Ws/kgK] * [K]
     def Q_from_HP(m, t):
         if value(m.HP_off[t]) != 0:
             return(m.Q_HP_Out[t] == m_flow_HP * c_w_water * value(m.T_HP_VL[t]))
@@ -330,11 +328,12 @@ def run_MPC(params, options, eco, time_series, devs, end):
             return(m.Q_HP_Out[t] == 0)
     model.Q_from_HP = Constraint(time, rule = Q_from_HP, name = 'Q_from_HP')
 
-###     3.11 Wärmestrombilanz HP -> [W]
+###     3.10 Wärmestrombilanz HP -> [W]
     def Q_HP_sum(m, t):
-        return(m.Q_HP[t] == m.Q_HP_Out[t] - m.Q_HP_In[t])
+        return(m.Q_HP[t] >= value(m.Q_HP_Out[t]) - value(m.Q_HP_In[t]))
     model.Q_HP_sum  = Constraint(time, rule = Q_HP_sum, name = 'Q_HP_sum')
 
+######################################################################################################
 #######################---4. Equations to describe the Consumer-System (Hou)---#######################
 
 ###     4.1 Return temperature of Heating Fluid -> [K] = [K] - ([W] / [kg/s] * [Ws/kgK])
@@ -350,13 +349,14 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     4.3 Heat flow back from House to Storage -> [W] = [kg/s] * [Ws/kgK] * [K]
     def total_Heat_from_House(m, t):
-        return(m.Q_Hou_Out[t] == m_flow_Hou * c_w_water * m.T_Hou_RL[t])
+        return(m.Q_Hou_Out[t] <= m_flow_Hou * c_w_water * m.T_Hou_RL[t])
     model.Total_Heat_from_House = Constraint(time, rule = total_Heat_from_House, name = 'Total_Heat_from_House')
 
 ###     4.4 Decharging Power from House -> [W]
     def Q_Hou_sum(m, t):
         return (m.Q_Hou[t] >= m.Q_Hou_In[t] - m.Q_Hou_Out[t])
     model.Q_Hou_sum = Constraint(time, rule=Q_Hou_sum, name='Q_Hou_sum')
+
 
 ###     4.5 Modell temperature from Storage to House -> [K]
     def Temperature_to_House(m, t):
@@ -369,7 +369,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     5.1 Power Balance - PV-Power Production vs. Power Demand -> [W]
     def power_balance(m, t):
-        return(m.P_EL[t] == m.P_EL_Dem[t] + m.P_EL_HP[t] - m.P_PV[t])
+        return(m.P_EL[t] >= m.P_EL_Dem[t] + m.P_EL_HP[t] - m.P_PV[t])
     model.power_balance = Constraint(time, rule = power_balance, name = 'Power_balance')
 
 ###     5.2 Ermitteln, ob Strom ins Netz eingespeist oder bezogen [-]
@@ -385,18 +385,22 @@ def run_MPC(params, options, eco, time_series, devs, end):
 ###     6.1 Ermitteln der Kosten für Strom und für Einnahmen mit eingespeistem Strom pro Zeitschritt -> [€]
     def Cost_for_Power(m, t):
         if value(m.Feed_In[t]):
-            m.c_earning[t] == m.P_EL[t] * c_payment
-            m.c_cost[t] == 0
-            return(m.c_cost[t], m.c_earning[t])
+            return(m.c_cost[t] == 0.0)
         else:
-            m.c_earning[t] == 0
             if options['Tariff']['Variable']:
                 m.c_cost[t] == m.P_EL[t] * c_grid[t]
-                return(m.c_cost[t], m.c_earning[t])
+                return(m.c_cost[t] == value(m.P_EL[t]) * c_grid[t])
             else:
-                m.c_cost[t] == m.P_EL[t] * c_grid
-                return(m.c_cost[t], m.c_earning[t])
+                return (m.c_cost[t] == value(m.P_EL[t]) * c_grid)
     model.Cost_for_Power = Constraint(time, rule= Cost_for_Power, name= 'Cost_for_Power')
+
+###     6.2 Return money in case of Feed-In -> [€]
+    def Return_for_Power(m, t):
+        if value(m.Feed_In):
+            return(m.c_earning[t] == value(m.P_EL[t]) * c_payment)
+        else:
+            return(m.c_earning[t] == 0.0)
+        model.Return_for_Power = Constraint(time, rule=Return_for_Power, name= 'Return_for_Power')
 
 ###     6.2 Ermitteln der Gesamtausgaben für Strom abzüglich Einnahmen -> [€]
     def Cost_sum(m, t):
@@ -404,12 +408,14 @@ def run_MPC(params, options, eco, time_series, devs, end):
     model.Cost_sum = Constraint(time, rule= Cost_sum, name = 'Cost_sum')
 
 #######################---Objective Function---#######################
+## Idee: P_EL erstmal minimieren:
+#    def Sum_PEL(m, t):
+#        return (m.PEL == sum(m.P_EL_Dem[t]) for t in time)
+#    model.Sum_PEL = Constraint(rule= Sum_PEL, name= 'Sum_PEL')
 
     def objective_rule(m):
         return (m.costs_total)
     model.total_costs = Objective(rule = objective_rule, sense = minimize, name = 'Minimize total costs')
-
-
 
 
 #################################(ABFALL)#####################################
@@ -445,23 +451,13 @@ def run_MPC(params, options, eco, time_series, devs, end):
 # Ist die zurückgeführte Temperatur größer, wird die Speichertemperatur als HP-Rücklauftemperatur genommen
 
 
-############################ Gleichsetzen von Variablen, die mehrere Bezeichnungen haben, aber das Gleiche sind####################
-
-
 #######################---Solve Model---#######################
 
-    if options['Solve']['type'] == 'gurobi':
-        solver = SolverFactory('gurobi')
-        solver.options['Presolve'] = 2
-        solver.options['mipgap'] = options['Solve']['MIP_gap']
-        solver.options['TimeLimit'] = options['Solve']['TimeLimit']
-        solver.options['DualReductions'] = 0
-
-    elif options['Solve']['type'] == 'glpk':
-        solver = SolverFactory('glpk')
-#    solver.options['Presolve'] = 2
-        solver.options['mipgap'] = options['Solve']['MIP_gap']
-        solver.options['TimeLimit'] = options['Solve']['TimeLimit']
+    solver = SolverFactory('gurobi')
+    solver.options['Presolve'] = 1
+    solver.options['mipgap'] = options['Solve']['MIP_gap']
+    solver.options['TimeLimit'] = options['Solve']['TimeLimit']
+    solver.options['DualReductions'] = 0
 
     try:
         opti_start_time = read_time.time()
@@ -470,7 +466,8 @@ def run_MPC(params, options, eco, time_series, devs, end):
         print('TerminationCondition', results.solver.termination_condition)
         # Get solving time
         opti_end_time = read_time.time() - opti_start_time
-        print("Optimization done. (%f seconds.)" % (opti_end_time))
+        print("Optimization done1. (%f seconds.)" % (opti_end_time))
+        print(log_infeasible_constraints(model)) #->  None???
 
     except:
         print('Error:', sys.exc_info())
@@ -481,7 +478,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
             results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
             print('TerminationCondition', results.solver.termination_condition)
             opti_end_time = read_time.time() - opti_start_time
-            print("Optimization done. (%f seconds.)" % (opti_end_time))
+            print("Optimization done2. (%f seconds.)" % (opti_end_time))
         except:
             # Try to get a solution within max defined solving time
             print('Error:', sys.exc_info())
@@ -490,16 +487,18 @@ def run_MPC(params, options, eco, time_series, devs, end):
             results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
             print('TerminationCondition', results.solver.termination_condition)
             opti_end_time = read_time.time() - opti_start_time
-            print("Optimization done. (%f seconds.)" % (opti_end_time))
+            print("Optimization done3. (%f seconds.)" % (opti_end_time))
 
     status = 'feasible'
 
     if results.solver.termination_condition == TerminationCondition.infeasibleOrUnbounded or \
          results.solver.termination_condition == TerminationCondition.infeasible:
+
         solver_parameters = "ResultFile=model.ilp"  # write an ILP file to print the IIS
         results = solver.solve(model, tee=True, logfile='log_file_lower.log', options_string=solver_parameters)
         print('model infeasible, solver status', results.solver.termination_condition)
-        print(log_infeasible_constraints(model))
+#        status = 'infeasible'
+
 
 
     res_control_horizon = {
@@ -530,14 +529,16 @@ def run_MPC(params, options, eco, time_series, devs, end):
         'c_total'           : [],
 #        'c_revenue'         : [],
         'total_costs'       : [],
+        'PEL'               : [],
         #'m_Sto_water'             : [],
 
     }
     results_horizon = int((params['control_horizon'] / params['time_step']))
+    print('Results_Horizont ist:',  results_horizon)
     for t in range(results_horizon):
         if status == 'infeasible':
             for res in res_control_horizon:
-                res_control_horizon[res].append()
+                res_control_horizon[res].append(0)
 
 
         res_control_horizon['solving_time'].append(opti_end_time)
@@ -565,7 +566,8 @@ def run_MPC(params, options, eco, time_series, devs, end):
         res_control_horizon['c_total'].append(value(model.costs_total))
 #        res_control_horizon['c_revenue'].append(model.c_revenue)
         res_control_horizon['total_costs'].append(model.total_costs)
-#
+#        res_control_horizon['PEL'].append(model.PEL)
+
     model.pprint()
 #    print(res_control_horizon['P_EL'])
     return res_control_horizon
