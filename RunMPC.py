@@ -16,7 +16,7 @@ options = {
     'WeatherData':   {'TRY'                  : 'cold'       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                     },      # [-] 'cold' -> kaltes TRY 2015
-    'Solve'         :   {'MIP_gap'             : 0.1,
+    'Solve'         :   {'MIP_gap'             : 1,
                         'TimeLimit'            : 60,
                         'TimeLimitMax'         : 35491348,
                         'type'                 : 'gurobi',
@@ -25,6 +25,7 @@ options = {
     'PV'            :   {'PV_factor'           : 1.0,      # Rescale PV- Generation P_PV = n_Mod (default: 750) * 330 W * PV_factor
                          },
 
+    'Initial'       : {'T_HP_VL_Init'           : 35 + 273.15 },
 
 
 ### Location of the Single Family House ###
@@ -37,12 +38,12 @@ options = {
                          },
 }
 #prediction_horizon = 72
-start_time = 0
+start_time = 1
 time_step = 1
 total_runtime = 10           # Iterationsschritte
-control_horizon = 5
+control_horizon = 10
 params_opti = {
-    'prediction_horizon'    : 5,
+    'prediction_horizon'    : 10,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
@@ -98,8 +99,9 @@ save_optim_results = {
     'T_Hou_VL': [],
     'T_Hou_RL': [],
     'c_total': [],
+    'c_grid' : [],
 #    'c_revenue': [],
-    'total_costs': [],
+    'total_costs':  [],
     }
 
 save_optim_results_opti = copy.deepcopy(save_optim_results)
@@ -108,12 +110,13 @@ save_optim_results_opti = copy.deepcopy(save_optim_results)
 for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'])):
     print("======================== iteration = " +     str(iter) + " ========================")
     print('New start time is:', params_opti['start_time'])
+    params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon']
     end = (iter) * int(params_opti['control_horizon'] / params_opti['time_step'])
     time_series = parameters.load_time_series(params_opti, options)
 
     print('Optimization is running....')
     results_optim = mpc.run_MPC(params_opti, options, eco, time_series, devs, end)
-    params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon'] * iter
+
 
     for res in save_optim_results_opti:
         for t in range(params_opti['prediction_horizon']):

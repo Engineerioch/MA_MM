@@ -14,12 +14,14 @@ def load_params(params):
 
 
     # Set economic parameters
-
+# todo Einheiten der Kosten Checken
     eco = {
         'costs'     : {
+            #todo: Array für die Strompreise erstellen
             'c_grid_var_t'  : 1,                      # [Euro/kWh] Electricity Price if option with variable el price (Variabler Stropreis)
-            'c_grid_dem'    : 1,                      # [Euro/kWh] Electricity Price if option 'fix' el price (Fester Strompreis)
+            'c_grid_dem'    : 0.35,                   # [Euro/kWh] Electricity Price if option 'fix' el price (Fester Strompreis)
             'c_payment'     : 0.06,                   # [Euro/kWh] Feed in tariff (Einspeisevergütung)
+            'c_comfort'     : 1000,
         }
     }
     # Set component parameters
@@ -44,6 +46,7 @@ def load_params(params):
             'Q_HP_Max'      : 10000,                        # [W]    Maximum Heat Power of Heat Pump
             'T_HP_VL_1'     : 35 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 1
             'T_HP_VL_2'     : 70 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 2
+            'T_HP_VL_3'     : 20 + 273.15,
             'm_flow_HP'     : 80 / 3600,                    # [kg/s] Constant Heat flow of HP if HP is running
             'eta_HP'        : 0.4,                          # [-]    Gütegrad HP
             'Q_HP_Min'      : 0                             # [W]    Minimum Heat power of HP
@@ -80,8 +83,6 @@ def load_params(params):
 
 
 
-
-
 def load_time_series(params, options):
     global dQ
     time_step           = params['time_step']
@@ -104,16 +105,26 @@ def load_time_series(params, options):
         #  dann wird die Summe der Zeilen gebildet (sum)
     time_series['Q_Hou_Dem'] = []
     if options['WeatherData']['TRY']    == 'cold':
-            dQ = pd.read_csv("D:/lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_cold.csv")
+        dQ = pd.read_csv("D:/lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_cold.csv")
     elif options['WeatherData']['TRY']  == 'normal':
-            dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_normal.csv")
+        dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_normal.csv")
     elif options['WeatherData']['TRY']  == 'warm':
-            dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_warm.csv")
+        dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_warm.csv")
     else:
         print('Please tell which TRY you want to be simulated in parameter.py -> Options')
         #Anpassung des Q_Heat_Dem sodass der Array nur noch die Summe der Wärmebedarfe der Einzelräume beinhaltet
     dQ                          = dQ.iloc[: , 1:]
     time_series['Q_Hou_Dem']    = dQ.sum(axis=1)
+
+# Einlesen des Strompreises
+    time_series['c_grid'] = []
+    if options['Tariff']['Variable']:
+        dC = pd.read_csv('input_data/VariablePowerPrice.csv', skiprows=0)
+        time_series['c_grid'] = dC.iloc[:, 0]
+    else:
+        dC = pd.read_csv('input_data/FixPowerPrice.csv', skiprows=0)
+        time_series['c_grid'] = dC.iloc[:,0]
+
 
     time_series['T_Air'] = []
         # Einlesen der Außentemperatur abhängig vom ausgewählten TRY
