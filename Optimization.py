@@ -5,6 +5,7 @@ from pyomo.environ import *
 from pyomo.util.infeasible import log_infeasible_constraints
 from pyomo.opt import UnknownSolver
 from pyomo.opt.base.solvers import SolverFactoryClass
+from pyomo.opt import SolverStatus, TerminationCondition
 import time as read_time
 import sys
 import copy
@@ -312,7 +313,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
         if value(m.HP_off[t]) == 1:
             return (m.COP_Carnot[t] == 1)
         else:  #
-            return(m.COP_Carnot[t] == T_HP_VL_1 / (T_HP_VL_1 - T_Input[t + end]))
+            return(m.COP_Carnot[t] == value(m.T_HP_VL[t]) / (value(m.T_HP_VL[t]) - T_Input[t + end]))
     model.CoP_Carnot = Constraint(time, rule = CoP_Carnot, name = 'CoP_Carnot')
 #todo T_VL richitg einfügen, vlt wie mit Modi
 
@@ -466,44 +467,56 @@ def run_MPC(params, options, eco, time_series, devs, end):
     solver.options['TimeLimit'] = options['Solve']['TimeLimit']
     solver.options['DualReductions'] = 0
 
-    try:
-        opti_start_time = read_time.time()
-        results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
-        log_infeasible_constraints(model)
-        print('TerminationCondition', results.solver.termination_condition)
-        # Get solving time
-        opti_end_time = read_time.time() - opti_start_time
-        print("Optimization done1. (%f seconds.)" % (opti_end_time))
-        print(log_infeasible_constraints(model)) #->  None???
+    resultate = solver.solve(model)
 
-    except:
-        print('Error:', sys.exc_info())
-        try:
-        # Try to get a solution within a longer solving time
-            opti_start_time = read_time.time()
-            solver.options['TimeLimit'] = options['Solve']['TimeLimit'] * 2
-            results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
-            print('TerminationCondition', results.solver.termination_condition)
-            opti_end_time = read_time.time() - opti_start_time
-            print("Optimization done2. (%f seconds.)" % (opti_end_time))
-        except:
-            # Try to get a solution within max defined solving time
-            print('Error:', sys.exc_info())
-            opti_start_time = read_time.time()
-            solver.options['TimeLimit'] = options['Solve']['TimeLimitMax']
-            results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
-            print('TerminationCondition', results.solver.termination_condition)
-            opti_end_time = read_time.time() - opti_start_time
-            print("Optimization done3. (%f seconds.)" % (opti_end_time))
+    if (resultate.solver.status==SolverStatus.ok) and (resultate.solver.termination_condition==TerminationCondition.optimal):
+        model.display()
+    elif (resultate.solver.termination_condition==TerminationCondition.infeasible or resultate.solver.termination_condition==TerminationCondition.other):
+        print('Model is infeasible. Check Constraints')
+    else:
+        print('Solver status is :',resultate.solver.status)
+        print('TerminationCondition is:', resultate.solver.termination_condition)
 
-    status = 'feasible'
 
-    if results.solver.termination_condition == TerminationCondition.infeasibleOrUnbounded or \
-         results.solver.termination_condition == TerminationCondition.infeasible:
 
-        solver_parameters = "ResultFile=model.ilp"  # write an ILP file to print the IIS
-        results = solver.solve(model, tee=True, logfile='log_file_lower.log', options_string=solver_parameters)
-        print('model infeasible, solver status', results.solver.termination_condition)
+#    try:
+#        opti_start_time = read_time.time()
+#        results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
+#        log_infeasible_constraints(model)
+#        print('TerminationCondition', results.solver.termination_condition)
+#        # Get solving time
+#        opti_end_time = read_time.time() - opti_start_time
+#        print("Optimization done1. (%f seconds.)" % (opti_end_time))
+#        print(log_infeasible_constraints(model)) #->  None???
+
+#    except:
+#        print('Error:', sys.exc_info())
+#        try:
+#        # Try to get a solution within a longer solving time
+#            opti_start_time = read_time.time()
+#            solver.options['TimeLimit'] = options['Solve']['TimeLimit'] * 2
+#            results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
+#            print('TerminationCondition', results.solver.termination_condition)
+#            opti_end_time = read_time.time() - opti_start_time
+#            print("Optimization done2. (%f seconds.)" % (opti_end_time))
+#        except:
+#            # Try to get a solution within max defined solving time
+#            print('Error:', sys.exc_info())
+#            opti_start_time = read_time.time()
+#            solver.options['TimeLimit'] = options['Solve']['TimeLimitMax']
+#            results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
+#            print('TerminationCondition', results.solver.termination_condition)
+#            opti_end_time = read_time.time() - opti_start_time
+#            print("Optimization done3. (%f seconds.)" % (opti_end_time))
+
+#    status = 'feasible'
+
+#    if results.solver.termination_condition == TerminationCondition.infeasibleOrUnbounded or \
+#         results.solver.termination_condition == TerminationCondition.infeasible:
+
+#        solver_parameters = "ResultFile=model.ilp"  # write an ILP file to print the IIS
+#        results = solver.solve(model, tee=True, logfile='log_file_lower.log', options_string=solver_parameters)
+#        print('model infeasible, solver status', results.solver.termination_condition)
 #        status = 'infeasible'
 
 
@@ -541,43 +554,43 @@ def run_MPC(params, options, eco, time_series, devs, end):
         #'m_Sto_water'       : [],
 
     }
-    results_horizon = int((params['control_horizon'] / params['time_step']))
-    print('Results_Horizont ist:',  results_horizon)
-    for t in range(results_horizon):
-        if status == 'infeasible':
-            for res in res_control_horizon:
-                res_control_horizon[res].append(0)
+#    results_horizon = int((params['control_horizon'] / params['time_step']))
+#    print('Results_Horizont ist:',  results_horizon)
+#    for t in range(results_horizon):
+#        if status == 'infeasible':
+#            for res in res_control_horizon:
+#                res_control_horizon[res].append(0)
 
 
-        res_control_horizon['solving_time'].append(opti_end_time)
-        res_control_horizon['Mode 0'].append(value(model.HP_off[t]))
-        res_control_horizon['Mode 1'].append(value(model.HP_mode1[t]))
-        res_control_horizon['Mode 2'].append(model.HP_mode2[t])
-        res_control_horizon['Q_Sto'].append(value(model.Q_Sto[t]))
-        res_control_horizon['Q_HP'].append(value(model.Q_HP[t]))
-        res_control_horizon['Q_Hou_Dem'].append(Q_Hou_Dem[t])
-        res_control_horizon['Q_Hou'].append(value(model.Q_Hou[t]))
-        res_control_horizon['Q_Sto_Loss'].append(value(model.Q_Sto_Loss[t]))
-        res_control_horizon['P_EL'].append(value(model.P_EL[t]))
-        res_control_horizon['P_EL_HP'].append(value(model.P_EL_HP[t]))
-        res_control_horizon['P_EL_Dem'].append(value(model.P_EL_Dem[t]))
-        res_control_horizon['P_PV'].append(value(model.P_PV[t]))
-        res_control_horizon['COP_Carnot'].append(value(model.COP_Carnot[t]))
-        res_control_horizon['COP_HP'].append(value(model.COP_HP[t]))
-        res_control_horizon['T_Air_Input'].append(T_Input[t])
-        res_control_horizon['T_Air'].append(value(model.T_Air[t]))
-        res_control_horizon['T_Sto'].append(value(model.T_Sto[t]))
-        res_control_horizon['T_HP_VL'].append(value(model.T_HP_VL[t]))
-        res_control_horizon['T_HP_RL'].append(value(model.T_HP_RL[t]))
-        res_control_horizon['T_Hou_VL'].append(value(model.T_Hou_VL[t]))
-        res_control_horizon['T_Hou_RL'].append(value(model.T_Hou_RL[t]))
-        res_control_horizon['c_grid'].append(c_grid[t])
-        res_control_horizon['c_total'].append(value(model.costs_total))
+#        res_control_horizon['solving_time'].append(opti_end_time)
+#        res_control_horizon['Mode 0'].append(value(model.HP_off[t]))
+#        res_control_horizon['Mode 1'].append(value(model.HP_mode1[t]))
+#        res_control_horizon['Mode 2'].append(model.HP_mode2[t])
+#        res_control_horizon['Q_Sto'].append(value(model.Q_Sto[t]))
+#        res_control_horizon['Q_HP'].append(value(model.Q_HP[t]))
+#        res_control_horizon['Q_Hou_Dem'].append(Q_Hou_Dem[t])
+#        res_control_horizon['Q_Hou'].append(value(model.Q_Hou[t]))
+#        res_control_horizon['Q_Sto_Loss'].append(value(model.Q_Sto_Loss[t]))
+#        res_control_horizon['P_EL'].append(value(model.P_EL[t]))
+#        res_control_horizon['P_EL_HP'].append(value(model.P_EL_HP[t]))
+#        res_control_horizon['P_EL_Dem'].append(value(model.P_EL_Dem[t]))
+#        res_control_horizon['P_PV'].append(value(model.P_PV[t]))
+#        res_control_horizon['COP_Carnot'].append(value(model.COP_Carnot[t]))
+#        res_control_horizon['COP_HP'].append(value(model.COP_HP[t]))
+#        res_control_horizon['T_Air_Input'].append(T_Input[t])
+#        res_control_horizon['T_Air'].append(value(model.T_Air[t]))
+#        res_control_horizon['T_Sto'].append(value(model.T_Sto[t]))
+#        res_control_horizon['T_HP_VL'].append(value(model.T_HP_VL[t]))
+#        res_control_horizon['T_HP_RL'].append(value(model.T_HP_RL[t]))
+#        res_control_horizon['T_Hou_VL'].append(value(model.T_Hou_VL[t]))
+#        res_control_horizon['T_Hou_RL'].append(value(model.T_Hou_RL[t]))
+#        res_control_horizon['c_grid'].append(c_grid[t])
+ #       res_control_horizon['c_total'].append(value(model.costs_total))
 #        res_control_horizon['c_revenue'].append(model.c_revenue)
-        res_control_horizon['total_costs'].append(model.total_costs)
+#        res_control_horizon['total_costs'].append(model.total_costs)
 #        res_control_horizon['PEL'].append(model.PEL)
 
-    model.pprint()
+#    model.pprint()
 #    print(res_control_horizon['P_EL'])
     return res_control_horizon
 
