@@ -102,13 +102,12 @@ def run_MPC(params, options, eco, time_series, devs, end):
         'T_HP_RL'   : 33.0 + 273.15,
         'T_Hou_VL'  : T_Sto_Init + 2.0,
         'T_Hou_RL'  : (T_Sto_Init + 2.0) - Q_Hou_Dem[start_time] / (m_flow_Hou * c_w_water * 1000),
-        'T_Air'     : T_Input[start_time],
-        'COP_HP'    : T_HP_VL_3 / (T_HP_VL_3- (273.15 - 20)) * eta_HP,     # Minimum values as Inits as the corresponding formulas don't take these values
-        'COP_Carnot': T_HP_VL_3 / (T_HP_VL_3 - (273.15 - 20)),              # Minimum values as Inits as the corresponding formulas don't take these valuesy
+        'T_Air'     : T_Input[start_time + end],
+        'COP_HP'    : T_HP_VL_1 / (T_HP_VL_1 - 273.15) * eta_HP,     # Minimum values as Inits as the corresponding formulas don't take these values
+        'COP_Carnot': T_HP_VL_1 / (T_HP_VL_1 - 273.15),              # Minimum values as Inits as the corresponding formulas don't take these valuesy
         'T_Sto'     : T_Sto_Init,
         'c_earning' : 0,
         'c_cost'    : P_EL_Dem[params['start_time']] * c_grid[start_time],
-#        'c_revenue' : 0,
         'Feed_In'   : 0,
         'HP_off'    : 1,
         'HP_mode1'  : 0,
@@ -118,7 +117,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
     bounds_low = {
         'COP_Carnot'    : T_HP_VL_1 / (T_HP_VL_1 - (273.15 - 20)),              # Minimaler Carnot-COP bei maximaler Vorlauftemperatur und minimaler Außentemperatur (min in Wetterdaten =-17.2 -> deshalb -20 als Minimaltemperatur gewählt
-        'COP_HP'        : 0.0, #T_HP_VL_1 / (T_HP_VL_1 - (273.15 - 20)) * eta_HP,     # Minimaler Carnot-COP mal Gütezahl ergbit HP-COP
+        'COP_HP'        : T_HP_VL_1 / (T_HP_VL_1 - (273.15 - 20)) * eta_HP,     # Minimaler Carnot-COP mal Gütezahl ergbit HP-COP
         'P_EL'          : -float('inf'),
         'P_EL_Dem'      : -float('inf'),
         'P_EL_HP'       : 0.0,
@@ -200,8 +199,6 @@ def run_MPC(params, options, eco, time_series, devs, end):
     model.Q_Sto_In      = Var(time, within = NonNegativeReals,  name = 'Q_Sto_In',      initialize = initials['Q_Sto_In'],  bounds=(bounds_low['Q_Sto_In'], bounds_up['Q_Sto_In']))
     model.Q_Sto_Out     = Var(time, within = NonNegativeReals,  name = 'Q_Sto_Out',     initialize = initials['Q_Sto_Out'], bounds=(bounds_low['Q_Sto_Out'], bounds_up['Q_Sto_Out']))
     model.Q_Penalty     = Var(time, within = NonNegativeReals,  name = 'Q_Penalty',     initialize = initials['Q_Penalty'], bounds=(bounds_low['Q_Penalty'], bounds_up['Q_Penalty']))
-#    model.Q_mode1       = Var(time, within = NonNegativeReals,  name = 'Q_mode1',       initialize = 0, bounds=(0.0, 10000))
-#    model.Q_mode2       = Var(time, within = NonNegativeReals,  name = 'Q_mode2',       initialize = 0,                bounds=(0.0, 10000))
     model.T_HP_VL       = Var(time, within = NonNegativeReals,  name = 'T_HP_VL',       initialize = initials['T_HP_VL'],   bounds=(bounds_low['T_HP_VL'],bounds_up['T_HP_VL']))
     model.T_HP_RL       = Var(time, within = NonNegativeReals,  name = 'T_HP_RL',       initialize = initials['T_HP_RL'],   bounds=(bounds_low['T_HP_RL'],bounds_up['T_HP_RL']))
     model.T_Hou_VL      = Var(time, within = NonNegativeReals,  name = 'T_Hou_VL',      initialize = initials['T_Hou_VL'],  bounds=(bounds_low['T_Hou_VL'],bounds_up['T_Hou_VL'])) #bounds=(293.15, 343.15))
@@ -214,9 +211,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
     model.c_cost        = Var(time, within = NonNegativeReals,  name = 'c_cost',        initialize = initials['c_cost'],    bounds=(bounds_low['c_cost'],bounds_up['c_cost']))     # Stromkosten pro Zeitschritt
     model.c_penalty     = Var(time, within = NonNegativeReals,  name = 'c_penalty',     initialize = initials['c_penalty'], bounds=(bounds_low['c_penalty'],bounds_up['c_penalty']))
 #    model.c_grid        = Var(time, within = Reals,             name = 'c_grid', initialize = )
-#    model.c_total       = Var(time, within = Reals,             name = 'c_total', initialize =)
-#    model.c_revenue     = Var(time, within = Reals,             name = 'c_revenue', initialize = initials['c_revenue'])   # Stromvergütung gesamt (reine Vergütung)
-    model.costs_total   = Var(      within = Reals,             name = 'costs_total',   initialize=0)
+    model.costs_total   = Var(      within = Reals,             name = 'costs_total', initialize=0)
     model.Feed_In       = Var(time, within=  Boolean,           name = 'Feed_In',       initialize= initials['Feed_In'])
 
     ##### Entscheidungsvariablen: Auswahl des Modus
@@ -251,7 +246,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 #######################---2. Equations to describe the storage-system (Sto)---#######################
 
 ###     2.1 Calculation of temperature of storage
-    def Temp_Sto(m, t):
+    def Temp_Sto(m, t): # todo Zeit einfügen
         if t >= 1:
             return((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water == (m.Q_HP[t] - m.Q_Hou[t] - m.Q_Sto_Loss[t]))
         else:
@@ -284,9 +279,9 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     3.2 Constraints for Binary Variables to descide if T_HP_VL = 70°C in Mode 1 or 35°C in Mode 2 or HP off -> [-]
     def HP_Mode_rule(m, t):
-        return (m.HP_off[t] + m.HP_mode1[t] + m.HP_mode2[t] >= 1.0)
+        return (m.HP_off[t] + m.HP_mode1[t] + m.HP_mode2[t] == 1.0)
     model.HP_Mode_rule = Constraint(time, rule=HP_Mode_rule, name='HP_Mode_rule')
-# todo, ausprobieren ^ größer/kleiner gleich Zeichen aus...
+# todo, ausprobieren ^ größer/kleiner gleich Zeichen aus...-> macht im Moment keinen Unterschied (27.1, 9:41)
 
 # todo im Off modus ne minimal TVL geben
 ###     3.3 Temperature from HP to Storage -> [K]
@@ -296,16 +291,16 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     3.4 Power demand of HP -> [W]
     def Power_for_HP(m, t):
-#        if value(m.HP_off[t]) != 0.0:
-            return(m.P_EL_HP[t] == m.Q_HP[t] / 1) #m.COP_HP[t]) #todo COP_HP reinbekommen
-#        else:
-#            return(m.P_EL_HP[t] == 0.0)
+        if value(m.HP_off[t]) != 0.0:
+            return(m.P_EL_HP[t] == m.Q_HP[t] / value(m.COP_HP[t]))
+        else:
+            return(m.P_EL_HP[t] == 0.0)
     model.Power_for_HP = Constraint(time, rule = Power_for_HP, name = 'Power_for_HP')
 
 ###     3.5 Coefficient of Performance of HP -> [-]
     def CoP_HP(m, t):
-        return (m.COP_HP[t] == 1)
-        #return(m.COP_HP[t]  == m.COP_Carnot[t] * eta_HP)
+#        return (m.COP_HP[t] == 1)
+        return(m.COP_HP[t]  == m.COP_Carnot[t] * eta_HP)
     model.CoP_HP = Constraint(time, rule = CoP_HP, name = 'CoP_HP')
 
 ###     3.6 Coefficient of Performance Carnot -> [-]
@@ -347,25 +342,24 @@ def run_MPC(params, options, eco, time_series, devs, end):
     model.heat_use_House = Constraint(time, rule = heat_use_House, name ='heat_use_House')
 
 ###     4.2 Heat flow from Storage to House -> [W] = [kg/s] * [Ws/kgK] * [K]
-    def total_Heat_to_House(m, t):
-        return(m.Q_Hou_In[t] == m_flow_Hou * c_w_water * m.T_Hou_VL[t])
-    model.Total_Heat_to_House = Constraint(time, rule = total_Heat_to_House, name = 'Total_Heat_to_House')
+#    def total_Heat_to_House(m, t):
+#        return(m.Q_Hou_In[t] == m_flow_Hou * c_w_water * m.T_Hou_VL[t])
+#    model.Total_Heat_to_House = Constraint(time, rule = total_Heat_to_House, name = 'Total_Heat_to_House')
 
 ###     4.3 Heat flow back from House to Storage -> [W] = [kg/s] * [Ws/kgK] * [K]
-    def total_Heat_from_House(m, t):
-        return(m.Q_Hou_Out[t] <= m_flow_Hou * c_w_water * m.T_Hou_RL[t])
-    model.Total_Heat_from_House = Constraint(time, rule = total_Heat_from_House, name = 'Total_Heat_from_House')
+#   def total_Heat_from_House(m, t):
+#       return(m.Q_Hou_Out[t] <= m_flow_Hou * c_w_water * m.T_Hou_RL[t])
+#   model.Total_Heat_from_House = Constraint(time, rule = total_Heat_from_House, name = 'Total_Heat_from_House')
 
 ###     4.4 Decharging Power from House -> [W]
     def Q_Hou_sum(m, t):
-        return (m.Q_Hou[t] >= m.Q_Hou_In[t] - m.Q_Hou_Out[t] + m.Q_Penalty[t])
+        return (m.Q_Hou[t] == Q_Hou_Dem[t+end]  + m.Q_Penalty[t])
     model.Q_Hou_sum = Constraint(time, rule=Q_Hou_sum, name='Q_Hou_sum')
 # todo 4.4 entweder <= oder == -> Strafe definieren
 ###     4.5 Modell temperature from Storage to House -> [K]
     def Temperature_to_House(m, t):
         return(m.T_Hou_VL[t] == m.T_Sto[t] + 2)
     model.Temperature_to_House = Constraint(time, rule= Temperature_to_House, name = 'Temperature_to_House')
-
 
 
 #######################---5. Power balance---#######################
@@ -399,11 +393,11 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     6.2 Return money in case of Feed-In -> [€]
     def Return_for_Power(m, t):
-        if value(m.Feed_In):
+        if value(m.Feed_In[t]):
             return(m.c_earning[t] == value(m.P_EL[t]) * c_payment)
         else:
             return(m.c_earning[t] == 0.0)
-        model.Return_for_Power = Constraint(time, rule=Return_for_Power, name= 'Return_for_Power')
+    model.Return_for_Power = Constraint(time, rule=Return_for_Power, name= 'Return_for_Power')
 
 ###     6.3 Ermitteln der Gesamtausgaben für Strom abzüglich Einnahmen -> [€]
     def Cost_sum(m, t):
@@ -416,47 +410,12 @@ def run_MPC(params, options, eco, time_series, devs, end):
     model.Penalty_Costs = Constraint(time, rule = Penatly_Costs, name = 'Penalty_Costs')
 
 #######################---Objective Function---#######################
-## Idee: P_EL erstmal minimieren:
-#    def Sum_PEL(m, t):
-#        return (m.PEL == sum(m.P_EL_Dem[t]) for t in time)
-#    model.Sum_PEL = Constraint(rule= Sum_PEL, name= 'Sum_PEL')
 
     def objective_rule(m):
         return (m.costs_total)
     model.total_costs = Objective(rule = objective_rule, sense = minimize, name = 'Minimize total costs')
 
 
-#################################(ABFALL)#####################################
-## 19. Heat flow from/ to Storage
- #   def Storage_Power_Change(m, t):
- #       if t > 0:
- #           return(m.Q_Sto[t] == (m_Sto_water * c_w_water * (m.T_Sto[t] - m.T_Sto[t-1])) / delta_t)
- #       else:
- #           return(m.Q_Sto[t] == m_Sto_water * c_w_water * m.T_Sto[t])
- #   model.Storage_Power_Change = Constraint(time, rule=Storage_Power_Change, name ='Storage_Power_Change')
-
-
-            # 22. Get T_Hou_RL for an easy ideal consumer model
- #   def T_House_to_Storage(m, t):
- #       return(m.T_Hou_RL[t] == m.T_Hou_VL[t] - (((m.Q_Hou_Out[t] - m.Q_Hou_In[t] ) / ( m_flow_Hou * c_w_water ) * dt ) ))
- #   model.T_House_to_Storage = Constraint(time, rule = T_House_to_Storage, name = 'T_House_to_Storage')
-
-            # 18. Temperature of easy Storage model
-##    def easy_storage(m, t):
-##        if t == 0:
-##            return(m.T_Sto[t] == 20)
-##        else:
-##            return(m.T_Sto[t] - (m.Q_HP[t] + m.Q_Hou[t] + U_Sto * (T_Sto_Env - m.T_Sto[t] )  / (m_Sto_water * c_w_water) )== m.T_Sto[t-1])
-##    model.easy_storage = Constraint(time, rule = easy_storage, name = 'easy_storage')
-
-#    def HP_Q_mode(m, t):
-#        return (m.Q_HP[t] == m.Q_mode1[t] * m.HP_mode1[t] + m.Q_mode2[t] * m.HP_mode2[t] + 0.0 * m.HP_off[t])
-#    model.Heat_Q_mode = Constraint(time, rule=HP_Q_mode, name='HP_Q_mode')
-
-# 23. Define which Temperatures are equal; conservative interpretation
-# Annahme für schönere Rechnungen: Wenn die Temperatur im Speicher größer, als die
-# zurückgeführte Temperatur aus dem Haus ist wird der Mittelwert aus beiden gebildet
-# Ist die zurückgeführte Temperatur größer, wird die Speichertemperatur als HP-Rücklauftemperatur genommen
 
 
 #######################---Solve Model---#######################
@@ -479,45 +438,43 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 
 
-#    try:
-#        opti_start_time = read_time.time()
-#        results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
-#        log_infeasible_constraints(model)
-#        print('TerminationCondition', results.solver.termination_condition)
-#        # Get solving time
-#        opti_end_time = read_time.time() - opti_start_time
-#        print("Optimization done1. (%f seconds.)" % (opti_end_time))
-#        print(log_infeasible_constraints(model)) #->  None???
+    try:
+        opti_start_time = read_time.time()
+        results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
+        log_infeasible_constraints(model)
+        print('TerminationCondition', results.solver.termination_condition)
+        # Get solving time
+        opti_end_time = read_time.time() - opti_start_time
+        print("Optimization done1. (%f seconds.)" % (opti_end_time))
+        print(log_infeasible_constraints(model)) #->  None???
 
-#    except:
-#        print('Error:', sys.exc_info())
-#        try:
-#        # Try to get a solution within a longer solving time
-#            opti_start_time = read_time.time()
-#            solver.options['TimeLimit'] = options['Solve']['TimeLimit'] * 2
-#            results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
-#            print('TerminationCondition', results.solver.termination_condition)
-#            opti_end_time = read_time.time() - opti_start_time
-#            print("Optimization done2. (%f seconds.)" % (opti_end_time))
-#        except:
-#            # Try to get a solution within max defined solving time
-#            print('Error:', sys.exc_info())
-#            opti_start_time = read_time.time()
-#            solver.options['TimeLimit'] = options['Solve']['TimeLimitMax']
-#            results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
-#            print('TerminationCondition', results.solver.termination_condition)
-#            opti_end_time = read_time.time() - opti_start_time
-#            print("Optimization done3. (%f seconds.)" % (opti_end_time))
+    except:
+        print('Error:', sys.exc_info())
+        try:
+        # Try to get a solution within a longer solving time
+            opti_start_time = read_time.time()
+            solver.options['TimeLimit'] = options['Solve']['TimeLimit'] * 2
+            results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
+            print('TerminationCondition', results.solver.termination_condition)
+            opti_end_time = read_time.time() - opti_start_time
+            print("Optimization done2. (%f seconds.)" % (opti_end_time))
+        except:
+            # Try to get a solution within max defined solving time
+            print('Error:', sys.exc_info())
+            opti_start_time = read_time.time()
+            solver.options['TimeLimit'] = options['Solve']['TimeLimitMax']
+            results = solver.solve(model, report_timing=True, tee=True, logfile='log_file_upper.log')
+            print('TerminationCondition', results.solver.termination_condition)
+            opti_end_time = read_time.time() - opti_start_time
+            print("Optimization done3. (%f seconds.)" % (opti_end_time))
+    status = 'feasible'
 
-#    status = 'feasible'
-
-#    if results.solver.termination_condition == TerminationCondition.infeasibleOrUnbounded or \
-#         results.solver.termination_condition == TerminationCondition.infeasible:
-
-#        solver_parameters = "ResultFile=model.ilp"  # write an ILP file to print the IIS
-#        results = solver.solve(model, tee=True, logfile='log_file_lower.log', options_string=solver_parameters)
-#        print('model infeasible, solver status', results.solver.termination_condition)
-#        status = 'infeasible'
+    if results.solver.termination_condition == TerminationCondition.infeasibleOrUnbounded or \
+         results.solver.termination_condition == TerminationCondition.infeasible:
+        solver_parameters = "ResultFile=model.ilp"  # write an ILP file to print the IIS
+        results = solver.solve(model, tee=True, logfile='log_file_lower.log', options_string=solver_parameters)
+        print('model infeasible, solver status', results.solver.termination_condition)
+  #      status = 'infeasible'
 
 
 
@@ -554,43 +511,39 @@ def run_MPC(params, options, eco, time_series, devs, end):
         #'m_Sto_water'       : [],
 
     }
-#    results_horizon = int((params['control_horizon'] / params['time_step']))
-#    print('Results_Horizont ist:',  results_horizon)
-#    for t in range(results_horizon):
-#        if status == 'infeasible':
-#            for res in res_control_horizon:
-#                res_control_horizon[res].append(0)
+    results_horizon = int((params['control_horizon'] / params['time_step']))
+    print('Results_Horizont ist:',  results_horizon)
+    for t in range(results_horizon):
+        if status == 'infeasible':
+            for res in res_control_horizon:
+                res_control_horizon[res].append(0)
 
 
-#        res_control_horizon['solving_time'].append(opti_end_time)
-#        res_control_horizon['Mode 0'].append(value(model.HP_off[t]))
-#        res_control_horizon['Mode 1'].append(value(model.HP_mode1[t]))
-#        res_control_horizon['Mode 2'].append(model.HP_mode2[t])
-#        res_control_horizon['Q_Sto'].append(value(model.Q_Sto[t]))
-#        res_control_horizon['Q_HP'].append(value(model.Q_HP[t]))
-#        res_control_horizon['Q_Hou_Dem'].append(Q_Hou_Dem[t])
-#        res_control_horizon['Q_Hou'].append(value(model.Q_Hou[t]))
-#        res_control_horizon['Q_Sto_Loss'].append(value(model.Q_Sto_Loss[t]))
-#        res_control_horizon['P_EL'].append(value(model.P_EL[t]))
-#        res_control_horizon['P_EL_HP'].append(value(model.P_EL_HP[t]))
-#        res_control_horizon['P_EL_Dem'].append(value(model.P_EL_Dem[t]))
-#        res_control_horizon['P_PV'].append(value(model.P_PV[t]))
-#        res_control_horizon['COP_Carnot'].append(value(model.COP_Carnot[t]))
-#        res_control_horizon['COP_HP'].append(value(model.COP_HP[t]))
-#        res_control_horizon['T_Air_Input'].append(T_Input[t])
-#        res_control_horizon['T_Air'].append(value(model.T_Air[t]))
-#        res_control_horizon['T_Sto'].append(value(model.T_Sto[t]))
-#        res_control_horizon['T_HP_VL'].append(value(model.T_HP_VL[t]))
-#        res_control_horizon['T_HP_RL'].append(value(model.T_HP_RL[t]))
-#        res_control_horizon['T_Hou_VL'].append(value(model.T_Hou_VL[t]))
-#        res_control_horizon['T_Hou_RL'].append(value(model.T_Hou_RL[t]))
-#        res_control_horizon['c_grid'].append(c_grid[t])
- #       res_control_horizon['c_total'].append(value(model.costs_total))
-#        res_control_horizon['c_revenue'].append(model.c_revenue)
-#        res_control_horizon['total_costs'].append(model.total_costs)
-#        res_control_horizon['PEL'].append(model.PEL)
-
-#    model.pprint()
+        res_control_horizon['solving_time'].append(opti_end_time)
+        res_control_horizon['Mode 0'].append(value(model.HP_off[t]))
+        res_control_horizon['Mode 1'].append(value(model.HP_mode1[t]))
+        res_control_horizon['Mode 2'].append(model.HP_mode2[t])
+        res_control_horizon['Q_Sto'].append(value(model.Q_Sto[t]))
+        res_control_horizon['Q_HP'].append(value(model.Q_HP[t]))
+        res_control_horizon['Q_Hou_Dem'].append(Q_Hou_Dem[t])
+        res_control_horizon['Q_Hou'].append(value(model.Q_Hou[t]))
+        res_control_horizon['Q_Sto_Loss'].append(value(model.Q_Sto_Loss[t]))
+        res_control_horizon['P_EL'].append(value(model.P_EL[t]))
+        res_control_horizon['P_EL_HP'].append(value(model.P_EL_HP[t]))
+        res_control_horizon['P_EL_Dem'].append(value(model.P_EL_Dem[t]))
+        res_control_horizon['P_PV'].append(value(model.P_PV[t]))
+        res_control_horizon['COP_Carnot'].append(value(model.COP_Carnot[t]))
+        res_control_horizon['COP_HP'].append(value(model.COP_HP[t]))
+        res_control_horizon['T_Air_Input'].append(T_Input[t])
+        res_control_horizon['T_Air'].append(value(model.T_Air[t]))
+        res_control_horizon['T_Sto'].append(value(model.T_Sto[t]))
+        res_control_horizon['T_HP_VL'].append(value(model.T_HP_VL[t]))
+        res_control_horizon['T_HP_RL'].append(value(model.T_HP_RL[t]))
+        res_control_horizon['T_Hou_VL'].append(value(model.T_Hou_VL[t]))
+        res_control_horizon['T_Hou_RL'].append(value(model.T_Hou_RL[t]))
+        res_control_horizon['c_total'].append(value(model.costs_total))
+        res_control_horizon['total_costs'].append(model.total_costs)
+    model.pprint()
 #    print(res_control_horizon['P_EL'])
     return res_control_horizon
 

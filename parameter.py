@@ -46,7 +46,7 @@ def load_params(params):
             'Q_HP_Max'      : 10000,                        # [W]    Maximum Heat Power of Heat Pump
             'T_HP_VL_1'     : 35 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 1
             'T_HP_VL_2'     : 70 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 2
-            'T_HP_VL_3'     : 20 + 273.15,
+            'T_HP_VL_3'     : 22 + 273.15,
             'm_flow_HP'     : 80 / 3600,                    # [kg/s] Constant Heat flow of HP if HP is running
             'eta_HP'        : 0.4,                          # [-]    Gütegrad HP
             'Q_HP_Min'      : 0                             # [W]    Minimum Heat power of HP

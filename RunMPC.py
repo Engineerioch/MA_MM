@@ -40,10 +40,10 @@ options = {
 #prediction_horizon = 72
 start_time = 0
 time_step = 1
-total_runtime = 10           # Iterationsschritte
-control_horizon = 10
+total_runtime = 15           # Iterationsschritte
+control_horizon = 5
 params_opti = {
-    'prediction_horizon'    : 10,
+    'prediction_horizon'    : 5,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
@@ -122,32 +122,7 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
         for t in range(params_opti['prediction_horizon']):
             save_optim_results_opti[res].append(results_optim[res])
 
-    # Set start time for next iteration
 
 
-
-# Load Time Series for prediction horizon
-#time_series = parameters.load_time_series(options)
-
-#print(save_optim_results_opti['P_PV'])
-#print(save_optim_results_opti['T_Air'])
-#print(save_optim_results_opti['P_EL_Dem'])
-
-
-
-#print(save_optim_results_opti['T_Sto')
-# print("Q_Hou =")
-#print(save_optim_results_opti['Q_Hou']) # -> Schaut gut aus
-
-#print('P_PV =')
-#print(save_optim_results_opti['P_PV']) # -> Schaut gut aus
-
-#print('T_Air =')
-#print(save_optim_results_opti['T_Air']) # Abfuck
-#print('P_EL_Dem=')
-#print(save_optim_results_opti['P_EL_Dem']) #-> Werte werden gelesen, aber falsch?
-#print(save_optim_results_opti['T_Air_Input'])
-#print(save_optim_results_opti['T_Sto'])
-#print(save_optim_results_opti['T_Air'])
-#print(save_optim_results_opti['P_EL'])
+print(save_optim_results_opti['T_Air_Input'])
 #print(save_optim_results_opti['Q_Hou'])
