@@ -72,9 +72,10 @@ def get_solar_radiation_forecast(prediction_horizon, time_step, year, hour_of_ye
 #print(dTCold)
 
 
-dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_warm.csv")
-
-# Anpassung des Q_Heat_Dem sodass der Array nur noch die Summe der Wärmebedarfe der Einzelräume beinhaltet
-dQ = dQ.iloc[:, 1:]
-Q_Hou_Dem = dQ.sum(axis=1)
-print(max(Q_Hou_Dem))
+dH = pd.read_csv('input_data/P_PV_TRY_cold.csv')
+P_PV_list = dH.values.tolist()
+dH = [item for sublist in P_PV_list for item in sublist]
+#print(dH[0:10])
+for i in range(0, 10):
+    print(dH[i])
+print(dH[10])

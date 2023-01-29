@@ -15,7 +15,7 @@ import time as read_time
 def run_MPC(params, options, eco, time_series, devs, end):
 
 # Set parameter
-    dt                  =   params['time_step']
+    dt                  =   params['time_step']                                               # time Step in hours
     start_time          =   params['start_time']
     prediction_horizon  =   params['prediction_horizon']
     time_range          =   range(int(prediction_horizon * (1/params['time_step'])) +1)
@@ -47,7 +47,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
     U_Sto               =   devs['Sto']['U_Sto']
     Cap_Sto             =   devs['Sto']['Volume'] * devs['Nature']['c_w_water']
     T_Kalt              =   devs['Sto']['T_Kalt']
-    A_Sto               =   devs['Sto']['A_Sto']
+#    A_Sto               =   devs['Sto']['A_Sto']
     T_Sto_Init          =   devs['Sto']['T_Sto_Init']
     Q_Sto_min           =   m_Sto_water * devs['Nature']['c_w_water'] * T_Sto_min
     Q_Sto_max           =   m_Sto_water * devs['Nature']['c_w_water'] * T_Sto_max
@@ -79,41 +79,52 @@ def run_MPC(params, options, eco, time_series, devs, end):
     BigM                = 1000
 
 
+    gl_init = {
+        'P_EL' : P_EL_Dem[start_time] + m_flow_HP * c_w_water * (T_HP_VL_2- (33.0 + 273.15)) / (T_HP_VL_2 / (T_HP_VL_2 - 273.15) * eta_HP) - P_PV[start_time],
+        'T_HP_VL' : T_HP_VL_2
+
+    }
+
 #######################---Set initial values---#######################
-# Todo: inits für jeden Fall; hier nur wenn die WP am Anfang aus ist -> Eigentlich sollte es ja so sein, \
+# Todo: inits für jeden Fall; hier nur wenn die WP am Anfang im Modus 2 ist -> Eigentlich sollte es ja so sein, \
 # Todo: dass alle 3 Modi am Anfang einer Optimierung möglich sein können.
     initials = {
-        'P_EL'      : P_EL_Dem[start_time],
-        'P_EL_HP'   : 0.0,
+        'P_EL'      : gl_init['P_EL'],
+        'P_EL_HP'   : m_flow_HP * c_w_water * (gl_init['T_HP_VL'] - (33.0 + 273.15))/ (gl_init['T_HP_VL'] / (gl_init['T_HP_VL'] - T_Input[start_time]) * eta_HP),
         'P_EL_Dem'  : P_EL_Dem[start_time],
         'P_PV'      : P_PV[start_time],
         'Q_Sto'     : m_Sto_water * c_w_water * T_Sto_Init,
-        'Q_HP'      : 0,
-        'Q_HP_Out'  : 0,
-        'Q_HP_In'   : 0,
-        'Q_Hou_In'  : m_flow_Hou * c_w_water * (T_Sto_Init + 2.0),
-        'Q_Hou_Out' : m_flow_Hou * c_w_water * (T_Sto_Init + 2.0) - Q_Hou_Dem[params['start_time']],
-        'Q_Sto_Loss': U_Sto * A_Sto * (T_Sto_Init - T_Sto_Env),
+        'Q_HP'      : m_flow_HP * c_w_water * (gl_init['T_HP_VL'] - (33.0 + 273.15)),
+        'Q_Sto_Loss': U_Sto * (T_Sto_Init - T_Sto_Env),
         'Q_Hou'     : Q_Hou_Dem[start_time],
-        'Q_Sto_Out' : Q_Hou_Dem[start_time],
-        'Q_Sto_In'  : 0.0,
         'Q_Penalty' : 0.0,
-        'T_HP_VL'   : T_HP_VL_1,
+        'T_HP_VL'   : gl_init['T_HP_VL'],
         'T_HP_RL'   : 33.0 + 273.15,
         'T_Hou_VL'  : T_Sto_Init + 2.0,
-        'T_Hou_RL'  : (T_Sto_Init + 2.0) - Q_Hou_Dem[start_time] / (m_flow_Hou * c_w_water * 1000),
-        'T_Air'     : T_Input[start_time + end],
-        'COP_HP'    : T_HP_VL_1 / (T_HP_VL_1 - 273.15) * eta_HP,     # Minimum values as Inits as the corresponding formulas don't take these values
-        'COP_Carnot': T_HP_VL_1 / (T_HP_VL_1 - 273.15),              # Minimum values as Inits as the corresponding formulas don't take these valuesy
+        'T_Hou_RL'  : (T_Sto_Init + 2.0) - Q_Hou_Dem[start_time] / (m_flow_Hou * c_w_water),
+        'T_Air'     : T_Input[start_time],
+        'COP_HP'    : gl_init['T_HP_VL'] / (gl_init['T_HP_VL'] - (T_Input[start_time])) * eta_HP,     # Minimum values as Inits as the corresponding formulas don't take these values
+        'COP_Carnot': gl_init['T_HP_VL'] / (gl_init['T_HP_VL'] - (T_Input[start_time])),              # Minimum values as Inits as the corresponding formulas don't take these valuesy
         'T_Sto'     : T_Sto_Init,
+        'T_Hou_RL_Dem' : (T_Sto_Init + 2.0) - Q_Hou_Dem[start_time] / (m_flow_Hou * c_w_water),
         'c_earning' : 0,
-        'c_cost'    : P_EL_Dem[params['start_time']] * c_grid[start_time],
-        'Feed_In'   : 0,
-        'HP_off'    : 1,
+#        'c_cost'    : (P_EL_Dem[start_time] + (m_flow_HP * c_w_water * (T_HP_VL_2- (33.0 + 273.15))) / (T_HP_VL_2 / (T_HP_VL_2 - T_Input[start_time]) * eta_HP)) * c_grid[start_time],
+#        'Feed_In'   : 0,
+        'HP_off'    : 0,
         'HP_mode1'  : 0,
-        'HP_mode2'  : 0,
+        'HP_mode2'  : 1,
         'c_penalty' : 0,
     }
+
+    if gl_init['P_EL'] <= 0:
+        initials['Feed_In'] = 1
+        initials['c_cost'] = 0
+        initials['c_earning'] = gl_init['P_EL'] * c_payment
+    else:
+        initials['Feed_In'] = 0
+        initials['c_cost'] = gl_init['P_EL'] * c_grid[start_time]
+        initials['c_earning'] = 0
+
 
     bounds_low = {
         'COP_Carnot'    : T_HP_VL_1 / (T_HP_VL_1 - (273.15 - 20)),              # Minimaler Carnot-COP bei maximaler Vorlauftemperatur und minimaler Außentemperatur (min in Wetterdaten =-17.2 -> deshalb -20 als Minimaltemperatur gewählt
@@ -123,20 +134,21 @@ def run_MPC(params, options, eco, time_series, devs, end):
         'P_EL_HP'       : 0.0,
         'P_PV'          : 0.0,
         'Q_HP'          : 0.0,
-        'Q_HP_Out'      : 0, #m_flow_HP * c_w_water * T_HP_VL_2,
-        'Q_HP_In'       : 0, #m_flow_HP * c_w_water * (T_Sto_min - 2),
-        'Q_Hou_In'      : m_flow_Hou * c_w_water * (T_Sto_min + 2),
-        'Q_Hou_Out'     : m_flow_Hou * c_w_water * T_Sto_Env,
+#        'Q_HP_Out'      : 0, #m_flow_HP * c_w_water * T_HP_VL_2,
+#        'Q_HP_In'       : 0, #m_flow_HP * c_w_water * (T_Sto_min - 2),
+#        'Q_Hou_In'      : m_flow_Hou * c_w_water * (T_Sto_min + 2),
+#        'Q_Hou_Out'     : m_flow_Hou * c_w_water * T_Sto_Env,
         'Q_Sto'         : m_Sto_water * c_w_water * T_Kalt,
         'Q_Sto_Loss'    : 0.0,                                            # Minimaler Verlustwärmestrom ist 0. wenn die Speichertemperatur gleich der Umgebungstemperatur ist
         'Q_Hou'         : 0.0,
-        'Q_Sto_In'      : 0.0,
-        'Q_Sto_Out'     : 0.0,
+#        'Q_Sto_In'      : 0.0,
+#        'Q_Sto_Out'     : 0.0,
         'Q_Penalty'     : - float('inf'),
         'T_HP_RL'       : T_Sto_min - 2,
         'T_HP_VL'       : T_HP_VL_3,
         'T_Hou_RL'      : T_Kalt,
         'T_Hou_VL'      : T_Sto_min + 2,
+        'T_Hou_RL_Dem'  : 20 + 273.15,                                  # 20°C als Minimale Rückflusstemperatur im Heizen sicherzustellen (soweit das mit 20° möglich ist :D)
         'T_Sto'         : T_Sto_min,
         'c_cost'        : 0,
         'c_earning'     : - float('inf'),
@@ -144,27 +156,28 @@ def run_MPC(params, options, eco, time_series, devs, end):
     }
 
     bounds_up = {
-        'COP_Carnot': T_HP_VL_2 / (T_HP_VL_2 - (40 + 273.15)),          # Maximaler Carnot-COP bei minimaler Vorlauftemperatur und maximaler Außentemperatur (max in Wetterdaten = 37 -> deshalb 40°C als Maximaltemperatur gewählt
-        'COP_HP'    : T_HP_VL_2 / (T_HP_VL_2 - (40 + 273.15)) * eta_HP,
+        'COP_Carnot': T_HP_VL_2 / (T_HP_VL_2 - (273.15 + 15)),          # Maximaler Carnot-COP bei minimaler Vorlauftemperatur und maximaler Außentemperatur (max in Wetterdaten = 37 -> deshalb 40°C als Maximaltemperatur gewählt
+        'COP_HP'    : T_HP_VL_2 / (T_HP_VL_2 - (273.15 + 15)) * eta_HP,
         'P_EL'      : float('inf'),
         'P_EL_Dem'  : float('inf'),
         'P_EL_HP'   : float('inf'),
         'P_PV'      : 6000.0,
         'Q_HP'      : 10000.0,                                            #Von Modell vorgegeben
-        'Q_HP_In'   : 1000000, #float('inf'),  #m_flow_HP * c_w_water * (T_Sto_max -2),
-        'Q_HP_Out'  : m_flow_HP * c_w_water * (T_HP_VL_1),
+#        'Q_HP_In'   : 1000000, #float('inf'),  #m_flow_HP * c_w_water * (T_Sto_max -2),
+#        'Q_HP_Out'  : m_flow_HP * c_w_water * (T_HP_VL_1),
         'Q_Hou_In'  : m_flow_Hou * c_w_water * (T_Sto_max + 2),
         'Q_Hou_Out' : m_flow_Hou * c_w_water * (T_Sto_max + 2),
         'Q_Sto'     : m_Sto_water * c_w_water * T_Sto_max,
         'Q_Sto_Loss': U_Sto * c_w_water * (T_Sto_max - T_Kalt),         # Maximaler Verlustwärmestrom wenn die Temperaturdifferenz maximal ist
         'Q_Hou'     : 10000.0,                                          # Wird von Q_Hou_Dem eingelesen und als Soft-Constraint behandelt Annahme Q_Hou_Max = 10000 ,weil 9000W die maximale Q_Hou_Dem ist.
-        'Q_Sto_In'  : m_flow_HP * c_w_water * T_HP_VL_1 + m_flow_Hou * c_w_water * (T_Sto_max + 2),
-        'Q_Sto_Out' : m_flow_HP * c_w_water * (T_Sto_max - 2) + m_flow_Hou * c_w_water * (T_Sto_max + 2),
+#        'Q_Sto_In'  : m_flow_HP * c_w_water * T_HP_VL_1 + m_flow_Hou * c_w_water * (T_Sto_max + 2),
+#        'Q_Sto_Out' : m_flow_Hou * c_w_water * (T_Sto_max + 2),
         'Q_Penalty' : float('inf'),
         'T_HP_RL'   : T_Sto_max - 2,
         'T_HP_VL'   : T_HP_VL_1,
         'T_Hou_RL'  : T_Sto_max + 2,
         'T_Hou_VL'  : T_Sto_max + 2,
+        'T_Hou_RL_Dem' : T_Sto_max + 2,
         'T_Sto'     : T_Sto_max,
         'c_cost'    : 100000,
         'c_earning' : 0,
@@ -187,22 +200,16 @@ def run_MPC(params, options, eco, time_series, devs, end):
     model.P_EL_HP       = Var(time, within = NonNegativeReals,  name = 'P_EL_HP',       initialize = initials['P_EL_HP'],   bounds=(bounds_low['P_EL_HP'],bounds_up['P_EL_HP']))
     model.P_PV          = Var(time, within = Reals,             name = 'P_PV',          initialize = initials['P_PV'],      bounds=(bounds_low['P_PV'],bounds_up['P_PV']))
     model.P_EL_Dem      = Var(time, within = Reals,             name = 'P_EL_Dem',      initialize = initials['P_EL_Dem'],  bounds=(bounds_low['P_EL_Dem'],bounds_up['P_EL_Dem']))
-#    model.Q_Hou_Dem     = Param(time, within = Reals, name = 'Q_Hou_Dem'),
     model.Q_Sto         = Var(time, within = Reals,             name = 'Q_Sto',         initialize = initials['Q_Sto'],     bounds=(bounds_low['Q_Sto'],bounds_up['Q_Sto'])) # initialize=m_Sto_water*c_w_water*(35 + 273.15))
-    model.Q_HP_Out      = Var(time, within = NonNegativeReals,  name = 'Q_HP_Out',      initialize = initials['Q_HP_Out'],  bounds=(bounds_low['Q_HP_Out'],bounds_up['Q_HP_Out']))
-    model.Q_HP_In       = Var(time, within = NonNegativeReals,  name = 'Q_HP_In',       initialize = initials['Q_HP_In'],   bounds=(bounds_low['Q_HP_In'],bounds_up['Q_HP_In']))
-    model.Q_Hou_In      = Var(time, within = NonNegativeReals,  name = 'Q_Hou_In',      initialize = initials['Q_Hou_In'],  bounds=(bounds_low['Q_Hou_In'],bounds_up['Q_Hou_In']))
-    model.Q_Hou_Out     = Var(time, within = NonNegativeReals,  name = 'Q_Hou_Out',     initialize = initials['Q_Hou_Out'], bounds=(bounds_low['Q_Hou_Out'],bounds_up['Q_Hou_Out']))
     model.Q_Sto_Loss    = Var(time, within = Reals,             name = 'Q_Sto_Loss',    initialize = initials['Q_Sto_Loss'],bounds=(bounds_low['Q_Sto_Loss'],bounds_up['Q_Sto_Loss']))
-    model.Q_Hou         = Var(time, within = Reals,             name = 'Q_Hou',         initialize = initials['Q_Hou'],     bounds=(bounds_low['Q_Hou'],bounds_up['Q_HP_In']))
+    model.Q_Hou         = Var(time, within = Reals,             name = 'Q_Hou',         initialize = initials['Q_Hou'],     bounds=(bounds_low['Q_Hou'],bounds_up['Q_Hou']))
     model.Q_HP          = Var(time, within = NonNegativeReals,  name = 'Q_HP',          initialize = initials['Q_HP'],      bounds=(bounds_low['Q_HP'],bounds_up['Q_HP']))
-    model.Q_Sto_In      = Var(time, within = NonNegativeReals,  name = 'Q_Sto_In',      initialize = initials['Q_Sto_In'],  bounds=(bounds_low['Q_Sto_In'], bounds_up['Q_Sto_In']))
-    model.Q_Sto_Out     = Var(time, within = NonNegativeReals,  name = 'Q_Sto_Out',     initialize = initials['Q_Sto_Out'], bounds=(bounds_low['Q_Sto_Out'], bounds_up['Q_Sto_Out']))
     model.Q_Penalty     = Var(time, within = NonNegativeReals,  name = 'Q_Penalty',     initialize = initials['Q_Penalty'], bounds=(bounds_low['Q_Penalty'], bounds_up['Q_Penalty']))
     model.T_HP_VL       = Var(time, within = NonNegativeReals,  name = 'T_HP_VL',       initialize = initials['T_HP_VL'],   bounds=(bounds_low['T_HP_VL'],bounds_up['T_HP_VL']))
     model.T_HP_RL       = Var(time, within = NonNegativeReals,  name = 'T_HP_RL',       initialize = initials['T_HP_RL'],   bounds=(bounds_low['T_HP_RL'],bounds_up['T_HP_RL']))
     model.T_Hou_VL      = Var(time, within = NonNegativeReals,  name = 'T_Hou_VL',      initialize = initials['T_Hou_VL'],  bounds=(bounds_low['T_Hou_VL'],bounds_up['T_Hou_VL'])) #bounds=(293.15, 343.15))
-    model.T_Hou_RL      = Var(time, within = NonNegativeReals,  name = 'T_Hou_RL',      initialize = initials['T_Hou_RL'],  bounds=(bounds_low['T_Hou_RL'],bounds_up['T_Hou_RL'])) #bounds=(293.15, 343.15))
+    model.T_Hou_RL      = Var(time, within = NonNegativeReals,  name = 'T_Hou_RL',      initialize = initials['T_Hou_RL'],  bounds=(bounds_low['T_Hou_RL'],bounds_up['T_Hou_RL']))
+    model.T_Hou_RL_Dem  = Var(time, within = NonNegativeReals,  name = 'T_Hou_RL_Dem',initialize = initials['T_Hou_RL_Dem'], bounds=(bounds_low['T_Hou_RL_Dem'], bounds_up['T_Hou_RL_Dem']))
     model.T_Air         = Var(time, within = Reals,             name = 'T_Air',         initialize = initials['T_Air']) #,     bounds=(bounds_low[''],bounds_up['']))
     model.COP_HP        = Var(time, within = NonNegativeReals,  name = 'COP_HP',        initialize = initials['COP_HP'],    bounds=(bounds_low['COP_HP'],bounds_up['COP_HP']))
     model.COP_Carnot    = Var(time, within = NonNegativeReals,  name = 'COP_Carnot',    initialize = initials['COP_Carnot'],bounds=(bounds_low['COP_Carnot'],bounds_up['COP_Carnot']))
@@ -210,10 +217,8 @@ def run_MPC(params, options, eco, time_series, devs, end):
     model.c_earning     = Var(time, within = NonPositiveReals,  name = 'c_earning',     initialize = initials['c_earning'], bounds=(bounds_low['c_earning'],bounds_up['c_earning'])) # Epeisevergütung pro Zeitschritt
     model.c_cost        = Var(time, within = NonNegativeReals,  name = 'c_cost',        initialize = initials['c_cost'],    bounds=(bounds_low['c_cost'],bounds_up['c_cost']))     # Stromkosten pro Zeitschritt
     model.c_penalty     = Var(time, within = NonNegativeReals,  name = 'c_penalty',     initialize = initials['c_penalty'], bounds=(bounds_low['c_penalty'],bounds_up['c_penalty']))
-#    model.c_grid        = Var(time, within = Reals,             name = 'c_grid', initialize = )
     model.costs_total   = Var(      within = Reals,             name = 'costs_total', initialize=0)
     model.Feed_In       = Var(time, within=  Boolean,           name = 'Feed_In',       initialize= initials['Feed_In'])
-
     ##### Entscheidungsvariablen: Auswahl des Modus
     model.HP_off        = Var(time, within = Binary,            name = 'HP_off',        initialize = initials['HP_off'])        # HP an oder aus; HP_off = 1 -> HP ist aus
     model.HP_mode1      = Var(time, within = Binary,            name = 'HP_mode1',      initialize = initials['HP_mode1'])        # HP on, T_VL = 70 °C
@@ -229,7 +234,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     1.2 Import of House Heat Demand -> [W]
     def Heat_to_House_equals_Demand(m, t):
-        return (m.Q_Hou[t] >= Q_Hou_Dem[t + end])
+        return (m.Q_Hou[t] <= Q_Hou_Dem[t + end])
     model.Heat_to_House_equals_Demand = Constraint(time, rule=Heat_to_House_equals_Demand, name=Heat_to_House_equals_Demand)
 
 ###     1.3 Import of Electrical Power Demand of House Power -> [W]
@@ -248,42 +253,51 @@ def run_MPC(params, options, eco, time_series, devs, end):
 ###     2.1 Calculation of temperature of storage
     def Temp_Sto(m, t): # todo Zeit einfügen
         if t >= 1:
-            return((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water == (m.Q_HP[t] - m.Q_Hou[t] - m.Q_Sto_Loss[t]))
+            return ((m.T_Sto[t] - m.T_Sto[t - 1]) * m_Sto_water * c_w_water == (m.Q_HP[t] - m.Q_Hou[t] - value(m.Q_Sto_Loss[t])))
+#return((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water == (m.Q_HP[t] - m.Q_Hou[t] - m.Q_Sto_Loss[t]))
         else:
             return(m.T_Sto[t] == initials['T_Sto'])
     model.Temp_Sto = Constraint(time, rule= Temp_Sto, name = 'Temp_Sto')
 
-###     2.2 Definition of Storagetemperature -> [W] = [kg] * [Ws/kgK] * [K]
-#    def Q_Sto_Temp (m, t):
-#        if t >= 1:
-#            return(m.Q_Sto[t] == m_Sto_water * c_w_water * (value(m.T_Sto[t]) - value(m.T_Sto[t-1])))
-#        else:
-#            return(m.Q_Sto[t] == 0)
-#    model.Q_Sto_Temp = Constraint(time, rule = Q_Sto_Temp, name = 'Q_Sto_Temp')
+###     2.2 Nutzbare Speicherenergie -> [Wh] = [kg] * [Wh/kgK] * [K]
+    def Q_Sto_Temp (m, t):
+        if t >= 1:
+            return(m.Q_Sto[t] == m_Sto_water * c_w_water * (value(m.T_Sto[t]) - T_Sto_Env))
+        else:
+            return (m.Q_Sto[t] == initials['Q_Sto'])
+    model.Q_Sto_Temp = Constraint(time, rule = Q_Sto_Temp, name = 'Q_Sto_Temp')
 
-###    2.3 Loss of Storage to Environment in House (No Heating Power resuls from this) -> [W] = [W/m²K] * [m²] * [K]
+# Try: Änderung der Gespeicherten Energie im Speicher
+    def Change_of_Q_Sto(m, t):
+        if t >= 1:
+            return((m.Q_Sto[t] - m.Q_Sto[t - 1]) == (m.T_Sto[t] - m.T_Sto[t - 1]) * m_Sto_water * c_w_water)
+        else:
+            return(m.Q_Sto[t] == initials['Q_Sto'])
+    model.Change_of_Q_Sto =Constraint(time, rule=Change_of_Q_Sto, name = 'Change_of_Q_Sto')
+
+###    2.3 Loss of Storage to Environment in House (No Heating Power resuls from this) -> [Wh] = [W/K] * [K] * [h]
     def Storage_Loss(m, t):
-        return (m.Q_Sto_Loss[t] == U_Sto * A_Sto * (m.T_Sto[t] - T_Sto_Env))
+        return (m.Q_Sto_Loss[t] == U_Sto * (m.T_Sto[t] - T_Sto_Env) * dt)
     model.Storage_Loss = Constraint(time, rule=Storage_Loss, name='Storage_Loss')
 
 ######################################################################################################
 #######################---3. Equations to describe the Heat Pump-System (HP)---#######################
 
-###     3.1 Heat balance of Heat Pump depending on the Current mode -> [W] = [kg/s] * [Ws/kgK] * [K]
+###     3.1 Heat balance of Heat Pump depending on the Current mode -> [Wh] = [kg/h] * [Wh/kgK] * [K] * [h]
     def heat_from_HP(m, t):
         if value(m.HP_off[t]) == 1.0:
             return (m.Q_HP[t] == 0.0)                     # Power = 0 because Heat pump is off in Mode HP_off
         else:
-            return(m.Q_HP[t] == m_flow_HP * c_w_water * (m.T_HP_VL[t] - m.T_HP_RL[t]))
+            return(m.Q_HP[t] == m_flow_HP * c_w_water * (m.T_HP_VL[t] - m.T_HP_RL[t]) * dt)
     model.heat_from_HP = Constraint(time, rule = heat_from_HP, name = 'heat_from_HP')
 
 ###     3.2 Constraints for Binary Variables to descide if T_HP_VL = 70°C in Mode 1 or 35°C in Mode 2 or HP off -> [-]
     def HP_Mode_rule(m, t):
         return (m.HP_off[t] + m.HP_mode1[t] + m.HP_mode2[t] == 1.0)
     model.HP_Mode_rule = Constraint(time, rule=HP_Mode_rule, name='HP_Mode_rule')
-# todo, ausprobieren ^ größer/kleiner gleich Zeichen aus...-> macht im Moment keinen Unterschied (27.1, 9:41)
+# todo, ausprobieren ^ größer/kleiner gleich Zeichen aus...-> macht im Moment keinen Unterschied (29.1; 1425)
 
-# todo im Off modus ne minimal TVL geben
+# todo im Off modus ne minimal TVL geben -> Set on 22
 ###     3.3 Temperature from HP to Storage -> [K]
     def Temp_VL_HP(m, t):
         return (m.T_HP_VL[t] == T_HP_VL_1 * m.HP_mode1[t] + T_HP_VL_2 * m.HP_mode2[t] + T_HP_VL_3 * m.HP_off[t])
@@ -310,8 +324,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
         else:  #
             return(m.COP_Carnot[t] == value(m.T_HP_VL[t]) / (value(m.T_HP_VL[t]) - T_Input[t + end]))
     model.CoP_Carnot = Constraint(time, rule = CoP_Carnot, name = 'CoP_Carnot')
-#todo T_VL richitg einfügen, vlt wie mit Modi
-
+#todo T_VL richitg einfügen, vlt wie mit Modi -> über parameter wurde T_HP_VL_3 festgelegt und in Formel 3.3 hinzugefügt
 ###     3.7 Modell temperature from Storage to HP -> [K]
     def Back_to_HP(m, t):
         return(m.T_HP_RL[t] == m.T_Sto[t] - 2)
@@ -336,9 +349,9 @@ def run_MPC(params, options, eco, time_series, devs, end):
 ######################################################################################################
 #######################---4. Equations to describe the Consumer-System (Hou)---#######################
 
-###     4.1 Return temperature of Heating Fluid -> [K] = [K] - ([W] / [kg/s] * [Ws/kgK])
+###     4.1 Return temperature of Heating Fluid -> [Wh] = [Wh/kgK] * [kg/h] * [K] * [h])
     def heat_use_House(m, t):
-        return ((m.T_Hou_VL[t] - m.T_Hou_RL[t]) == (m.Q_Hou[t] / (m_flow_Hou * c_w_water)))
+        return (m.Q_Hou[t] ==m_flow_Hou * c_w_water * (m.T_Hou_VL[t] - m.T_Hou_RL[t]) * dt)
     model.heat_use_House = Constraint(time, rule = heat_use_House, name ='heat_use_House')
 
 ###     4.2 Heat flow from Storage to House -> [W] = [kg/s] * [Ws/kgK] * [K]
@@ -351,15 +364,34 @@ def run_MPC(params, options, eco, time_series, devs, end):
 #       return(m.Q_Hou_Out[t] <= m_flow_Hou * c_w_water * m.T_Hou_RL[t])
 #   model.Total_Heat_from_House = Constraint(time, rule = total_Heat_from_House, name = 'Total_Heat_from_House')
 
+
+
+# Idee: Der Wärmestrom, der bestraft wird, wird über die Differenz zwischen der wirklichen Rücklauftemperatur und der
+# benötigten RL Temperatur (zur Deckung des Wärmebedarfs) ermittelt. Wenn der Wärmebedarf gedeckt ist, sind die RL-T
+# gleich groß und der StrafWS = 0. Wird der Wärmebedarf nicht gedeckt, ist die tatsächliche RL-T größer als die
+# Benötigte. Aus dieser Differenz resultiert der Q_Penalty
+# Die Summe aus dem Q_Hou_Dem und Q_Penalty ergibt die Wärme, die in das Haus geht (tatsächlicher WS von Sto -> Hou)
+    def Penalty_Heat(m, t):
+        return(m.Q_Penalty[t] == m_flow_Hou * c_w_water * (m.T_Hou_RL[t] - m.T_Hou_RL_Dem[t]) * dt)
+    model.Penatly_Heat = Constraint(time, rule= Penalty_Heat, name='Penalty_Heat')
+
+    def RL_Demand(m, t):
+        return(Q_Hou_Dem[t + end] == m_flow_Hou * c_w_water * (m.T_Hou_VL[t] - m.T_Hou_RL_Dem[t]) * dt)
+    model.RL_Demand = Constraint(time, rule= RL_Demand, name='RL_Demand')
+
 ###     4.4 Decharging Power from House -> [W]
     def Q_Hou_sum(m, t):
-        return (m.Q_Hou[t] == Q_Hou_Dem[t+end]  + m.Q_Penalty[t])
+        return(m.Q_Hou[t] == Q_Hou_Dem[t+end]  + m.Q_Penalty[t])
     model.Q_Hou_sum = Constraint(time, rule=Q_Hou_sum, name='Q_Hou_sum')
 # todo 4.4 entweder <= oder == -> Strafe definieren
 ###     4.5 Modell temperature from Storage to House -> [K]
     def Temperature_to_House(m, t):
         return(m.T_Hou_VL[t] == m.T_Sto[t] + 2)
     model.Temperature_to_House = Constraint(time, rule= Temperature_to_House, name = 'Temperature_to_House')
+
+    def Maximum_Useable_Heat(m, t):
+        return(m.Q_Hou[t] * dt <= m.Q_Sto[t])
+    model.Maximum_Useable_Heat = Constraint(time, rule= Maximum_Useable_Heat, name='Maximum_Useable_Heat')
 
 
 #######################---5. Power balance---#######################

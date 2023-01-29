@@ -49,7 +49,7 @@ params_opti = {
     'start_time'            : start_time,
     'total_runtime'         : total_runtime,
 }
-
+end = 0
 # Define paths and directories for results
 path_file = str(os.path.dirname(os.path.realpath(__file__)))
 #print(path_file)
@@ -111,6 +111,7 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
     print("======================== iteration = " +     str(iter) + " ========================")
     print('New start time is:', params_opti['start_time'])
     params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon']
+
     end = (iter) * int(params_opti['control_horizon'] / params_opti['time_step'])
     time_series = parameters.load_time_series(params_opti, options)
 
@@ -124,5 +125,5 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
 
 
 
-print(save_optim_results_opti['T_Air_Input'])
+print(save_optim_results_opti['T_Air'])
 #print(save_optim_results_opti['Q_Hou'])
