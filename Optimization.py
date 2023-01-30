@@ -262,7 +262,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 ###     2.2 Nutzbare Speicherenergie -> [Wh] = [kg] * [Wh/kgK] * [K]
     def Q_Sto_Temp (m, t):
         if t >= 1:
-            return(m.Q_Sto[t] == m_Sto_water * c_w_water * (value(m.T_Sto[t]) - T_Sto_Env) * dt)
+            return(m.Q_Sto[t] == m_Sto_water * c_w_water * (value(m.T_Sto[t]) - T_Sto_Env))
         else:
             return (m.Q_Sto[t] == initials['Q_Sto'])
     model.Q_Sto_Temp = Constraint(time, rule = Q_Sto_Temp, name = 'Q_Sto_Temp')
@@ -303,10 +303,10 @@ def run_MPC(params, options, eco, time_series, devs, end):
         return (m.T_HP_VL[t] == T_HP_VL_1 * m.HP_mode1[t] + T_HP_VL_2 * m.HP_mode2[t] + T_HP_VL_3 * m.HP_off[t])
     model.Temp_VL_HP = Constraint(time, rule=Temp_VL_HP, name='Temp_VL_HP')
 
-###     3.4 Power demand of HP -> [W]
+###     3.4 Power demand of HP -> [Wh]
     def Power_for_HP(m, t):
         if value(m.HP_off[t]) != 0.0:
-            return(m.P_EL_HP[t] == m.Q_HP[t] / value(m.COP_HP[t]))
+            return(m.P_EL_HP[t] == m.Q_HP[t] / m.COP_HP[t])
         else:
             return(m.P_EL_HP[t] == 0.0)
     model.Power_for_HP = Constraint(time, rule = Power_for_HP, name = 'Power_for_HP')
@@ -345,19 +345,19 @@ def run_MPC(params, options, eco, time_series, devs, end):
 # gleich groß und der StrafWS = 0. Wird der Wärmebedarf nicht gedeckt, ist die tatsächliche RL-T größer als die
 # Benötigte. Aus dieser Differenz resultiert der Q_Penalty
 # Die Summe aus dem Q_Hou_Dem und Q_Penalty ergibt die Wärme, die in das Haus geht (tatsächlicher WS von Sto -> Hou)
-    def Penalty_Heat(m, t):
+    def Penalty_Heat(m, t): # [Wh]
         return(m.Q_Penalty[t] == m_flow_Hou * c_w_water * (m.T_Hou_RL[t] - m.T_Hou_RL_Dem[t]) * dt)
-    model.Penatly_Heat = Constraint(time, rule= Penalty_Heat, name='Penalty_Heat')
+    model.Penalty_Heat = Constraint(time, rule= Penalty_Heat, name='Penalty_Heat')
 
     def RL_Demand(m, t):
-        return(Q_Hou_Dem[t + end] == m_flow_Hou * c_w_water * (m.T_Hou_VL[t] - m.T_Hou_RL_Dem[t]) * dt)
+        return(Q_Hou_Dem[t + end] == m_flow_Hou * c_w_water * (value(m.T_Hou_VL[t]) - m.T_Hou_RL_Dem[t]) * dt)
     model.RL_Demand = Constraint(time, rule= RL_Demand, name='RL_Demand')
 
 ###     4.4 Decharging Power from House -> [W]
     def Q_Hou_sum(m, t):
         return(m.Q_Hou[t] == Q_Hou_Dem[t+end]  + m.Q_Penalty[t])
     model.Q_Hou_sum = Constraint(time, rule=Q_Hou_sum, name='Q_Hou_sum')
-# todo 4.4 entweder <= oder == -> Strafe definieren
+# todo 4.4 entweder <= oder == -> Strafe definieren -> Durch == und Strafe wird die tatsächlich gelieferte Wärme ermittelt
 ###     4.5 Modell temperature from Storage to House -> [K]
     def Temperature_to_House(m, t):
         return(m.T_Hou_VL[t] == m.T_Sto[t] + 2)
