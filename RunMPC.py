@@ -108,15 +108,18 @@ save_optim_results_opti = copy.deepcopy(save_optim_results)
 
 # Time Settings
 for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'])):
+
+    time_series = parameters.load_time_series(params_opti, options)
     print("======================== iteration = " +     str(iter) + " ========================")
     print('New start time is:', params_opti['start_time'])
-    params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon']
-
-    end = (iter) * int(params_opti['control_horizon'] / params_opti['time_step'])
-    time_series = parameters.load_time_series(params_opti, options)
-
-    print('Optimization is running....')
     results_optim = mpc.run_MPC(params_opti, options, eco, time_series, devs, end)
+    print('Optimization is running....')
+
+
+    params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon']
+    end = (iter) * int(params_opti['control_horizon'] / params_opti['time_step'])
+
+
 
 
     for res in save_optim_results_opti:

@@ -262,7 +262,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 ###     2.2 Nutzbare Speicherenergie -> [Wh] = [kg] * [Wh/kgK] * [K]
     def Q_Sto_Temp (m, t):
         if t >= 1:
-            return(m.Q_Sto[t] == m_Sto_water * c_w_water * (value(m.T_Sto[t]) - T_Sto_Env))
+            return(m.Q_Sto[t] == m_Sto_water * c_w_water * (value(m.T_Sto[t]) - T_Sto_Env) * dt)
         else:
             return (m.Q_Sto[t] == initials['Q_Sto'])
     model.Q_Sto_Temp = Constraint(time, rule = Q_Sto_Temp, name = 'Q_Sto_Temp')
@@ -293,7 +293,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     3.2 Constraints for Binary Variables to descide if T_HP_VL = 70°C in Mode 1 or 35°C in Mode 2 or HP off -> [-]
     def HP_Mode_rule(m, t):
-        return (m.HP_off[t] + m.HP_mode1[t] + m.HP_mode2[t] == 1.0)
+        return (m.HP_off[t] + m.HP_mode1[t] + m.HP_mode2[t] <= 1.0)
     model.HP_Mode_rule = Constraint(time, rule=HP_Mode_rule, name='HP_Mode_rule')
 # todo, ausprobieren ^ größer/kleiner gleich Zeichen aus...-> macht im Moment keinen Unterschied (29.1; 1425)
 
@@ -330,21 +330,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
         return(m.T_HP_RL[t] == m.T_Sto[t] - 2)
     model.Back_to_HP = Constraint(time, rule = Back_to_HP, name = 'Back_to_HP')
 
-###     3.8 Wärmestrom, der der HP vom Speicher zugeführt wird -> [W] = [kg/s] * [Ws/kgK] * [K]
-#    def Q_to_HP(m, t):
-#        if value(m.HP_off[t]) != 0:
-#            return(m.Q_HP_In[t] == m_flow_HP * c_w_water * value(m.T_HP_RL[t]))
-#        else:
-#            return(m.Q_HP_In[t] == 0)
-#    model.Q_to_HP = Constraint(time, rule = Q_to_HP, name = 'Q_to_HP')
 
-###     3.9 Wärmestrom, der von der HP an den Speicher abgegeben wird -> [W] = [kg/s] * [Ws/kgK] * [K]
- #   def Q_from_HP(m, t):
- #       if value(m.HP_off[t]) != 0:
- #           return(m.Q_HP_Out[t] == m_flow_HP * c_w_water * value(m.T_HP_VL[t]))
- #       else:
- #           return(m.Q_HP_Out[t] == 0)
- #   model.Q_from_HP = Constraint(time, rule = Q_from_HP, name = 'Q_from_HP')
 
 ######################################################################################################
 #######################---4. Equations to describe the Consumer-System (Hou)---#######################
@@ -353,18 +339,6 @@ def run_MPC(params, options, eco, time_series, devs, end):
     def heat_use_House(m, t):
         return (m.Q_Hou[t] ==m_flow_Hou * c_w_water * (m.T_Hou_VL[t] - m.T_Hou_RL[t]) * dt)
     model.heat_use_House = Constraint(time, rule = heat_use_House, name ='heat_use_House')
-
-###     4.2 Heat flow from Storage to House -> [W] = [kg/s] * [Ws/kgK] * [K]
-#    def total_Heat_to_House(m, t):
-#        return(m.Q_Hou_In[t] == m_flow_Hou * c_w_water * m.T_Hou_VL[t])
-#    model.Total_Heat_to_House = Constraint(time, rule = total_Heat_to_House, name = 'Total_Heat_to_House')
-
-###     4.3 Heat flow back from House to Storage -> [W] = [kg/s] * [Ws/kgK] * [K]
-#   def total_Heat_from_House(m, t):
-#       return(m.Q_Hou_Out[t] <= m_flow_Hou * c_w_water * m.T_Hou_RL[t])
-#   model.Total_Heat_from_House = Constraint(time, rule = total_Heat_from_House, name = 'Total_Heat_from_House')
-
-
 
 # Idee: Der Wärmestrom, der bestraft wird, wird über die Differenz zwischen der wirklichen Rücklauftemperatur und der
 # benötigten RL Temperatur (zur Deckung des Wärmebedarfs) ermittelt. Wenn der Wärmebedarf gedeckt ist, sind die RL-T
@@ -389,8 +363,9 @@ def run_MPC(params, options, eco, time_series, devs, end):
         return(m.T_Hou_VL[t] == m.T_Sto[t] + 2)
     model.Temperature_to_House = Constraint(time, rule= Temperature_to_House, name = 'Temperature_to_House')
 
+# Die Wärme die von Sto zu Haus geht kann nicht größer sein, als die nutzbare Energie im Sto
     def Maximum_Useable_Heat(m, t):
-        return(m.Q_Hou[t] * dt <= m.Q_Sto[t])
+        return(m.Q_Hou[t] <= m.Q_Sto[t])
     model.Maximum_Useable_Heat = Constraint(time, rule= Maximum_Useable_Heat, name='Maximum_Useable_Heat')
 
 
@@ -410,17 +385,12 @@ def run_MPC(params, options, eco, time_series, devs, end):
     model.Power_Demand = Constraint(time, rule=Power_Demand, name = 'Power_Demand')
 
 #######################---6. Costs---#######################
-# todo umformulieren
 ###     6.1 Ermitteln der Kosten für Strom und für Einnahmen mit eingespeistem Strom pro Zeitschritt -> [€]
     def Cost_for_Power(m, t):
         if value(m.Feed_In[t]):
             return(m.c_cost[t] == 0.0)
         else:
-            if options['Tariff']['Variable']:
-                m.c_cost[t] == m.P_EL[t] * c_grid[t]
-                return(m.c_cost[t] == value(m.P_EL[t]) * c_grid[t])
-            else:
-                return (m.c_cost[t] == value(m.P_EL[t]) * c_grid[t])
+            return(m.c_cost[t] == value(m.P_EL[t]) * c_grid[t])
     model.Cost_for_Power = Constraint(time, rule= Cost_for_Power, name= 'Cost_for_Power')
 
 ###     6.2 Return money in case of Feed-In -> [€]
@@ -438,7 +408,7 @@ def run_MPC(params, options, eco, time_series, devs, end):
 
 ###     6.4 Ermitteln der Strafkosten für das unterschreiten des Wärmebedarfs -> [€]
     def Penatly_Costs(m, t):
-        return(m.c_penalty[t] == m.Q_Penalty[t] * c_comfort)
+        return(m.c_penalty[t] == value(m.Q_Penalty[t]) * c_comfort)
     model.Penalty_Costs = Constraint(time, rule = Penatly_Costs, name = 'Penalty_Costs')
 
 #######################---Objective Function---#######################
@@ -446,8 +416,6 @@ def run_MPC(params, options, eco, time_series, devs, end):
     def objective_rule(m):
         return (m.costs_total)
     model.total_costs = Objective(rule = objective_rule, sense = minimize, name = 'Minimize total costs')
-
-
 
 
 #######################---Solve Model---#######################
