@@ -47,7 +47,7 @@ def load_params(params):
             'T_HP_VL_1'     : 70 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 1
             'T_HP_VL_2'     : 35 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 2
             'T_HP_VL_3'     : 22 + 273.15,
-            'm_flow_HP'     : 80,                    # [kg/h] Constant Heat flow of HP if HP is running
+            'm_flow_HP'     : 80 / 3600,                    # [kg/h] Constant Heat flow of HP if HP is running
             'eta_HP'        : 0.4,                          # [-]    Gütegrad HP
             'Q_HP_Min'      : 0                             # [W]    Minimum Heat power of HP
         },
@@ -65,13 +65,13 @@ def load_params(params):
         'Hou'   : {
             'T_Hou_delta_max'   :    20 + 273.15,           # [K]    Maximum Difference between T_Hou_Vl and T_Hou_RL
             # TODO: vernünftiger Wert für m_flow_Hou
-            'm_flow_Hou'        :     100,           # [kg/h] Constant Mass flow from Storage to House
+            'm_flow_Hou'        :     100 / 3600,           # [kg/s] Constant Mass flow from Storage to House
 
         },
 
         # Set natural Constant and other constants given by nature
         'Nature'    : {
-            'c_w_water'         : 4.18 / 3.6,                     # [Wh/kgK] Spezifische Wärmekapazität von Wasser 1.163WH/kgK
+            'c_w_water'         : 4.18 * 1000,              # [Ws/kgK] Spezifische Wärmekapazität von Wasser 1.163WH/kgK
             'Roh_water'         : 995,                      # [kg/m^3] konstante Dichte von Wasser irgendwo zwischen 30 und 40 Grad
 
 
