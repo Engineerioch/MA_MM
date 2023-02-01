@@ -38,7 +38,7 @@ options = {
                          },
 }
 #prediction_horizon = 72
-start_time = 0
+start_time = 2000
 time_step = 1
 total_runtime = 15           # Iterationsschritte
 control_horizon = 5
@@ -76,23 +76,15 @@ solving_time = {
 # Define variables to be saved
 save_optim_results = {
 #    'solving_time': [],
-#    'Mode 0': [],
-#    'Mode 1': [],
-#    'Mode 2': [],
     'Q_Sto': [],
     'Q_HP': [],
     'Q_Hou_Dem': [],
     'Q_Hou': [],
-#    'Q_Sto_Loss': [],
     'P_EL': [],
     'P_EL_HP': [],
     'P_EL_Dem': [],
     'Q_Penalty' : [],
-#    'P_PV_Grid': [],
-#    'P_PV': [],
-#    'COP_Carnot': [],
-#    'COP_HP': [],
-#    'T_Air_Input' : [],
+    'P_PV': [],
     'T_Air': [],
     'T_Sto': [],
     'T_HP_VL': [],
@@ -101,8 +93,11 @@ save_optim_results = {
     'T_Hou_RL': [],
     'c_total': [],
     'c_grid' : [],
-#    'c_revenue': [],
     'total_costs':  [],
+    'HP_off'    : [],
+    'HP_mode1'  : [],
+    'HP_mode2'  : [],
+    'Mode'      : [],
     }
 
 save_optim_results_opti = copy.deepcopy(save_optim_results)
@@ -127,5 +122,10 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
 
 
 
-print(save_optim_results_opti['T_Air'])
+#print(save_optim_results_opti['P_PV'])
 #print(save_optim_results_opti['Q_Hou'])
+print(save_optim_results_opti['Mode'])
+print(save_optim_results_opti['Q_HP'])
+print(save_optim_results_opti['Q_Hou'])
+print(save_optim_results_opti['Q_Penalty'])
+print(save_optim_results_opti['T_HP_VL'])

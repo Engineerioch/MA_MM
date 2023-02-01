@@ -17,11 +17,11 @@ def load_params(params):
 # todo Einheiten der Kosten Checken
     eco = {
         'costs'     : {
-            #todo: Array für die Strompreise erstellen
+            #todo: Array für die Strompreise & Vergütungen erstellen -> für fixen Strompreis erledgit
             'c_grid_var_t'  : 1,                      # [Euro/kWh] Electricity Price if option with variable el price (Variabler Stropreis)
             'c_grid_dem'    : 0.35,                   # [Euro/kWh] Electricity Price if option 'fix' el price (Fester Strompreis)
             'c_payment'     : 0.06,                   # [Euro/kWh] Feed in tariff (Einspeisevergütung)
-            'c_comfort'     : 1000,
+            'c_comfort'     : 100,
         }
     }
     # Set component parameters
