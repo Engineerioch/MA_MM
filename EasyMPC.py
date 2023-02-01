@@ -87,6 +87,7 @@ save_optim_results = {
     'P_EL': [],
     'P_EL_HP': [],
     'P_EL_Dem': [],
+    'Q_Penalty' : [],
 #    'P_PV_Grid': [],
 #    'P_PV': [],
 #    'COP_Carnot': [],
@@ -118,8 +119,6 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
 
     params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon']
     end = (iter) * int(params_opti['control_horizon'] / params_opti['time_step'])
-
-
 
 
     for res in save_optim_results_opti:

@@ -98,15 +98,18 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     model.Q_Sto = Var(time, within=NonNegativeReals, name='Q_Sto', initialize=initials_test['Q_Sto'])
     model.T_Sto = Var(time, within=NonNegativeReals, name='T_Sto', initialize=T_Sto_Init)
     model.Q_Sto_Change = Var(time, within=Reals, name= 'Q_Sto_Change', initialize=initials_test['Q_HP'] - initials_test['Q_Hou'])
-
     model.T_Hou_VL = Var(time, within=NonNegativeReals, name='T_Hou_VL', initialize=initials_test['T_Hou_VL'])
     model.T_Hou_RL = Var(time, within=NonNegativeReals, name='T_Hou_RL', initialize=initials_test['T_Hou_RL'])
     model.P_EL = Var(time, within=Reals, name='P_EL', initialize=initials_test['P_EL_Dem'] - initials_test['P_EL_HP'])
     model.c_cost = Var(time, within=NonNegativeReals, name='c_cost', initialize=0)
     model.costs_total = Var(within=Reals, name='costs_total', initialize=0)
+    model.Q_Penalty = Var(time, within=NonNegativeReals, name='Q_Penalty')
+
+
+
 
     def Heat_to_House_equals_Demand(m, t):
-        return (m.Q_Hou[t] == Q_Hou_Dem[t + end])
+        return (m.Q_Hou[t] >= Q_Hou_Dem[t + end])
     model.Heat_to_House_equals_Demand = Constraint(time, rule=Heat_to_House_equals_Demand, name=Heat_to_House_equals_Demand)
 
     def Power_Demand_In_House(m, t):
@@ -117,60 +120,22 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         return(m.T_Air[t] == T_Input[t + end])
     model.Temp_Outside = Constraint(time, rule= Temp_Outside, name='Temp_Outside')
 
-    def Power_from_HP(m, t):
-        return(m.P_EL_HP[t] == m.Q_HP[t] / 2)
-    model.Power_from_HP = Constraint(time, rule=Power_from_HP, name='Power_from_HP')
+###################################################################################
 
-    def Heat_Balance(m, t):
-        return(m.Q_Sto_Change[t] == m.Q_HP[t] - m.Q_Hou[t])
-    model.Heat_Balance = Constraint(time, rule=Heat_Balance, name='Heat_Balance')
-
-    def Q_Sto_Init(m, t):
-        if t== 0:
-            return(m.Q_Sto[t] == (T_Sto_Init - T_Sto_Env) * m_Sto_water * c_w_water)
-        else:
-            return (m.Q_Sto[t] == m.Q_Sto[t-1] + m.Q_Sto_Change[t])
-    model.Q_Sto_Init = Constraint(time, rule=Q_Sto_Init, name='Q_Sto_Init')
-
-#    def New_Q_Sto(m,t):
- #       return (m.Q_Sto[t+1] == m.Q_Sto[t] + m.Q_Sto_Change[t])
-  #  model.New_Q_Sto = Constraint(time, rule=New_Q_Sto, name='New_Q_Sto')
-
-
-
-#    def Heat_In_Storage(m, t):
- #       if t>= 1:
- #           return (m.Q_Sto[t] - m.Q_Sto[t-1] == m_Sto_water * c_w_water * (m.T_Sto[t] - m.T_Sto[t-1]))
-  #      else:
-   ##         return(m.Q_Sto[t] == m.T_Sto[t] * m_Sto_water * c_w_water)
-    #model.Heat_In_Storage = Constraint(time, rule=Heat_In_Storage, name='Heat_In_Storage')
-
-#    def Heat_from_HP(m, t):
-#        return (m.Q_HP[t] == m_flow_HP * c_w_water * (m.T_HP_VL[t] - m.T_HP_RL[t]))
-#    model.Heat_from_HP = Constraint(time, rule=Heat_from_HP, name='Heat_from_HP')
-
-    def Back_to_HP(m, t):
-        return(m.T_HP_RL[t] == m.T_Sto[t] - 2)
-    model.Back_to_HP = Constraint(time, rule = Back_to_HP, name = 'Back_to_HP')
-
-    def heat_use_House(m, t):
-        return (m.Q_Hou[t] ==m_flow_Hou * c_w_water * (m.T_Hou_VL[t] - m.T_Hou_RL[t]) * dt)
-    model.heat_use_House = Constraint(time, rule = heat_use_House, name ='heat_use_House')
-
-    def Temperature_to_House(m, t):
-        return (m.T_Hou_VL[t] == m.T_Sto[t] + 2)
-    model.Temperature_to_House = Constraint(time, rule=Temperature_to_House, name='Temperature_to_House')
-
-    def Maximum_Useable_Heat(m, t):
-        return (m.Q_Hou[t] <= m.Q_Sto[t])
-    model.Maximum_Useable_Heat = Constraint(time, rule=Maximum_Useable_Heat, name='Maximum_Useable_Heat')
+    def Heat_Sum(m, t):
+        return(m.Q_Hou[t] == m.Q_HP[t] + m.Q_Penalty[t])
+    model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
 
     def power_balance(m, t):
         return(m.P_EL[t] == P_EL_Dem[t + end] + m.P_EL_HP[t])# - P_PV[t + end])
     model.power_balance = Constraint(time, rule = power_balance, name = 'Power_balance')
 
+    def Kosten(m, t):
+        return (m.c_cost[t] == (m.Q_HP[t] / 2) * c_grid[t] + m.Q_Penalty[t] * c_comfort)
+    model.Kosten = Constraint(time, rule=Kosten, name='Kosten')
+
     def PHP(m, t):
-        return (m.costs_total == sum(m.Q_HP[t] for t in time))
+        return (m.costs_total == sum(m.c_cost[t] for t in time))
     model.PHP = Constraint(time, rule=PHP, name ='PHP')
 
     def objective_rule(m):
@@ -208,6 +173,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         'P_EL'              : [],
         'P_EL_HP'           : [],
         'P_EL_Dem'          : [],
+        'Q_Penalty'         : [],
     #    'P_PV_Grid'         : [],
    #     'P_PV_Use'          : [],
   #      'P_PV'              : [],
@@ -249,6 +215,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         res_control_horizon['P_EL'].append(value(model.P_EL[t]))
         res_control_horizon['P_EL_HP'].append(value(model.P_EL_HP[t]))
         res_control_horizon['P_EL_Dem'].append(value(model.P_EL_Dem[t]))
+        res_control_horizon['Q_Penalty'].append(value(model.Q_Penalty[t]))
   #      res_control_horizon['P_PV'].append(value(model.P_PV[t]))
   #      res_control_horizon['COP_Carnot'].append(value(model.COP_Carnot[t]))
   #      res_control_horizon['COP_HP'].append(value(model.COP_HP[t]))
