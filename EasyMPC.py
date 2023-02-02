@@ -38,9 +38,9 @@ options = {
                          },
 }
 #prediction_horizon = 72
-start_time = 2000
+start_time = 4200
 time_step = 1
-total_runtime = 15           # Iterationsschritte
+total_runtime = 5           # Iterationsschritte
 control_horizon = 5
 params_opti = {
     'prediction_horizon'    : 5,
@@ -98,6 +98,8 @@ save_optim_results = {
     'HP_mode1'  : [],
     'HP_mode2'  : [],
     'Mode'      : [],
+    'Q_Sto_Energy' : [],
+    'Q_Sto_Power' : [],
     }
 
 save_optim_results_opti = copy.deepcopy(save_optim_results)
@@ -117,15 +119,20 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
 
 
     for res in save_optim_results_opti:
-        for t in range(params_opti['prediction_horizon']):
+       # for t in range(params_opti['prediction_horizon']):
             save_optim_results_opti[res].append(results_optim[res])
 
 
 
-#print(save_optim_results_opti['P_PV'])
-#print(save_optim_results_opti['Q_Hou'])
+print('Mode')
 print(save_optim_results_opti['Mode'])
+print('Q_HP')
 print(save_optim_results_opti['Q_HP'])
+print('Q_House')
 print(save_optim_results_opti['Q_Hou'])
+print('Q_Penalty:')
 print(save_optim_results_opti['Q_Penalty'])
-print(save_optim_results_opti['T_HP_VL'])
+print('T_Sto')
+print(save_optim_results_opti['T_Sto'])
+print('Q_Sto_Energy')
+print(save_optim_results_opti['Q_Sto_Power'])
