@@ -174,11 +174,11 @@ def runeasyModell(params, options, eco, time_series, devs, end):
 
 ####################---3. Consumer System (Hou) ---####################
 
-    def Heat_Sum(m, t): [W]
+    def Heat_Sum(m, t): # [W]
         return(m.Q_Hou[t] + m.Q_Penalty[t] >= Q_Hou_Dem[t + start_time])
     model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
 
-    def Temp_to_House(m, t): 
+    def Temp_to_House(m, t):
         return(m.T_Hou_VL[t] == m.T_Sto[t] + 2)
     model.Temp_to_House = Constraint(time, rule=Temp_to_House, name='Temp_to_House')
 
