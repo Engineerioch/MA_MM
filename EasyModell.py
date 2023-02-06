@@ -79,7 +79,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
 #        'T_HP_RL' : T_HP_RL_Init,
 #        'P_EL_HP' : m_flow_HP * c_w_water * (T_HP_VL_Init - T_HP_RL_Init) / 2,
         'P_EL_Dem': P_EL_Dem[start_time],
-        'T_Hou_VL' : T_Sto_Init + 2,
+        'T_Hou_VL' : T_Sto_Init + 5,
         'Q_Hou' : Q_Hou_Dem[start_time],
         'T_Air' : T_Input[start_time],
         'T_Hou_RL': (T_Sto_Init + 2) - (Q_Hou_Dem[start_time] / (m_flow_Hou * c_w_water)),
@@ -118,6 +118,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     model.Q_Sto_Energy = Var(time, within=NonNegativeReals, name='Q_Sto_Energy')
     model.T_Hou_VL = Var(time, within=NonNegativeReals, name='T_Hou_VL')
     model.T_Hou_RL = Var(time, within=NonNegativeReals, bounds=(283.15, 400), name='T_Hou_RL')
+    model.Q_Sto_Power_max = Var(time, within=NonNegativeReals, name='Q_Sto_Power_max')
 
 
 
@@ -153,8 +154,9 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     model.Heat_Power_HP = Constraint(time, rule=Heat_Power_HP, name='Heat_Power_HP')
     # ^ [W = kg/s  * J/kgK  * K -> kg/s * Ws/kgK * K = W]
     def Temp_from_Storage(m, t): # Set T_HP_RL depending on T_Sto [K]
-        return (m.T_HP_RL[t] == m.T_Sto[t] - 2)
+        return (m.T_HP_RL[t] == m.T_Sto[t] - 5)
     model.Temp_from_Storage = Constraint(time, rule=Temp_from_Storage, name='Temp_from_Storage')
+
 
     def Display_HP_Mode(m,t): # Constrain to Display the Mode
         return (m.Mode[t] == 0 * m.HP_off[t] + 1 * m.HP_mode1[t] + 2 * m.HP_mode2[t])
@@ -179,10 +181,10 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
 
     def Temp_to_House(m, t):
-        return(m.T_Hou_VL[t] == m.T_Sto[t] + 2)
+        return(m.T_Hou_VL[t] == m.T_Sto[t] + 5)
     model.Temp_to_House = Constraint(time, rule=Temp_to_House, name='Temp_to_House')
 
-    def Power_House(m, t):
+    def Power_House(m, t): # Calculation of Heat flow to House to have the limiting factor of T_Hou_RL [W]
         return (m.Q_Hou[t] == m_flow_Hou * c_w_water * (m.T_Hou_VL[t] - m.T_Hou_RL[t]))
     model.Power_House = Constraint(time, rule= Power_House, name='Power_House')
 
@@ -195,6 +197,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
             return (m.T_Sto[t] == T_Sto_Init)
     model.Temp_Sto = Constraint(time, rule=Temp_Sto, name='Temp_Sto')
 
+
     def Storage_Energy(m, t): # Calculation of Useable Energy in Storage [J] = [Ws] -> [Ws] * 3600 = [Wh]
         return(m.Q_Sto_Energy[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - T_Sto_Env))
     model.Storage_Energy = Constraint(time, rule=Storage_Energy, name='Storage_Energy')
@@ -203,23 +206,30 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         return (m.Q_Sto_Loss[t] == U_Sto * (m.T_Sto[t] - T_Sto_Env))
     model.Loss_Sto = Constraint(time, rule= Loss_Sto, name='Loss_Sto')
 
-#    def Storage_Power(m, t):
-#        return(m.Q_Sto_Power[t] == m.Q_Sto_Energy[t] / delta_t)
-#    model.Storage_Power = Constraint(time, rule=Storage_Power, name='Storage_Power')
+    def Maximum_Storage_Power(m, t): # Maximum Power by Storage per hour
+        return(m.Q_Sto_Power_max[t] == m.Q_Sto_Energy[t] / delta_t)
+    model.Maximum_Storage_Power = Constraint(time, rule=Maximum_Storage_Power, name='Maximum_Storage_Power')
 
+    def Storage_Power(m, t): # [W]
+        return(m.Q_Sto_Power[t] == m.Q_Hou[t])
+    model.Storage_Power = Constraint(time, rule=Storage_Power, name='Storage_Power')
+
+    def Storage_Constraint(m, t):
+        return(m.Q_Sto_Power[t] <= m.Q_Sto_Power_max[t])
+#    model.Storage_Constraint = Constraint(time, rule=Storage_Constraint, name='Storage_Constraint')
 ####################---5. Linking of all Systems ---####################
 
-    def power_balance(m, t):
-        return(m.P_EL[t] == m.P_EL_Dem[t] + m.P_EL_HP[t] - m.P_PV[t])
+    def power_balance(m, t): 
+        return(m.P_EL[t] == (m.P_EL_Dem[t] + m.P_EL_HP[t] - m.P_PV[t]))
     model.power_balance = Constraint(time, rule = power_balance, name = 'Power_balance')
 
     def Define_Feed_Binary(m, t):
         return (m.P_EL[t] * m.No_Feed_In[t] >= 0)
     model.Define_Feed_Binary = Constraint(time, rule= Define_Feed_Binary, name='Define_Feed_Binary')
 
-    def Maximum_Q_Hou(m, t):
-        return(m.Q_Hou[t] <= m.Q_Sto_Energy[t])
-    model.Maximum_Q_Hou = Constraint(time, rule=Maximum_Q_Hou, name='Maximum_Q_Hou')
+#    def Maximum_Q_Hou(m, t):
+#        return(m.Q_Hou[t] <= m.Q_Sto_Power_max[t])
+#    model.Maximum_Q_Hou = Constraint(time, rule=Maximum_Q_Hou, name='Maximum_Q_Hou')
 
 ####################---6. Calculation of Costs ---####################
     def Cost_for_Power(m, t):
@@ -293,7 +303,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         'Q_HP'              : [],
         'Q_Hou_Dem'         : [],
         'Q_Hou'             : [],
-     #   'Q_Sto_Loss'        : [],
+        'Q_Sto_Loss'        : [],
         'P_EL'              : [],
         'P_EL_HP'           : [],
         'P_EL_Dem'          : [],
@@ -310,7 +320,6 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         'T_Hou_VL'          : [],
         'T_Hou_RL'          : [],
         'c_total'           : [],
-
         'total_costs'       : [],
         'c_grid'            : [],
         'HP_off'            : [],
@@ -319,7 +328,11 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         'Mode'              : [],
         'Q_Sto_Energy'      : [],
         'Q_Sto_Power'       : [],
-
+        'Q_Sto_Power_Max'   : [],
+        'c_power'           : [],
+        'c_penalty'         : [],
+        'c_revenue'         : [],
+        'c_grid'            : [],
     }
     status = 'feasible'
     results_horizon = int((params['control_horizon'] / params['time_step']))
@@ -332,7 +345,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
 
 #        res_control_horizon['solving_time'].append(opti_end_time)
         res_control_horizon['Q_HP'].append(value(model.Q_HP[t]))
-        res_control_horizon['Q_Hou_Dem'].append(Q_Hou_Dem[t])
+        res_control_horizon['Q_Hou_Dem'].append(Q_Hou_Dem[t+start_time])
         res_control_horizon['Q_Hou'].append(value(model.Q_Hou[t]))
         res_control_horizon['P_EL'].append(value(model.P_EL[t]))
         res_control_horizon['P_EL_HP'].append(value(model.P_EL_HP[t]))
@@ -342,10 +355,11 @@ def runeasyModell(params, options, eco, time_series, devs, end):
   #      res_control_horizon['COP_Carnot'].append(value(model.COP_Carnot[t]))
   #      res_control_horizon['COP_HP'].append(value(model.COP_HP[t]))
         res_control_horizon['T_Air_Input'].append(T_Input[t])
+        res_control_horizon['Q_Sto_Loss'].append(value(model.Q_Sto_Loss[t]))
         res_control_horizon['T_Air'].append(value(model.T_Air[t]))
         res_control_horizon['T_Sto'].append(value(model.T_Sto[t]))
         res_control_horizon['T_HP_VL'].append(value(model.T_HP_VL[t]))
-#        res_control_horizon['T_HP_RL'].append(value(model.T_HP_RL[t]))
+        res_control_horizon['T_HP_RL'].append(value(model.T_HP_RL[t]))
         res_control_horizon['c_total'].append(value(model.costs_total))
         res_control_horizon['HP_off'].append(value(model.HP_off[t]))
         res_control_horizon['HP_mode1'].append(value(model.HP_mode1[t]))
@@ -354,8 +368,15 @@ def runeasyModell(params, options, eco, time_series, devs, end):
 #        res_control_horizon['COP_Carnot'].append(value(model.COP_Carnot[t]))
 #        res_control_horizon['COP_HP'].append(value(model.COP_HP[t]))
         res_control_horizon['Q_Sto_Energy'].append(value(model.Q_Sto_Energy[t]))
-#        res_control_horizon['Q_Sto_Power'].append(value(model.Q_Sto_Power[t]))
-
-    model.pprint()
+        res_control_horizon['Q_Sto_Power'].append(value(model.Q_Sto_Power[t]))
+        res_control_horizon['Q_Sto_Power_Max'].append(value(model.Q_Sto_Power_max[t]))
+        res_control_horizon['T_Hou_RL'].append(value(model.T_Hou_RL[t]))
+        res_control_horizon['total_costs'].append(value(model.costs_total))
+        res_control_horizon['c_power'].append(value(model.c_power[t]))
+        res_control_horizon['c_penalty'].append(value(model.c_penalty[t]))
+        res_control_horizon['c_revenue'].append(value(model.c_revenue[t]))
+        res_control_horizon['c_grid'].append(c_grid[t])
+    model.display
+#    model.pprint()
 #    print(res_control_horizon['P_EL'])
     return res_control_horizon
