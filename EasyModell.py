@@ -112,13 +112,17 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     model.c_revenue = Var(time, within=NonPositiveReals, name='c_revenue')
     model.T_Sto = Var(time, within=NonNegativeReals, bounds=(273.15, 368.15), name='T_Sto')
     model.Q_Sto_Power = Var(time, within=NonNegativeReals, name='Q_Sto_Power')
-    model.COP_HP = Var(time, within=NonNegativeReals, name='COP_HP')
+    model.COP_HP = Var(time, within=NonNegativeReals, name='COP_HP', bounds=(0.00001, 30))
     model.COP_Carnot = Var(time, within=NonNegativeReals, name='COP_Carnot')
     model.Q_Sto_Loss = Var(time, within=Reals, name='Q_Sto_Loss')
     model.Q_Sto_Energy = Var(time, within=NonNegativeReals, name='Q_Sto_Energy')
     model.T_Hou_VL = Var(time, within=NonNegativeReals, name='T_Hou_VL')
     model.T_Hou_RL = Var(time, within=NonNegativeReals, bounds=(283.15, 400), name='T_Hou_RL')
     model.Q_Sto_Power_max = Var(time, within=NonNegativeReals, name='Q_Sto_Power_max')
+    model.COP_off = Var(time, within= NonNegativeReals, name='COP_off')
+    model.COP_1 = Var(time, within= NonNegativeReals, name='COP_1')
+    model.COP_2 = Var(time, within= NonNegativeReals, name='COP_2')
+    model.P_HP_1 = Var(time, within=NonNegativeReals, name='P_HP_1')
 
 
 
@@ -163,16 +167,34 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     model.Display_HP_Mode = Constraint(time, rule=Display_HP_Mode, name='Display_HP_Mode')
 
     def Power_from_HP(m, t): # Demand of el. Power by HP [W]
-        return (m.P_EL_HP[t] == m.Q_HP[t] / 2 )
+        return (m.P_EL_HP[t] == m.P_HP_1[t] )
     model.Power_from_HP = Constraint(time, rule= Power_from_HP, name='Power_from_HP')
 
-    #   def CoP_HP(m, t):
-    #        return(m.COP_HP[t] == m.COP_Carnot[t] * eta_HP)
-    #    model.CoP_HP = Constraint(time, rule=CoP_HP, name='CoP_HP')
+    def Power_1(m,t):
+        return (m.P_HP_1[t] == m.Q_HP[t] /m.COP_1[t])
+    model.Power_1= Constraint(time, rule=Power_1, name='Power_1')
 
-    #    def CoP_Carnot(m, t):
-    #        return(m.COP_Carnot[t] == m.T_HP_VL[t] / (m.T_HP_VL[t] - m.T_Air[t]))
-    #    model.CoP_Carnot = Constraint(time, rule=CoP_Carnot, name='CoP_Carnot')
+    def CoP_HP(m, t):
+        return(m.COP_HP[t] == m.COP_Carnot[t] * eta_HP)
+    model.CoP_HP = Constraint(time, rule=CoP_HP, name='CoP_HP')
+
+    def CoP_Carnot(m, t):
+        return(m.COP_Carnot[t] == m.COP_off[t] * m.HP_off[t] + m.COP_1[t] * m.HP_mode1[t] + m.COP_2[t] * m.HP_mode2[t])
+    model.CoP_Carnot = Constraint(time, rule=CoP_Carnot, name='CoP_Carnot')
+
+    # Ermittlung des Carnot-Wirkungsgrades für die 2 Betriebsmodi und Festlegung von COP_off > 0
+    def Cop_1(m,t):
+        return (m.COP_1[t] == (T_HP_VL_1 / (T_HP_VL_1 - T_Input[t + start_time])))
+    model.Cop_1 = Constraint(time, rule= Cop_1, name='Cop_1')
+
+    def Cop_2(m,t):
+        return (m.COP_2[t] == T_HP_VL_2 / (T_HP_VL_2 - T_Input[t + start_time]))
+    model.Cop_2 = Constraint(time, rule= Cop_2, name='Cop_2')
+
+    def Cop_0(m,t):
+        return (m.COP_off[t] == 0.0001)
+    model.Cop_0 = Constraint(time, rule= Cop_0, name='Cop_0')
+
 
 ####################---3. Consumer System (Hou) ---####################
 
@@ -219,7 +241,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
 #    model.Storage_Constraint = Constraint(time, rule=Storage_Constraint, name='Storage_Constraint')
 ####################---5. Linking of all Systems ---####################
 
-    def power_balance(m, t): 
+    def power_balance(m, t):
         return(m.P_EL[t] == (m.P_EL_Dem[t] + m.P_EL_HP[t] - m.P_PV[t]))
     model.power_balance = Constraint(time, rule = power_balance, name = 'Power_balance')
 
