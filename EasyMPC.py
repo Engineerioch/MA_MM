@@ -38,12 +38,12 @@ options = {
                          },
 }
 #prediction_horizon = 72
-start_time = 4200
+start_time = 0
 time_step = 1
-total_runtime = 5           # Iterationsschritte
-control_horizon = 5
+total_runtime = 2000           # Iterationsschritte
+control_horizon = 2000
 params_opti = {
-    'prediction_horizon'    : 5,
+    'prediction_horizon'    : 2000,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
@@ -87,6 +87,7 @@ save_optim_results = {
     'P_PV': [],
     'T_Air': [],
     'T_Sto': [],
+    'Q_Sto_Loss' :[],
     'T_HP_VL': [],
     'T_HP_RL': [],
     'T_Hou_VL': [],
@@ -100,6 +101,11 @@ save_optim_results = {
     'Mode'      : [],
     'Q_Sto_Energy' : [],
     'Q_Sto_Power' : [],
+    'Q_Sto_Power_Max' : [],
+    'total_costs' : [],
+    'c_power': [],
+    'c_penalty':[],
+    'c_revenue':[],
     }
 
 save_optim_results_opti = copy.deepcopy(save_optim_results)
@@ -122,17 +128,88 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
        # for t in range(params_opti['prediction_horizon']):
             save_optim_results_opti[res].append(results_optim[res])
 
+show = 'costs'
+if show == 'HP':
+    print('Mode')
+    print(save_optim_results_opti['Mode'])
+    print('Q_HP')
+    print(save_optim_results_opti['Q_HP'])
+    print('T_HP_VL')
+    print(save_optim_results_opti['T_HP_VL'])
+    print('T_HP_RL')
+    print(save_optim_results_opti['T_HP_RL'])
+    #print('P_EL_HP')
+    #print(save_optim_results_opti['P_EL_HP'])
+    #print('COP_HP')
+    #print(save_optim_results_opti['COP_HP'])
+elif show == 'Sto':
+    print('T_Sto')
+    print(save_optim_results_opti['T_Sto'])
+    print('Q_Sto_Energy')
+    print(save_optim_results_opti['Q_Sto_Energy'])
+    print('Q_Sto_Power')
+    print(save_optim_results_opti['Q_Sto_Power'])
+    print('Q_Sto_Power_Max')
+    print(save_optim_results_opti['Q_Sto_Power_Max'])
+elif show == 'Power':
+    print('P_EL')
+    print(save_optim_results_opti['P_EL'])
+    print('P_PV')
+    print(save_optim_results_opti['P_PV'])
+    print('P_EL_HP')
+    print(save_optim_results_opti['P_EL_HP'])
+elif show == 'costs':
+#    print('c_grid')
+#    print(save_optim_results_opti['c_grid'])
+    print('c_power')
+    print(save_optim_results_opti['c_power'])
+    print('c_revenue')
+    print(save_optim_results_opti['c_revenue'])
+    print('c_penalty')
+    print(save_optim_results_opti['c_penalty'])
+    print('total_costs')
+    print(save_optim_results_opti['total_costs'])
+elif show == 'Hou':
+    print('Q_Hou')
+    print(save_optim_results_opti['Q_Hou'])
+    print('T_Hou_VL')
+    print(save_optim_results_opti['T_Hou_VL'])
+    print('T_Hou_RL')
+    print(save_optim_results_opti['T_Hou_RL'])
+    print('Q_Penalty')
+    print(save_optim_results_opti['Q_Penalty'])
+elif show == 'Heat':
+    print('Q_HP')
+    print(save_optim_results_opti['Q_HP'])
+    print('Q_Penalty')
+    print(save_optim_results_opti['Q_Penalty'])
+    print('Q_Sto_Power')
+    print(save_optim_results_opti['Q_Sto_Power'])
+    print('Q_Hou')
+    print(save_optim_results_opti['Q_Hou'])
+    print('Q_Hou_Dem')
+    print(save_optim_results_opti['Q_Hou_Dem'])
+else:
+    print('Q_House')
+    print(save_optim_results_opti['Q_Hou'])
+    print('Q_Sto_Loss')
+    print(save_optim_results_opti['Q_Sto_Loss'])
+    print('Q_Penalty:')
+    print(save_optim_results_opti['Q_Penalty'])
+    print('T_Sto')
+    print(save_optim_results_opti['T_Sto'])
+    #print('Q_Sto_Energy')
+    #print(save_optim_results_opti['Q_Sto_Power'])
+    print('T_HP_VL')
+    print(save_optim_results_opti['T_HP_VL'])
+    print('T_Hou_RL')
+    print(save_optim_results_opti['T_Hou_RL'])
+    print('Q_Hou_Dem')
+    print(save_optim_results_opti['Q_Hou_Dem'])
+    print('Stromkosten')
+    print(save_optim_results_opti['c_power'])
+    print('Strafkosten')
+    print(save_optim_results_opti['c_penalty'])
 
-
-print('Mode')
-print(save_optim_results_opti['Mode'])
-print('Q_HP')
-print(save_optim_results_opti['Q_HP'])
-print('Q_House')
-print(save_optim_results_opti['Q_Hou'])
-print('Q_Penalty:')
-print(save_optim_results_opti['Q_Penalty'])
-print('T_Sto')
-print(save_optim_results_opti['T_Sto'])
-print('Q_Sto_Energy')
-print(save_optim_results_opti['Q_Sto_Power'])
+    print('Total Costs')
+    print(save_optim_results_opti['total_costs'])
