@@ -18,10 +18,8 @@ def load_params(params):
     eco = {
         'costs'     : {
             #todo: Array für die Strompreise & Vergütungen erstellen -> für fixen Strompreis erledgit
-            'c_grid_var_t'  : 1,                      # [Euro/kWh] Electricity Price if option with variable el price (Variabler Stropreis)
-            'c_grid_dem'    : 0.35,                   # [Euro/kWh] Electricity Price if option 'fix' el price (Fester Strompreis)
-            'c_payment'     : 0.06,                   # [Euro/kWh] Feed in tariff (Einspeisevergütung)
-            'c_comfort'     : 100,
+            'c_payment'     : 0.06 / 1000,                   # [Euro/kWh] Feed in tariff (Einspeisevergütung)
+            'c_comfort'     : 1000,
         }
     }
     # Set component parameters
@@ -32,7 +30,7 @@ def load_params(params):
             'T_Sto_min' : 18 + 273.15,                   # [K] Minimum temperature of storage
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
-            'T_Sto_Init': 70 + 273.15,                  # [K] initial Storage Temperature for Optimization
+            'T_Sto_Init': 55 + 273.15,                  # [K] initial Storage Temperature for Optimization
             'Volume'    : 0.3,                          # [m³] Volume of thermal Storage Set in Dymola
             'U_Sto'     : 2.5,                          # [W/K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
@@ -44,10 +42,10 @@ def load_params(params):
     # Set Heat Pump parameter
         'HP'    : {
             'Q_HP_Max'      : 10000,                        # [W]    Maximum Heat Power of Heat Pump
-            'T_HP_VL_1'     : 70 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 1
-            'T_HP_VL_2'     : 35 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 2
+            'T_HP_VL_1'     : 35 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 1
+            'T_HP_VL_2'     : 70 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 2
             'T_HP_VL_3'     : 22 + 273.15,
-            'm_flow_HP'     : 80 / 3600,                    # [kg/h] Constant Heat flow of HP if HP is running
+            'm_flow_HP'     : 180 / 3600,                    # [kg/h] Constant Heat flow of HP if HP is running
             'eta_HP'        : 0.4,                          # [-]    Gütegrad HP
             'Q_HP_Min'      : 0                             # [W]    Minimum Heat power of HP
         },
@@ -116,7 +114,7 @@ def load_time_series(params, options):
     dQ                          = dQ.iloc[: , 1:]
     time_series['Q_Hou_Dem']    = dQ.sum(axis=1)
 
-# Einlesen des Strompreises
+# Einlesen des Strompreises [€/kWh]
     time_series['c_grid'] = []
     if options['Tariff']['Variable']:
         dC = pd.read_csv('input_data/VariablePowerPrice.csv', skiprows=0)
