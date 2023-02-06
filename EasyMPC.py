@@ -40,10 +40,10 @@ options = {
 #prediction_horizon = 72
 start_time = 0
 time_step = 1
-total_runtime = 2000           # Iterationsschritte
-control_horizon = 2000
+total_runtime = 60           # Iterationsschritte
+control_horizon = 60
 params_opti = {
-    'prediction_horizon'    : 2000,
+    'prediction_horizon'    : 60,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
