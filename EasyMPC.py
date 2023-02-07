@@ -25,8 +25,8 @@ options = {
     'PV'            :   {'PV_factor'           : 1.0,      # Rescale PV- Generation P_PV = n_Mod (default: 750) * 330 W * PV_factor
                          },
 
-    'Initial'       : {'T_HP_VL_Init'           : 35 + 273.15 },
-
+    'Initial'       : {'T_HP_VL_Init'           : 35 + 273.15,
+                       },
 
 ### Location of the Single Family House ###
     'Location'      :   {'lat'                  : 52.519*2*3.14/360,            # [°]   Latitude Berlin
@@ -38,12 +38,12 @@ options = {
                          },
 }
 #prediction_horizon = 72
-start_time = 0
+start_time = 3000
 time_step = 1
-total_runtime = 60           # Iterationsschritte
-control_horizon = 60
+total_runtime = 100           # Iterationsschritte
+control_horizon = 100
 params_opti = {
-    'prediction_horizon'    : 60,
+    'prediction_horizon'    : 100,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
@@ -87,7 +87,7 @@ save_optim_results = {
     'P_PV': [],
     'T_Air': [],
     'T_Sto': [],
-    'Q_Sto_Loss' :[],
+    'Q_Sto_Loss': [],
     'T_HP_VL': [],
     'T_HP_RL': [],
     'T_Hou_VL': [],
@@ -109,7 +109,7 @@ save_optim_results = {
     }
 
 save_optim_results_opti = copy.deepcopy(save_optim_results)
-
+#options['Initial']['T_Sto_Init'] = save_optim_results_opti['T_Sto']
 # Time Settings
 for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'])):
 
@@ -119,16 +119,25 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
     results_optim = mpc.runeasyModell(params_opti, options, eco, time_series, devs, end)
     print('Optimization is running....')
 
-
     params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon']
-    end = (iter) * int(params_opti['control_horizon'] / params_opti['time_step'])
+    end = (iter ) * int(params_opti['control_horizon'])
+
+#if iter == 0:
+#    T_Sto_Init = devs['Sto']['T_Sto_Init']
+#else:
+
+
+
+
 
 
     for res in save_optim_results_opti:
        # for t in range(params_opti['prediction_horizon']):
             save_optim_results_opti[res].append(results_optim[res])
+#    options['Initial']['T_Sto'] = save_optim_results_opti['T_Sto'][end - 1]
 
-show = 'costs'
+
+show = 'HP143'
 if show == 'HP':
     print('Mode')
     print(save_optim_results_opti['Mode'])
@@ -189,23 +198,19 @@ elif show == 'Heat':
     print(save_optim_results_opti['Q_Hou'])
     print('Q_Hou_Dem')
     print(save_optim_results_opti['Q_Hou_Dem'])
+#elif show == 'Vergleich':
+
 else:
     print('Q_House')
     print(save_optim_results_opti['Q_Hou'])
-    print('Q_Sto_Loss')
-    print(save_optim_results_opti['Q_Sto_Loss'])
     print('Q_Penalty:')
     print(save_optim_results_opti['Q_Penalty'])
-    print('T_Sto')
-    print(save_optim_results_opti['T_Sto'])
-    #print('Q_Sto_Energy')
-    #print(save_optim_results_opti['Q_Sto_Power'])
-    print('T_HP_VL')
-    print(save_optim_results_opti['T_HP_VL'])
-    print('T_Hou_RL')
-    print(save_optim_results_opti['T_Hou_RL'])
     print('Q_Hou_Dem')
     print(save_optim_results_opti['Q_Hou_Dem'])
+    print('T_Sto')
+    print(save_optim_results_opti['T_Sto'])
+    print('Mode')
+    print(save_optim_results_opti['Mode'])
     print('Stromkosten')
     print(save_optim_results_opti['c_power'])
     print('Strafkosten')
@@ -213,3 +218,8 @@ else:
 
     print('Total Costs')
     print(save_optim_results_opti['total_costs'])
+
+    print(save_optim_results_opti['P_EL_HP'])
+
+
+

@@ -19,7 +19,7 @@ def load_params(params):
         'costs'     : {
             #todo: Array für die Strompreise & Vergütungen erstellen -> für fixen Strompreis erledgit
             'c_payment'     : 0.06 / 1000,                   # [Euro/kWh] Feed in tariff (Einspeisevergütung)
-            'c_comfort'     : 1000,
+            'c_comfort'     : 1,                             # [€/Wh]
         }
     }
     # Set component parameters
@@ -30,12 +30,12 @@ def load_params(params):
             'T_Sto_min' : 18 + 273.15,                   # [K] Minimum temperature of storage
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
-            'T_Sto_Init': 55 + 273.15,                  # [K] initial Storage Temperature for Optimization
+            'T_Sto_Init': 30 + 273.15,                  # [K] initial Storage Temperature for Optimization
             'Volume'    : 0.3,                          # [m³] Volume of thermal Storage Set in Dymola
-            'U_Sto'     : 2.5,                          # [W/K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
+            'U_Sto'     : 0.3,                          # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             #todo richtiger Wert für A_Sto
-#            'A_Sto'     : 2,                            # [m²] Surface of Heat Storage
+            'A_Sto'     : 2.14,                            # [m²] Surface of Heat Storage
 
         },
 
@@ -82,7 +82,6 @@ def load_params(params):
 
 
 def load_time_series(params, options):
-    global dQ
     time_step           = params['time_step']
     start_time          = params['start_time']
     prediction_horizon  = params['prediction_horizon']
@@ -103,11 +102,11 @@ def load_time_series(params, options):
         #  dann wird die Summe der Zeilen gebildet (sum)
     time_series['Q_Hou_Dem'] = []
     if options['WeatherData']['TRY']    == 'cold':
-        dQ = pd.read_csv("D:/lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_cold.csv")
+        dQ = pd.read_csv('input_data/Q_Dem/Q_Heat_Dem_cold.csv')
     elif options['WeatherData']['TRY']  == 'normal':
-        dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_normal.csv")
+        dQ = pd.read_csv('input_data/Q_Dem/Q_Heat_Dem_normal.csv')
     elif options['WeatherData']['TRY']  == 'warm':
-        dQ = pd.read_csv("D:/lma-mma/MA_MM_Python/input_data/Q_Dem/Q_Heat_Dem_warm.csv")
+        dQ = pd.read_csv('input_data/Q_Dem/Q_Heat_Dem_warm.csv')
     else:
         print('Please tell which TRY you want to be simulated in parameter.py -> Options')
         #Anpassung des Q_Heat_Dem sodass der Array nur noch die Summe der Wärmebedarfe der Einzelräume beinhaltet
@@ -128,7 +127,6 @@ def load_time_series(params, options):
         # Einlesen der Außentemperatur abhängig vom ausgewählten TRY
     if options['WeatherData']['TRY']    == "cold":
         dT = pd.read_csv('input_data/Temperature_Berlin.csv', skiprows=0)
- #       time_series['T_Air'] = dT.iloc[:, 3]
         time_series['T_Air'] = dT.iloc[:, 3]
     elif options['WeatherData']['TRY']  == 'normal':
         dT = pd.read_csv('input_data/Temperature_Berlin.csv', skiprows=0)
