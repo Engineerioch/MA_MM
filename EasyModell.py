@@ -14,7 +14,7 @@ import time as read_time
 
 
 
-def runeasyModell(params, options, eco, time_series, devs, end):
+def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     # Set parameter
     dt = params['time_step']  # time Step in hours
     start_time = int(params['start_time'])
@@ -39,7 +39,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     # Set Heat storage parameters
     T_Sto_max = devs['Sto']['T_Sto_max']
     T_Sto_min = devs['Sto']['T_Sto_min']
-    T_Sto_Init = devs['Sto']['T_Sto_Init']
+ #   T_Sto_Init = devs['Sto']['T_Sto_Init']
     m_Sto_water = devs['Sto']['Volume'] * devs['Nature']['Roh_water']
     T_Sto_Env = devs['Sto']['T_Sto_Env']
     U_Sto = devs['Sto']['U_Sto']
@@ -63,7 +63,7 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     T_HP_VL_1 = devs['HP']['T_HP_VL_1']  # [K] Vorlauftemperatur der Wärmepumpe im Modus "1", = 70°C
     T_HP_VL_2 = devs['HP']['T_HP_VL_2']  # [K] Vorlauftemperatur der Wärmepumpe im Modus "2", = 35°C
     T_HP_VL_3 = devs['HP']['T_HP_VL_3']  # [K] Vorlauftemperatur im Modus "Off", = 20°C
-    T_Sto_Init = devs['Sto']['T_Sto_Init']
+ #   T_Sto_Init = devs['Sto']['T_Sto_Init']
 
     # Set Natural Parameters
     c_w_water = devs['Nature']['c_w_water']
@@ -197,10 +197,6 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     model.Power_off = Constraint(time, rule=Power_off, name='Power_off')
 
 
-#    def Power_from_HP(m, t):
-#        return(m.P_EL_HP[t] == m.Q_HP[t] / 5)
-#    model.Power_from_HP = Constraint(time, rule= Power_from_HP, name='Power_from_HP')
-
 ####################---3. Consumer System (Hou) ---####################
 
     def Heat_Sum(m, t): # [W]
@@ -221,7 +217,8 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         if t >= 1:
             return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) / delta_t == (m.Q_HP[t] - m.Q_Hou[t] - m.Q_Sto_Loss[t]) )
         else:
-            return (m.T_Sto[t] == T_Sto_Init)
+ #           if iter == 0:
+                return(m.T_Sto[t] == T_Sto_Init)
     model.Temp_Sto = Constraint(time, rule=Temp_Sto, name='Temp_Sto')
 
     def Storage_Energy(m, t): # Calculation of Useable Energy in Storage [J] = [Ws] -> [Ws] * 3600 = [Wh]
@@ -240,9 +237,6 @@ def runeasyModell(params, options, eco, time_series, devs, end):
         return(m.Q_Sto_Power_max[t] >= m.Q_Hou[t])
     model.Storage_Power = Constraint(time, rule=Storage_Power, name='Storage_Power')
 
-#    def Storage_Constraint(m, t):
-#        return(m.Q_Sto_Power[t] <= m.Q_Sto_Power_max[t])
-#    model.Storage_Constraint = Constraint(time, rule=Storage_Constraint, name='Storage_Constraint')
 ####################---5. Linking of all Systems ---####################
 
     def power_balance(m, t):
@@ -252,10 +246,6 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     def Define_Feed_Binary(m, t):
         return (m.P_EL[t] * m.No_Feed_In[t] >= 0)
     model.Define_Feed_Binary = Constraint(time, rule= Define_Feed_Binary, name='Define_Feed_Binary')
-
-#    def Maximum_Q_Hou(m, t):
- #       return(m.Q_Hou[t] <= m.Q_Sto_Power_max[t])
-  #  model.Maximum_Q_Hou = Constraint(time, rule=Maximum_Q_Hou, name='Maximum_Q_Hou')
 
 ####################---6. Calculation of Costs ---####################
     def Cost_for_Power(m, t):
@@ -279,45 +269,6 @@ def runeasyModell(params, options, eco, time_series, devs, end):
     def objective_rule(m):
         return (m.costs_total)
     model.total_costs = Objective(rule = objective_rule, sense = minimize, name = 'Minimize total costs')
-
-
-    #   def CoP_HP(m, t):
-    #        return(m.COP_HP[t] == m.COP_Carnot[t] * eta_HP)
-    #    model.CoP_HP = Constraint(time, rule=CoP_HP, name='CoP_HP')
-
-    #    def CoP_Carnot(m, t):
-    #        return(m.COP_Carnot[t] == m.T_HP_VL[t] / (m.T_HP_VL[t] - m.T_Air[t]))
-    #    model.CoP_Carnot = Constraint(time, rule=CoP_Carnot, name='CoP_Carnot')
-
-#    def Energy_in_Storage(m, t):
-#        return (m.Q_Sto[t] == m_flow_Hou * c_w_water * (m.T_Sto[t] - T_Sto_Env))
-#    model.Energy_in_Storage = Constraint(time, rule=Energy_in_Storage, name='Energy_in_Storage')
-
-
-#    def Heat_to_House_equals_Demand(m, t):
-#        return (m.Q_Hou[t] >= Q_Hou_Dem[t + start_time])
-#    model.Heat_to_House_equals_Demand = Constraint(time, rule=Heat_to_House_equals_Demand, name=Heat_to_House_equals_Demand)
-
-    #  def CoP_HP(m, t):
-    #     return(m.COP_HP[t] == m.COP_Carnot[t] * eta_HP)
-    # model.CoP_HP = Constraint(time, rule=CoP_HP, name='CoP_HP')
-
-    # def CoP_Carnot(m, t):
-    #     return(m.COP_Carnot[t] == m.COP_off[t] * m.HP_off[t] + m.COP_1[t] * m.HP_mode1[t] + m.COP_2[t] * m.HP_mode2[t])
-    # model.CoP_Carnot = Constraint(time, rule=CoP_Carnot, name='CoP_Carnot')
-
-    # Ermittlung des Carnot-Wirkungsgrades für die 2 Betriebsmodi und Festlegung von COP_off > 0
-    # def Cop_1(m,t):
-    #     return (m.COP_1[t] == (T_HP_VL_1 / (T_HP_VL_1 - T_Input[t + start_time])))
-    # model.Cop_1 = Constraint(time, rule= Cop_1, name='Cop_1')
-
-    # def Cop_2(m,t):
-    #    return (m.COP_2[t] == T_HP_VL_2 / (T_HP_VL_2 - T_Input[t + start_time]))
-    # model.Cop_2 = Constraint(time, rule= Cop_2, name='Cop_2')
-
-    # def Cop_0(m,t):
-    #    return (m.COP_off[t] == 0.0001)
-    # model.Cop_0 = Constraint(time, rule= Cop_0, name='Cop_0')
 
 
 
