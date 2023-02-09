@@ -53,7 +53,8 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     T_Hou_delta_max = devs['Hou']['T_Hou_delta_max']
     P_EL_Dem = time_series['P_EL_Dem']
     m_flow_Hou = devs['Hou']['m_flow_Hou']
-    Q_Hou_Dem = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
+    Q_Hou_Input = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
+    T_Hou_Gre = devs['Hou']['T_Hou_Gre']
 
     # Set Heat Pump parameters
     m_flow_HP = devs['HP']['m_flow_HP']
@@ -85,19 +86,11 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     COP_off = 1
 
 
-    initials_test = {
-        'Q_Sto' : (T_Sto_Init - T_Sto_Env) * m_Sto_water * c_w_water,
-#        'Q_HP'  : m_flow_HP * c_w_water * (T_HP_VL_Init - T_HP_RL_Init),
-#        'T_HP_VL': T_HP_VL_Init,
-#        'T_HP_RL' : T_HP_RL_Init,
-#        'P_EL_HP' : m_flow_HP * c_w_water * (T_HP_VL_Init - T_HP_RL_Init) / 2,
-        'P_EL_Dem': P_EL_Dem[start_time],
-        'T_Hou_VL' : T_Sto_Init + 5,
-        'Q_Hou' : Q_Hou_Dem[start_time],
-        'T_Air' : T_Input[start_time],
-        'T_Hou_RL': (T_Sto_Init + 2) - (Q_Hou_Dem[start_time] / (m_flow_Hou * c_w_water)),
-    }
+    for i in range(0, total_runtime, 24):
+        T_Mean = (sum(T_Input[start_time: 24 + start_time]) / 24)
 
+
+    print(T_Mean)
 
     model = ConcreteModel()
 
@@ -133,12 +126,11 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     model.T_Hou_RL = Var(time, within=NonNegativeReals, bounds=(283.15, 400), name='T_Hou_RL')
     model.Q_Sto_Power_max = Var(time, within=NonNegativeReals, name='Q_Sto_Power_max')
     model.COP_off = Var(time, within= NonNegativeReals, name='COP_off')
-#    model.COP_1 = Var(time, within= NonNegativeReals, name='COP_1')
-#    model.COP_2 = Var(time, within= NonNegativeReals, name='COP_2')
     model.P_HP_1 = Var(time, within=NonNegativeReals, name='P_HP_1')
     model.P_HP_2 = Var(time, within=NonNegativeReals, name='P_HP_2')
     model.P_HP_off = Var(time, within=NonNegativeReals, name='P_HP_off')
-
+    model.Trash = Var(time, within=Reals, name='Trash')
+    model.Q_Hou_Dem = Var(time, within=Reals, name='Q_Hou_Dem')
 
 
 ####################---1. Read of Input Data and Set it to the corresponding Variable ---####################
@@ -154,11 +146,32 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         return(m.P_PV[t] == P_PV[t + start_time])
     model.PV_Import = Constraint(time, rule=PV_Import, name='PV_Import')
 
+##    def T_Mean_Calc(m, t):
+##        if t == 0:
+##            return(m.T_Mean[t] == (sum(m.T_Air[t] for t in time)) / 24)
+##        else:
+##            return (m.T_Mean[t] == m.T_Mean[t-t])
+##    model.T_Mean_Calc = Constraint(time, rule=T_Mean_Calc, name='T_Mean_Calc')
 ####################---2. Heat Pump-System (HP) ---####################
+
+    def House_Demand(m, t):
+        if T_Mean >=T_Hou_Gre:
+            return(m.Q_Hou_Dem[t] == 0)
+        else:
+            return(m.Q_Hou_Dem[t] == Q_Hou_Input[t+start_time])
+    model.House_Demand = Constraint(time, rule=House_Demand, name='House_Demant')
+#    def HP_off_on_hot_days(m, t):
+#        if T_Mean >= 273.15 + 13:
+#            return (m.Q_Hou_Dem[t] == )
+#        else:
+#            return (m.Trash[t] == )
+#    model.HP_off_on_hot_days = Constraint(time, rule=HP_off_on_hot_days, name='HP_off_on_hot_days')
 
     def HP_Modes(m, t): # Constraint to Set one Mode [-]
         return(m.HP_off[t] + m.HP_mode1[t] + m.HP_mode2[t] == 1)
     model.HP_Modes = Constraint(time, rule= HP_Modes, name='HP_Modes')
+
+
 
     def Operation_Temp(m, t): # Definition of T_HP_VL in each mode [K]
         return (m.T_HP_VL[t] == m.HP_mode1[t] * T_HP_VL_1 + m.HP_mode2[t] * T_HP_VL_2 + m.HP_off[t] * T_HP_VL_3)
@@ -196,11 +209,10 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         return(m.P_HP_off[t] == 0)
     model.Power_off = Constraint(time, rule=Power_off, name='Power_off')
 
-
 ####################---3. Consumer System (Hou) ---####################
 
     def Heat_Sum(m, t): # [W]
-        return(m.Q_Hou[t] + m.Q_Penalty[t] >= Q_Hou_Dem[t + start_time])
+        return(m.Q_Hou[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t])
     model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
 
     def Temp_to_House(m, t):
@@ -299,6 +311,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
       #  'Mode 2'            : [],
         'Q_Sto'             : [],
         'Q_HP'              : [],
+        'Q_Hou_Input'       : [],
         'Q_Hou_Dem'         : [],
         'Q_Hou'             : [],
         'Q_Sto_Loss'        : [],
@@ -306,9 +319,8 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         'P_EL_HP'           : [],
         'P_EL_Dem'          : [],
         'Q_Penalty'         : [],
-
         'P_PV'              : [],
- #       'COP_Carnot'        : [],
+#        'COP_Carnot'        : [],
 #        'COP_HP'            : [],
         'T_Air_Input'       : [],
         'T_Air'             : [],
@@ -331,6 +343,8 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         'c_penalty'         : [],
         'c_revenue'         : [],
         'c_grid'            : [],
+        'T_Sto_Init'        : [],
+        'T_Mean'            : [],
     }
     status = 'feasible'
     results_horizon = int((params['control_horizon'] / params['time_step']))
@@ -343,7 +357,8 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
 #        res_control_horizon['solving_time'].append(opti_end_time)
         res_control_horizon['Q_HP'].append(value(model.Q_HP[t]))
-        res_control_horizon['Q_Hou_Dem'].append(Q_Hou_Dem[t+start_time])
+        res_control_horizon['Q_Hou_Input'].append(Q_Hou_Input[t+start_time])
+        res_control_horizon['Q_Hou_Dem'].append(value(model.Q_Hou_Dem[t]))
         res_control_horizon['Q_Hou'].append(value(model.Q_Hou[t]))
         res_control_horizon['P_EL'].append(value(model.P_EL[t]))
         res_control_horizon['P_EL_HP'].append(value(model.P_EL_HP[t]))
@@ -374,6 +389,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         res_control_horizon['c_penalty'].append(value(model.c_penalty[t]))
         res_control_horizon['c_revenue'].append(value(model.c_revenue[t]))
         res_control_horizon['c_grid'].append(c_grid[t])
+        res_control_horizon['T_Mean'].append(T_Mean)
 #    model.display
    # model.pprint()
 #    print(res_control_horizon['P_EL'])

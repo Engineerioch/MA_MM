@@ -38,17 +38,20 @@ options = {
                          },
 }
 #prediction_horizon = 72
-start_time = 3000
+start_time = 8760/2
 time_step = 1
-total_runtime = 100           # Iterationsschritte
-control_horizon = 100
+total_runtime = 480           # Iterationsschritte       -> Sollte durch 24 teilbar sein
+control_horizon = 10
 params_opti = {
-    'prediction_horizon'    : 100,
+    'prediction_horizon'    : 24,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
     'total_runtime'         : total_runtime,
 }
+if control_horizon >= params_opti['prediction_horizon']:
+    print('Control Horizon has to be smaller than the prediction horizon')
+
 end = 0
 # Define paths and directories for results
 path_file = str(os.path.dirname(os.path.realpath(__file__)))
@@ -106,9 +109,10 @@ save_optim_results = {
     'c_power': [],
     'c_penalty':[],
     'c_revenue':[],
+    'T_Mean' : [],
     }
 
-save_optim_results_opti = copy.deepcopy(save_optim_results)
+save_results = copy.deepcopy(save_optim_results)
 #options['Initial']['T_Sto_Init'] = save_optim_results_opti['T_Sto']
 # Time Settings
 for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'])):
@@ -116,110 +120,126 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
     time_series = parameters.load_time_series(params_opti, options)
     print("======================== iteration = " +     str(iter) + " ========================")
     print('New start time is:', params_opti['start_time'])
-    results_optim = mpc.runeasyModell(params_opti, options, eco, time_series, devs, end)
+    if iter == 0:
+        T_Sto_Init = devs['Sto']['T_Sto_Init']
+    else:
+        T_Sto_Init = save_results['T_Sto'][iter-1][end]
+    results_optim = mpc.runeasyModell(params_opti, options, eco, time_series, devs, iter, T_Sto_Init)
     print('Optimization is running....')
 
+
+
     params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon']
-    end = (iter ) * int(params_opti['control_horizon'])
-
-#if iter == 0:
-#    T_Sto_Init = devs['Sto']['T_Sto_Init']
-#else:
+    end = int(params_opti['control_horizon']) - 1
 
 
 
-
-
-
-    for res in save_optim_results_opti:
+    for res in save_results:
        # for t in range(params_opti['prediction_horizon']):
-            save_optim_results_opti[res].append(results_optim[res])
+            save_results[res].append(results_optim[res])
 #    options['Initial']['T_Sto'] = save_optim_results_opti['T_Sto'][end - 1]
 
 
-show = 'HP143'
+show = 'Heat'
+
 if show == 'HP':
     print('Mode')
-    print(save_optim_results_opti['Mode'])
+    print(save_results['Mode'])
     print('Q_HP')
-    print(save_optim_results_opti['Q_HP'])
+    print(save_results['Q_HP'])
     print('T_HP_VL')
-    print(save_optim_results_opti['T_HP_VL'])
+    print(save_results['T_HP_VL'])
     print('T_HP_RL')
-    print(save_optim_results_opti['T_HP_RL'])
+    print(save_results['T_HP_RL'])
+    print('T_Sto')
+    print(save_results['T_Sto'])
+    print('T_Air')
+    print(save_results['T_Air'])
     #print('P_EL_HP')
     #print(save_optim_results_opti['P_EL_HP'])
     #print('COP_HP')
     #print(save_optim_results_opti['COP_HP'])
 elif show == 'Sto':
     print('T_Sto')
-    print(save_optim_results_opti['T_Sto'])
+    print(save_results['T_Sto'])
     print('Q_Sto_Energy')
-    print(save_optim_results_opti['Q_Sto_Energy'])
+    print(save_results['Q_Sto_Energy'])
     print('Q_Sto_Power')
-    print(save_optim_results_opti['Q_Sto_Power'])
+    print(save_results['Q_Sto_Power'])
     print('Q_Sto_Power_Max')
-    print(save_optim_results_opti['Q_Sto_Power_Max'])
+    print(save_results['Q_Sto_Power_Max'])
 elif show == 'Power':
     print('P_EL')
-    print(save_optim_results_opti['P_EL'])
+    print(save_results['P_EL'])
     print('P_PV')
-    print(save_optim_results_opti['P_PV'])
+    print(save_results['P_PV'])
     print('P_EL_HP')
-    print(save_optim_results_opti['P_EL_HP'])
+    print(save_results['P_EL_HP'])
 elif show == 'costs':
 #    print('c_grid')
 #    print(save_optim_results_opti['c_grid'])
     print('c_power')
-    print(save_optim_results_opti['c_power'])
+    print(save_results['c_power'])
     print('c_revenue')
-    print(save_optim_results_opti['c_revenue'])
+    print(save_results['c_revenue'])
     print('c_penalty')
-    print(save_optim_results_opti['c_penalty'])
+    print(save_results['c_penalty'])
     print('total_costs')
-    print(save_optim_results_opti['total_costs'])
+    print(save_results['total_costs'])
 elif show == 'Hou':
     print('Q_Hou')
-    print(save_optim_results_opti['Q_Hou'])
+    print(save_results['Q_Hou'])
     print('T_Hou_VL')
-    print(save_optim_results_opti['T_Hou_VL'])
+    print(save_results['T_Hou_VL'])
     print('T_Hou_RL')
-    print(save_optim_results_opti['T_Hou_RL'])
+    print(save_results['T_Hou_RL'])
     print('Q_Penalty')
-    print(save_optim_results_opti['Q_Penalty'])
+    print(save_results['Q_Penalty'])
 elif show == 'Heat':
     print('Q_HP')
-    print(save_optim_results_opti['Q_HP'])
+    print(save_results['Q_HP'])
     print('Q_Penalty')
-    print(save_optim_results_opti['Q_Penalty'])
+    print(save_results['Q_Penalty'])
     print('Q_Sto_Power')
-    print(save_optim_results_opti['Q_Sto_Power'])
+    print(save_results['Q_Sto_Power'])
     print('Q_Hou')
-    print(save_optim_results_opti['Q_Hou'])
+    print(save_results['Q_Hou'])
     print('Q_Hou_Dem')
-    print(save_optim_results_opti['Q_Hou_Dem'])
+    print(save_results['Q_Hou_Dem'])
+    print('T_Mean')
+    print(save_results['T_Mean'])
+    print('T_Sto')
+    print(save_results['T_Sto'])
 #elif show == 'Vergleich':
+elif show == 'all':
+
+
+
+    fig, ax = plt.subplots()
+
+    # Werte für Tabelle erstellen
+    table_data = [
+        ["Mode", save_results['Mode']],
+        ["Player 2", save_results['Q_HP']],
+      #  ["Player 3", 33],
+      #  ["Player 4", 25],
+      #  ["Player 5", 12]
+    ]
+
+    # Tabelle erstellen
+    table = ax.table(cellText=table_data, loc='center')
+    plt.show()
+
 
 else:
-    print('Q_House')
-    print(save_optim_results_opti['Q_Hou'])
-    print('Q_Penalty:')
-    print(save_optim_results_opti['Q_Penalty'])
-    print('Q_Hou_Dem')
-    print(save_optim_results_opti['Q_Hou_Dem'])
-    print('T_Sto')
-    print(save_optim_results_opti['T_Sto'])
-    print('Mode')
-    print(save_optim_results_opti['Mode'])
-    print('Stromkosten')
-    print(save_optim_results_opti['c_power'])
-    print('Strafkosten')
-    print(save_optim_results_opti['c_penalty'])
 
-    print('Total Costs')
-    print(save_optim_results_opti['total_costs'])
+    print(save_results['T_Air'])
+    print(save_results['T_Mean'])
 
-    print(save_optim_results_opti['P_EL_HP'])
+
+ #   print(save_results['T_Sto'])
+
+
 
 
 
