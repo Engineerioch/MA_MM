@@ -6,6 +6,7 @@ from pyomo.gdp import *
 from pyomo.opt import SolverStatus, TerminationCondition
 import time as read_time
 import sys
+import math
 import copy
 import time as read_time
 
@@ -22,32 +23,36 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     total_runtime = int(params['total_runtime'])
     time_range = range(int(prediction_horizon * (1 / params['time_step'])) + 1)
     time = range(int(prediction_horizon / params['time_step']))
-    delta_t = params['time_step'] * 3600  # time Step in seconds
+    delta_t = params['time_step'] * 3600  # time Step in
+    Laufvariable = list(range(params['control_horizon']))
+    day = range(int(total_runtime/24))
 
-    # Set economic parameter - set in parameter.py -> eco
-    #    c_grid_var          =   time_series['c_grid_var']                # [Euro/kWh]   Variable grid charges Stromnetze Berlin
-    #    c_grid              =   eco['costs']['c_grid_dem']                  # [Euro/kWh]   Grid charges with fix Price Berlin
+    # Set economic parameters
     c_payment = eco['costs']['c_payment']  # [Euro/kWh]    Feed in tariff
     c_grid = time_series['c_grid'] / 1000               # [€/Wh] Strompreis bei Netzbezug (Teilung durch 1000 weil Rohdaten in €/kWh
     c_comfort = eco['costs']['c_comfort'] / 1000        # [€/Wh] Strafkosten bei nicht gedeckten Hauswärembedarf
 
     # Set PV profile
     P_PV = time_series['P_PV']
-    P_PV_Max = devs['PV']['n_mod'] * devs['PV']['P_PV_Module']  # [kW] maximum Sum Power of all PV-Modules
-    P_PV_Min = devs['PV']['P_PV_Min']
+
 
     # Set Heat storage parameters
     T_Sto_max = devs['Sto']['T_Sto_max']
     T_Sto_min = devs['Sto']['T_Sto_min']
- #   T_Sto_Init = devs['Sto']['T_Sto_Init']
+
     m_Sto_water = devs['Sto']['Volume'] * devs['Nature']['Roh_water']
     T_Sto_Env = devs['Sto']['T_Sto_Env']
     U_Sto = devs['Sto']['U_Sto']
-    Cap_Sto = devs['Sto']['Volume'] * devs['Nature']['c_w_water']
-    T_Kalt = devs['Sto']['T_Kalt']
-    A_Sto               =   devs['Sto']['A_Sto']
+    h_d = devs['Sto']['h_d_ratio']
+    V_Sto = devs['Sto']['Volume']
+    D_Sto_In   =   ((V_Sto * 4)/math.pi * h_d)**(1/float(3))         # Innendurchmesser des Speichers
+    D_Sto_Au   = D_Sto_In + 2 * devs['Sto']['S_Wall']
+# todo: einkommentieren wenn implemmentiert
+    A_Sto       = ((math.pi * (D_Sto_Au ** 2)) / 4) * 2 + math.pi * D_Sto_Au * (h_d * D_Sto_In)
+
     Q_Sto_min = m_Sto_water * devs['Nature']['c_w_water'] * T_Sto_min
     Q_Sto_max = m_Sto_water * devs['Nature']['c_w_water'] * T_Sto_max
+
 
     # Set Consumer parameter
     T_Hou_delta_max = devs['Hou']['T_Hou_delta_max']

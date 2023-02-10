@@ -28,6 +28,9 @@ options = {
     'Initial'       : {'T_HP_VL_Init'           : 35 + 273.15,
                        },
 
+    'Sto'           : {'Size'                   : 'Small'   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
+
+                       },
 ### Location of the Single Family House ###
     'Location'      :   {'lat'                  : 52.519*2*3.14/360,            # [°]   Latitude Berlin
                          'lon'                  : 13.408*2*3.14/360,            # [°]   Longitude Berlin
@@ -62,7 +65,7 @@ if not os.path.exists(dir_results):
 
 
 # Load Parameter
-eco, devs, year = parameters.load_params(params_opti)
+eco, devs, year = parameters.load_params(options, params_opti)
 
 # save paramater settings of devices an economic assumptions to pickle file
 devs_file = dir_results + '/devs.pkl'

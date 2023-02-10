@@ -4,7 +4,7 @@ import pandas as pd
 #from Optimization import T_Hou_delta_max
 
 
-def load_params(params):
+def load_params(options, params):
 
     # Set time parameter for year
     year = {
@@ -31,12 +31,11 @@ def load_params(params):
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
             'T_Sto_Init': 50 + 273.15,                  # [K] initial Storage Temperature for Optimization
-            'Volume'    : 0.3,                          # [m³] Volume of thermal Storage Set in Dymola
             'U_Sto'     : 0.3,                          # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
-            #todo richtiger Wert für A_Sto
-            'A_Sto'     : 2.14,                            # [m²] Surface of Heat Storage
 
+            'h_d_ratio' : 2,                            # [-] Ratio of Heat/Diameter
+            'S_Wall'    : 0.15
         },
 
     # Set Heat Pump parameter
@@ -73,9 +72,16 @@ def load_params(params):
             'c_w_water'         : 4.18 * 1000,              # [Ws/kgK] Spezifische Wärmekapazität von Wasser 1.163WH/kgK
             'Roh_water'         : 995,                      # [kg/m^3] konstante Dichte von Wasser irgendwo zwischen 30 und 40 Grad
 
-
         },
     }
+
+    if options['Sto']['Size'] == 'Small':
+        devs['Sto']['Volume'] = 0.3          # [m³] Small Storage has a capacity of 300l
+    elif options['Sto']['Size'] == 'Medium':
+        devs['Sto']['Volume'] = 0.5            # [m³] Medium Storage has a capacity of 500l
+    elif options['Sto']['Size'] == 'Large':
+        devs['Sto']['Volume'] = 1.0         # [m³] Large Storage has a capacity of 1000l
+
 
 
     return eco, devs, year
