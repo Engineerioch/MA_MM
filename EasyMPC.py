@@ -4,10 +4,10 @@ import parameter as parameters
 from parameter import load_params
 import pickle
 import os
-import numpy as np
+import csv
 from datetime import datetime
 import copy
-
+import matplotlib.pyplot as plt
 
 
 options = {
@@ -28,8 +28,8 @@ options = {
     'Initial'       : {'T_HP_VL_Init'           : 35 + 273.15,
                        },
 
-    'Sto'           : {'Size'                   : 'Small'   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
-
+    'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
+                        'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
 ### Location of the Single Family House ###
     'Location'      :   {'lat'                  : 52.519*2*3.14/360,            # [°]   Latitude Berlin
@@ -43,10 +43,10 @@ options = {
 #prediction_horizon = 72
 start_time = 8760/2
 time_step = 1
-total_runtime = 480           # Iterationsschritte       -> Sollte durch 24 teilbar sein
+total_runtime = 30           # Iterationsschritte       -> Sollte durch 24 teilbar sein
 control_horizon = 10
 params_opti = {
-    'prediction_horizon'    : 24,
+    'prediction_horizon'    : 20,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
@@ -82,41 +82,42 @@ solving_time = {
 # Define variables to be saved
 save_optim_results = {
 #    'solving_time': [],
-    'Q_Sto': [],
-    'Q_HP': [],
-    'Q_Hou_Dem': [],
-    'Q_Hou': [],
-    'P_EL': [],
-    'P_EL_HP': [],
-    'P_EL_Dem': [],
-    'Q_Penalty' : [],
-    'P_PV': [],
-    'T_Air': [],
-    'T_Sto': [],
+    'Q_HP'              : [],
+    'Q_Hou_Dem'         : [],
+    'Q_Hou'             : [],
+    'Q_Penalty': [],
     'Q_Sto_Loss': [],
-    'T_HP_VL': [],
-    'T_HP_RL': [],
+    'Q_Sto_Energy': [],
+    'Q_Sto_Power_max': [],
+    'P_EL'              : [],
+    'P_EL_HP'           : [],
+    'P_EL_Dem'          : [],
+    'P_HP_1': [],
+    'P_HP_2': [],
+    'P_HP_off': [],
+    'P_PV'              : [],
+    'T_Air'             : [],
+    'T_Sto'             : [],
+    'T_HP_VL'           : [],
+    'T_HP_RL'           : [],
+    'T_Hou_RL'          : [],
+    'T_Mean': [],
     'T_Hou_VL': [],
-    'T_Hou_RL': [],
-    'c_total': [],
-    'c_grid' : [],
-    'total_costs':  [],
-    'HP_off'    : [],
-    'HP_mode1'  : [],
-    'HP_mode2'  : [],
-    'Mode'      : [],
-    'Q_Sto_Energy' : [],
-    'Q_Sto_Power' : [],
-    'Q_Sto_Power_Max' : [],
-    'total_costs' : [],
-    'c_power': [],
-    'c_penalty':[],
-    'c_revenue':[],
-    'T_Mean' : [],
+    'c_total'           : [],
+    'c_grid'            : [],
+    'total_costs'       : [],
+    'c_power'           : [],
+    'c_penalty'         : [],
+    'c_revenue'         : [],
+    'HP_off': [],
+    'HP_mode1': [],
+    'HP_mode2': [],
+    'Mode': [],
     }
 
 save_results = copy.deepcopy(save_optim_results)
-#options['Initial']['T_Sto_Init'] = save_optim_results_opti['T_Sto']
+
+
 # Time Settings
 for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'])):
 
@@ -139,11 +140,11 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
 
     for res in save_results:
        # for t in range(params_opti['prediction_horizon']):
+
             save_results[res].append(results_optim[res])
-#    options['Initial']['T_Sto'] = save_optim_results_opti['T_Sto'][end - 1]
 
 
-show = 'Heat'
+show = 'Save_Results'
 
 if show == 'HP':
     print('Mode')
@@ -213,7 +214,6 @@ elif show == 'Heat':
     print(save_results['T_Mean'])
     print('T_Sto')
     print(save_results['T_Sto'])
-#elif show == 'Vergleich':
 elif show == 'all':
 
 
@@ -233,16 +233,19 @@ elif show == 'all':
     table = ax.table(cellText=table_data, loc='center')
     plt.show()
 
+elif show== 'Save_Results':
+
+
+     with open('results.csv', 'w', newline='') as csvfile:
+         writer = csv.writer(csvfile)
+         writer.writerow([])
+
+         for key, values in save_results.items():
+            row = [key] + sum(values, [])
+            writer.writerow(row)
+
 
 else:
 
     print(save_results['T_Air'])
-    print(save_results['T_Mean'])
-
-
- #   print(save_results['T_Sto'])
-
-
-
-
-
+#    print(save_results['T_Mean'])
