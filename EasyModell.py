@@ -65,10 +65,11 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     # Calculation of COP in each mode and in each time step
     Temp_COP = T_Input.tolist()
     COP_1 = []
-    COP_2 = []
     for i in range (start_time, start_time + total_runtime):
         COP1 = T_HP_VL_1 / ( T_HP_VL_1 - Temp_COP[i])
         COP_1.append(COP1)
+    COP_2 = []
+    for i in range (start_time, start_time + total_runtime):
         COP2 = T_HP_VL_2 / (T_HP_VL_2 - Temp_COP[i])
         COP_2.append(COP2)
     COP_off = 1
@@ -80,41 +81,45 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     model = ConcreteModel()
 
 #    model.P_PV = Var(time, within=NonNegativeReals , name = 'P_PV')
-    model.Q_Hou = Var(time, within= NonNegativeReals, name='Q_Hou')#, initialize=initials_test['Q_Hou'])
-    model.P_EL_Dem = Var(time, within=NonNegativeReals, name='P_EL_Dem')#, initialize=initials_test['P_EL_Dem'])
-    model.T_Air = Var(time, within=Reals, name='T_Air')#, initialize=initials_test['T_Air'])
-    model.T_HP_VL = Var(time, within=NonNegativeReals, name='T_HP_VL')
-    model.T_HP_RL = Var(time, within=NonNegativeReals, name='T_HP_RL')
-    model.P_EL_HP = Var(time, within=NonNegativeReals, name='P_EL_HP', bounds=(0, 10000))
-    model.Q_HP = Var(time,within=NonNegativeReals, name='Q_HP', bounds= (0, 10000))#, initialize=initials_test['Q_HP'])
-    model.Q_HP_Unreal = Var(time,within=NonNegativeReals, name='Q_HP_Unreal', bounds= (0, 10000))
-    model.P_EL = Var(time, within=Reals, name='P_EL')
-    model.P_PV = Var(time, within=Reals, name='P_PV')
-    model.costs_total = Var(within=Reals, name='costs_total', initialize=0)
-    model.Q_Penalty = Var(time, within=NonNegativeReals, name='Q_Penalty')
-    model.c_power = Var(time, within=Reals, name='c_power')
-    model.c_penalty = Var(time, within=NonNegativeReals, name='c_penalty')
-    model.No_Feed_In = Var(time, within=Binary, name='No_Feed_In')
-    model.HP_off = Var(time, within=Binary, name='HP_off')
-    model.HP_mode1 = Var(time, within=Binary, name='HP_mode1')
-    model.HP_mode2 = Var(time, within=Binary, name='HP_mode2')
-    model.Mode = Var(time, within=Reals, name='Mode')
-    model.c_revenue = Var(time, within=NonPositiveReals, name='c_revenue')
-    model.T_Sto = Var(time, within=NonNegativeReals, bounds=(273.15, 368.15), name='T_Sto')
-    model.Q_Sto_Power = Var(time, within=NonNegativeReals, name='Q_Sto_Power')
-    model.COP_HP = Var(time, within=NonNegativeReals, name='COP_HP', bounds=(0.00001, 30))
-    model.COP_Carnot = Var(time, within=NonNegativeReals, name='COP_Carnot')
-    model.Q_Sto_Loss = Var(time, within=Reals, name='Q_Sto_Loss')
-    model.Q_Sto_Energy = Var(time, within=NonNegativeReals, name='Q_Sto_Energy')
-    model.T_Hou_VL = Var(time, within=NonNegativeReals, name='T_Hou_VL')
-    model.T_Hou_RL = Var(time, within=NonNegativeReals, bounds=(283.15, 400), name='T_Hou_RL')
-    model.Q_Sto_Power_max = Var(time, within=NonNegativeReals, name='Q_Sto_Power_max')
-    model.COP_off = Var(time, within= NonNegativeReals, name='COP_off')
-    model.P_HP_1 = Var(time, within=NonNegativeReals, name='P_HP_1')
-    model.P_HP_2 = Var(time, within=NonNegativeReals, name='P_HP_2')
-    model.P_HP_off = Var(time, within=NonNegativeReals, name='P_HP_off')
-    model.Q_Hou_Dem = Var(time, within=Reals, name='Q_Hou_Dem')
+    model.Q_Hou         = Var(time, within= NonNegativeReals, name='Q_Hou')#, initialize=initials_test['Q_Hou'])
+    model.Q_HP          = Var(time, within=Reals, name='Q_HP',bounds=(0, 10000))
+    model.Q_HP_Unreal   = Var(time, within=NonNegativeReals, name='Q_HP_Unreal', bounds=(0, 10000))
+    model.Q_Penalty     = Var(time, within=NonNegativeReals, name='Q_Penalty')
+    model.Q_Sto_Power   = Var(time, within=NonNegativeReals, name='Q_Sto_Power')
+    model.Q_Sto_Loss    = Var(time, within=Reals, name='Q_Sto_Loss')
+    model.Q_Sto_Energy  = Var(time, within=NonNegativeReals, name='Q_Sto_Energy')
+    model.Q_Sto_Power_max=Var(time, within=NonNegativeReals, name='Q_Sto_Power_max')
+    model.Q_Hou_Dem     = Var(time, within=Reals, name='Q_Hou_Dem')
+    model.Q_HP_1        = Var(time, within=NonNegativeReals, name='Q_HP_1')
+    model.Q_HP_2        = Var(time, within=NonNegativeReals, name='Q_HP_2')
+    model.P_EL_Dem      = Var(time, within=NonNegativeReals, name='P_EL_Dem')#, initialize=initials_test['P_EL_Dem'])
+    model.T_Air         = Var(time, within=Reals, name='T_Air')#, initialize=initials_test['T_Air'])
+    model.T_HP_VL       = Var(time, within=NonNegativeReals, name='T_HP_VL')
+    model.T_HP_RL       = Var(time, within=NonNegativeReals, name='T_HP_RL')
+    model.T_Sto         = Var(time, within=NonNegativeReals, bounds=(T_Sto_min, 368.15), name='T_Sto')
+    model.T_Hou_VL      = Var(time, within=NonNegativeReals, name='T_Hou_VL')
+    model.T_Hou_RL      = Var(time, within=NonNegativeReals, bounds=(283.15, 400), name='T_Hou_RL')
+    model.P_EL_HP       = Var(time, within=NonNegativeReals, name='P_EL_HP', bounds=(0, 10000))
+    model.P_EL          = Var(time, within=Reals, name='P_EL')
+    model.P_PV          = Var(time, within=Reals, name='P_PV')
+    model.P_HP_1        = Var(time, within=NonNegativeReals, name='P_HP_1')
+    model.P_HP_2        = Var(time, within=NonNegativeReals, name='P_HP_2')
+    model.P_HP_off      = Var(time, within=NonNegativeReals, name='P_HP_off')
+    model.costs_total   = Var(within=Reals, name='costs_total', initialize=0)
+    model.c_power       = Var(time, within=Reals, name='c_power')
+    model.c_penalty     = Var(time, within=NonNegativeReals, name='c_penalty')
+    model.c_revenue     = Var(time, within=NonPositiveReals, name='c_revenue')
+    model.c_cost        = Var(time, within=Reals,name='c_cost')
+    model.HP_off        = Var(time, within=Binary, name='HP_off')
+    model.HP_mode1      = Var(time, within=Binary, name='HP_mode1')
+    model.HP_mode2      = Var(time, within=Binary, name='HP_mode2')
+    model.Mode          = Var(time, within=Reals, name='Mode')
+    model.COP_Carnot    = Var(time, within=NonNegativeReals, name='COP_Carnot')
+    model.No_Feed_In    = Var(time, within=Binary, name='No_Feed_In')
 
+#    def Test(m,t):
+ #      return (m.HP_off[t] == 1)
+ #   model.Test=Constraint(time, rule=Test, name='Test')
 
 
     #todo COP ausrechnen um Daten zu sichern
@@ -161,7 +166,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
     # Calculation of actual Q_HP depending on mode: [W]
     def Actual_Q_HP(m, t):
-        return(m.Q_HP[t] == m.HP_off[t] * 0 + (m.HP_mode1[t] + m.HP_mode2[t]) * m.Q_HP_Unreal[t])
+        return(m.Q_HP[t] == (1 - m.HP_off[t]) * m.Q_HP_Unreal[t])
     model.Actual_Q_HP = Constraint(time, rule=Actual_Q_HP, name='Actual_Q_HP')
 
     # Calculation of HP-Heat Power with the theoretical T_HP_VL: [W]
@@ -177,12 +182,12 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
     # Constrain to Display the Mode: [-]
     def Display_HP_Mode(m,t):
-        return (m.Mode[t] == 0 * m.HP_off[t] + 1 * m.HP_mode1[t] + 2 * m.HP_mode2[t])
+        return (m.Mode[t] == (0 * m.HP_off[t]) + (1 * m.HP_mode1[t]) + (2 * m.HP_mode2[t]))
     model.Display_HP_Mode = Constraint(time, rule=Display_HP_Mode, name='Display_HP_Mode')
 
     # Demand of el. Power by HP depending on Mode: [W]
     def Power_from_HP(m, t):
-        return (m.P_EL_HP[t] == m.P_HP_1[t] * m.HP_mode1[t] + m.P_HP_2[t] * m.HP_mode2[t] + 0 * m.P_HP_off[t] * m.HP_off[t])
+        return (m.P_EL_HP[t] == (m.P_HP_1[t] * m.HP_mode1[t]) + (m.P_HP_2[t] * m.HP_mode2[t]) + 0 * m.HP_off[t])
     model.Power_from_HP = Constraint(time, rule= Power_from_HP, name='Power_from_HP')
 
     # Calculation of theoretical el. Power demand from HP in Mode 1: [W]
@@ -195,10 +200,10 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         return(m.P_HP_2[t] == m.Q_HP[t] / (COP_2[t] * eta_HP))
     model.Power_2 = Constraint(time, rule=Power_2, name='Power_2')
 
-    # Calculation of theoretical el. Power demand from HP in Mode off: [W]
-    def Power_off(m, t):
-        return(m.P_HP_off[t] == 0)
-    model.Power_off = Constraint(time, rule=Power_off, name='Power_off')
+    # Calculation of actual COP: [-]
+    def Cop_Carnot(m, t):
+        return(m.COP_Carnot[t] == (1 - m.HP_off[t]) * (m.HP_mode1[t] * COP_1[t] + m.HP_mode2[t] * COP_2[t]))
+    model.Cop_Carnot = Constraint(time, rule=Cop_Carnot, name='Cop_Carnot')
 
 ####################---3. Consumer System (Hou) ---####################
 
@@ -207,6 +212,13 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         return(m.Q_Hou[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t])
     model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
 
+    def Limit_Q_Penalty(m,t):
+        return (m.Q_Hou[t] >= m.Q_Penalty[t])
+    model.Limit_Q_Penalty = Constraint(time, rule=Limit_Q_Penalty, name='Limit_Q_Penalty')
+
+#    def Limit_Heat_Power_To_House (m, t):
+#        return(m.Q_Hou[t] >= m.Q_Hou_Dem[t] + m.Q_Penalty[t])
+#    model.Limit_Heat_Power_To_House = Constraint(time, rule=Limit_Heat_Power_To_House, name='Limit_Heat_Power_To_House')
     # Calculation of Temp from Storage to House: [K]
     def Temp_to_House(m, t):
         return(m.T_Hou_VL[t] == m.T_Sto[t] + 2)
@@ -224,11 +236,10 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         if t >= 1:
             return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) / delta_t == (m.Q_HP[t] - m.Q_Hou[t] - m.Q_Sto_Loss[t]) )
         else:
-
             return(m.T_Sto[t] == T_Sto_Init)
     model.Temp_Sto = Constraint(time, rule=Temp_Sto, name='Temp_Sto')
 
-    # Calculation of Useable Energy in Storage [J] = [Ws] -> [Ws] * 3600 = [Wh]
+    # Calculation of useable Energy in Storage [J] = [Ws] -> [Ws] * 3600 = [Wh]
     def Storage_Energy(m, t):
         return(m.Q_Sto_Energy[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - T_Sto_Env))
     model.Storage_Energy = Constraint(time, rule=Storage_Energy, name='Storage_Energy')
@@ -243,10 +254,14 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         return(m.Q_Sto_Power_max[t] == m.Q_Sto_Energy[t] / delta_t)
     model.Maximum_Storage_Power = Constraint(time, rule=Maximum_Storage_Power, name='Maximum_Storage_Power')
 
-    # Heat-Power to House is smaller than Maximum Power in Storage: [-]
-    def Storage_Power(m, t): # [W]
-        return(m.Q_Sto_Power_max[t] >= m.Q_Hou[t])
+    def Storage_Power(m, t):
+        return(m.Q_Sto_Power[t] == m.Q_Sto_Energy[t] / delta_t)
     model.Storage_Power = Constraint(time, rule=Storage_Power, name='Storage_Power')
+
+    # Heat-Power to House is smaller than Maximum Power in Storage: [-]
+    def Limit_to_Storage_Power(m, t): # [W]
+        return(m.Q_Sto_Power_max[t] >= m.Q_Hou[t])
+    model.Limit_to_Storage_Power = Constraint(time, rule=Limit_to_Storage_Power, name='Limit_to_Storage_Power')
 
 ####################---5. Linking of all Systems ---####################
 
@@ -274,6 +289,10 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     def Costs_of_Penalty(m, t):
         return (m.c_penalty[t] == m.Q_Penalty[t] * c_comfort)
     model.Costs_of_Penalty = Constraint(time, rule=Costs_of_Penalty, name='Costs_of_Penalty')
+
+    def Costs_in_timestep(m,t):
+        return (m.c_cost[t] == m.c_power[t] + m.c_revenue[t] + m.c_penalty[t])
+    model.Costs_in_timestep = Constraint(time, rule=Costs_in_timestep, name='Costs_in_timestep')
 
     # Calculation of sum of all costs per control-horizon: [€]
     def PHP(m, t):
@@ -314,16 +333,16 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         'Q_Sto_Loss'        : [],
         'Q_Penalty'         : [],
         'Q_Sto_Energy'      : [],
-        'Q_Sto_Power_Max'   : [],
-        'Q_HP_Unreal'       : [],
+        'Q_Sto_Power'       : [],
         'Q_Sto_Power_max'   : [],
+        'Q_HP_Unreal'       : [],
         'P_EL'              : [],
         'P_EL_HP'           : [],
         'P_EL_Dem'          : [],
         'P_PV'              : [],
         'P_HP_1'            : [],
         'P_HP_2'            : [],
-        'P_HP_off'          : [],
+#        'P_HP_off'          : [],
         'T_Air_Input'       : [],
         'T_Air'             : [],
         'T_Sto'             : [],
@@ -334,7 +353,6 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         'T_Mean'            : [],
         'T_Hou_VL'          : [],
         'T_Sto_Init'        : [],
-        'c_total'           : [],
         'total_costs'       : [],
         'c_grid'            : [],
         'c_power': [],
@@ -346,6 +364,10 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         'HP_mode2'          : [],
         'Mode'              : [],
         'No_Feed_In'        : [],
+        'COP_Carnot'        : [],
+        'COP_1'             : [],
+        'COP_2'             : [],
+
 
     }
     status = 'feasible'
@@ -358,47 +380,50 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
 
 #        res_control_horizon['solving_time'].append(opti_end_time)
-        res_control_horizon['Q_HP'].append(value(model.Q_HP[t]))
-        res_control_horizon['Q_Hou_Input'].append(Q_Hou_Input[t+start_time])
-        res_control_horizon['Q_Hou_Dem'].append(value(model.Q_Hou_Dem[t]))
-        res_control_horizon['Q_Hou'].append(value(model.Q_Hou[t]))
-        res_control_horizon['Q_Penalty'].append(value(model.Q_Penalty[t]))
-        res_control_horizon['Q_Sto_Loss'].append(value(model.Q_Sto_Loss[t]))
-        res_control_horizon['Q_Sto_Energy'].append(value(model.Q_Sto_Energy[t]))
-        res_control_horizon['Q_HP_Unreal'].append(value(model.Q_HP_Unreal[t]))
-        res_control_horizon['Q_Sto_Power_Max'].append(value(model.Q_Sto_Power_max[t]))
-        res_control_horizon['P_EL'].append(value(model.P_EL[t]))
-        res_control_horizon['P_EL_HP'].append(value(model.P_EL_HP[t]))
-        res_control_horizon['P_EL_Dem'].append(value(model.P_EL_Dem[t]))
-        res_control_horizon['P_PV'].append(value(model.P_PV[t]))
-        res_control_horizon['P_HP_1'].append(value(model.P_HP_1[t]))
-        res_control_horizon['P_HP_2'].append(value(model.P_HP_2[t]))
-        res_control_horizon['P_HP_off'].append(value(model.P_HP_off[t]))
-        res_control_horizon['T_Air_Input'].append(T_Input[t])
-        res_control_horizon['T_Air'].append(value(model.T_Air[t]))
-        res_control_horizon['T_Sto'].append(value(model.T_Sto[t]))
-        res_control_horizon['T_Hou_VL'].append(value(model.T_Hou_VL[t]))
-        res_control_horizon['T_HP_VL'].append(value(model.T_HP_VL[t]))
-        res_control_horizon['T_HP_RL'].append(value(model.T_HP_RL[t]))
-        res_control_horizon['T_Hou_RL'].append(value(model.T_Hou_RL[t]))
-        res_control_horizon['T_Mean'].append(T_Mean)
-        res_control_horizon['c_total'].append(value(model.costs_total))
-        res_control_horizon['total_costs'].append(value(model.costs_total))
-        res_control_horizon['c_power'].append(value(model.c_power[t]))
-        res_control_horizon['c_penalty'].append(value(model.c_penalty[t]))
-        res_control_horizon['c_revenue'].append(value(model.c_revenue[t]))
+        res_control_horizon['Q_HP'].append(round(value(model.Q_HP[t]), 1))
+        res_control_horizon['Q_Hou_Input'].append(round(Q_Hou_Input[t+start_time], 2))
+        res_control_horizon['Q_Hou_Dem'].append(round(value(model.Q_Hou_Dem[t]), 2))
+        res_control_horizon['Q_Hou'].append(round(value(model.Q_Hou[t]), 2))
+        res_control_horizon['Q_Penalty'].append(round(value(model.Q_Penalty[t]), 2))
+        res_control_horizon['Q_Sto_Loss'].append(round(value(model.Q_Sto_Loss[t]), 2))
+        res_control_horizon['Q_Sto_Energy'].append(round(value(model.Q_Sto_Energy[t]), 2))
+        res_control_horizon['Q_HP_Unreal'].append(round(value(model.Q_HP_Unreal[t]), 2))
+        res_control_horizon['Q_Sto_Power'].append(round(value(model.Q_Sto_Power[t]), 2))
+        res_control_horizon['Q_Sto_Power_max'].append(round(value(model.Q_Sto_Power_max[t]), 2))
+        res_control_horizon['P_EL'].append(round(value(model.P_EL[t]), 2))
+        res_control_horizon['P_EL_HP'].append(round(value(model.P_EL_HP[t]), 2))
+        res_control_horizon['P_EL_Dem'].append(round(value(model.P_EL_Dem[t]), 2))
+        res_control_horizon['P_PV'].append(round(value(model.P_PV[t]), 2))
+        res_control_horizon['P_HP_1'].append(round(value(model.P_HP_1[t]), 2))
+        res_control_horizon['P_HP_2'].append(round(value(model.P_HP_2[t]), 2))
+#        res_control_horizon['P_HP_off'].append(round(value(model.P_HP_off[t]), 2))
+        res_control_horizon['T_Air_Input'].append(round(T_Input[t], 2))
+        res_control_horizon['T_Air'].append(round(value(model.T_Air[t]), 2))
+        res_control_horizon['T_Sto'].append(round(value(model.T_Sto[t]), 2))
+        res_control_horizon['T_Hou_VL'].append(round(value(model.T_Hou_VL[t]), 2))
+        res_control_horizon['T_HP_VL'].append(round(value(model.T_HP_VL[t]), 2))
+        res_control_horizon['T_HP_RL'].append(round(value(model.T_HP_RL[t]), 2))
+        res_control_horizon['T_Hou_RL'].append(round(value(model.T_Hou_RL[t]), 2))
+        res_control_horizon['T_Mean'].append(round(T_Mean, 2))
+        res_control_horizon['total_costs'].append(round(value(model.costs_total)  ,4))
+        res_control_horizon['c_power'].append(round(value(model.c_power[t]), 4))
+        res_control_horizon['c_penalty'].append(round(value(model.c_penalty[t]), 4))
+        res_control_horizon['c_revenue'].append(round(value(model.c_revenue[t]), 4))
         res_control_horizon['c_grid'].append(c_grid[t])
-        res_control_horizon['HP_off'].append(value(model.HP_off[t]))
-        res_control_horizon['HP_mode1'].append(value(model.HP_mode1[t]))
-        res_control_horizon['HP_mode2'].append(value(model.HP_mode2[t]))
-        res_control_horizon['Mode'].append(value(model.Mode[t]))
-        res_control_horizon['No_Feed_In'].append(value(model.No_Feed_In[t]))
-
+        res_control_horizon['c_cost'].append(round(value(model.c_cost[t]), 2))
+        res_control_horizon['HP_off'].append(int(value(model.HP_off[t])))
+        res_control_horizon['HP_mode1'].append(int(value(model.HP_mode1[t])))
+        res_control_horizon['HP_mode2'].append(int(value(model.HP_mode2[t])))
+        res_control_horizon['Mode'].append(round(value(model.Mode[t])))
+        res_control_horizon['No_Feed_In'].append(int(value(model.No_Feed_In[t])))
+        res_control_horizon['COP_Carnot'].append(round(value(model.COP_Carnot[t]), 3))
+        res_control_horizon['COP_1'].append(round(COP_1[t], 3))
+        res_control_horizon['COP_2'].append(round(value(COP_2[t]), 3))
 
 
 
 
 #    model.display
-#    model.pprint()
+    model.pprint()
 
     return res_control_horizon
