@@ -57,6 +57,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     T_HP_VL_1 = devs['HP']['T_HP_VL_1']  # [K] Vorlauftemperatur der Wärmepumpe im Modus "1", = 70°C
     T_HP_VL_2 = devs['HP']['T_HP_VL_2']  # [K] Vorlauftemperatur der Wärmepumpe im Modus "2", = 35°C
     T_HP_VL_3 = devs['HP']['T_HP_VL_3']  # [K] Vorlauftemperatur im Modus "Off", = 20°C
+    T_Spreiz  = devs['HP']['T_Spreiz']   # [K] Maximum Change of Temperature between Vorlauf and Rücklauf
 
     # Set Natural Parameters
     c_w_water = devs['Nature']['c_w_water']
@@ -125,6 +126,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     model.Mode          = Var(time, within=Reals, name='Mode')
     model.COP_Carnot    = Var(time, within=NonNegativeReals, name='COP_Carnot')
     model.No_Feed_In    = Var(time, within=Binary, name='No_Feed_In')
+    model.d_Temp        = Var(time, within=Reals, name='d_Temp', bounds=(0, T_Spreiz))
 
 
 #    def Test(m,t):
@@ -170,25 +172,32 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         return (m.T_HP_VL[t] == (m.HP_mode1[t] * T_HP_VL_1) + (m.HP_mode2[t] * T_HP_VL_2) + (m.HP_off[t] * T_HP_VL_3))
     model.Operation_Temp = Constraint(time, rule=Operation_Temp, name='Operation_Temp')
 
-    def Limit_Temp_VL(m, t):
-        return(m.T_HP_VL[t] >= m.T_HP_RL[t])
-    model.Limit_Temp_VL = Constraint(time, rule=Limit_Temp_VL, name='Limit_Temp_VL')
-
     # Calculation of actual Q_HP depending on mode: [W]
     def Actual_Q_HP(m, t):
         return(m.Q_HP[t] == (m.HP_mode1[t] + m.HP_mode2[t]) * m.Q_HP_Unreal[t] + (m.HP_off[t] * 0))
     model.Actual_Q_HP = Constraint(time, rule=Actual_Q_HP, name='Actual_Q_HP')
 
     # Calculation of HP-Heat Power with the theoretical T_HP_VL: [W]
-    def Heat_Power_HP(m, t):
-        return (m.Q_HP_Unreal[t] == m_flow_HP * c_w_water * (m.T_HP_VL[t] - m.T_HP_RL[t]))
-    model.Heat_Power_HP = Constraint(time, rule=Heat_Power_HP, name='Heat_Power_HP')
+#    def Heat_Power_HP(m, t):
+#        return (m.Q_HP_Unreal[t] == m_flow_HP * c_w_water * (m.T_HP_VL[t] - m.T_HP_RL[t]))
+#    model.Heat_Power_HP = Constraint(time, rule=Heat_Power_HP, name='Heat_Power_HP')
     #  [W = kg/s  * J/kgK  * K -> kg/s * Ws/kgK * K = W]
 
-    # Calculation of Temperature from Storage to Heat-Pump: [K]
-    def Temp_from_Storage(m, t):
-        return (m.T_HP_RL[t] == m.T_Sto[t] - 3)
-    model.Temp_from_Storage = Constraint(time, rule=Temp_from_Storage, name='Temp_from_Storage')
+    def Limit_T_Sto1(m,t):
+        return(m.HP_mode1[t] * m.T_Sto[t] <= T_HP_VL_1)
+    model.Limit_T_Sto1 = Constraint(time, rule=Limit_T_Sto1, name='Limit_T_Sto1')
+
+    def Limit_T_Sto2(m, t):
+        return (m.HP_mode2[t] * m.T_Sto[t] <= T_HP_VL_2)
+    model.Limit_T_Sto2 = Constraint(time, rule=Limit_T_Sto2, name='Limit_T_Sto')
+
+    def Heat_Power_HP(m, t):
+        return (m.Q_HP[t] == m_flow_HP * c_w_water * m.d_Temp[t])
+    model.Heat_Power_HP = Constraint(time, rule=Heat_Power_HP, name='Heat_Power_HP')
+
+    def Limit_Temp_Change_HP(m, t):
+        return(m.d_Temp[t] <= T_Spreiz)
+    model.Limit_Temp_Change_HP = Constraint(time, rule=Limit_Temp_Change_HP, name='Limit_Temp_Change_HP')
 
     # Constrain to Display the Mode: [-]
     def Display_HP_Mode(m,t):

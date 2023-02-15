@@ -19,7 +19,7 @@ def load_params(options, params):
         'costs'     : {
             #todo: Array für die Strompreise & Vergütungen erstellen -> für fixen Strompreis erledgit
             'c_payment'     : 0.06 / 1000,                   # [Euro/kWh] Feed in tariff (Einspeisevergütung)
-            'c_comfort'     : 1,                             # [€/Wh]
+            'c_comfort'     : 0.7,                             # [€/Wh]
         }
     }
     # Set component parameters
@@ -39,13 +39,14 @@ def load_params(options, params):
 
     # Set Heat Pump parameter
         'HP'    : {
-            'Q_HP_Max'      : 10000,                        # [W]    Maximum Heat Power of Heat Pump
-            'T_HP_VL_1'     : 35 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 1
-            'T_HP_VL_2'     : 70 + 273.15,                  # [K]    Constant Flow Temperature from HP to Storage in Mode 2
+            'Q_HP_Max'      : 10000,                        # [W]   Maximum Heat Power of Heat Pump
+            'T_HP_VL_1'     : 35 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
+            'T_HP_VL_2'     : 70 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 2
             'T_HP_VL_3'     : 22 + 273.15,
-            'm_flow_HP'     : 180 / 3600,                    # [kg/h] Constant Heat flow of HP if HP is running
-            'eta_HP'        : 0.4,                          # [-]    Gütegrad HP
-            'Q_HP_Min'      : 0                             # [W]    Minimum Heat power of HP
+            'm_flow_HP'     : 1230 / 3600,                   # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg(s zu bekommen)
+            'eta_HP'        : 0.4,                          # [-]   Gütegrad HP
+            'Q_HP_Min'      : 0,                            # [W]   Minimum Heat power of HP
+            'T_Spreiz'      : 7,                            # [K]   Maximum Change of Temperature between Vorlauf and Rücklauf
         },
 
     # Set PV parameters
@@ -60,7 +61,7 @@ def load_params(options, params):
     # Set Consumer parameters (House = Hou)
         'Hou'   : {
             'T_Hou_delta_max'   :    20 + 273.15,           # [K]    Maximum Difference between T_Hou_Vl and T_Hou_RL
-            'm_flow_Hou'        :     310 / 3600,           # [kg/s] Constant Mass flow from Storage to House
+            'm_flow_Hou'        :    1107 / 3600,           # [kg/s] Constant Mass flow from Storage to House
             'T_Hou_Gre'         : 273.15 + 15               # [K] Heizgrenztemperatur (Mittelwert über den Tag)
 
         },
@@ -79,6 +80,19 @@ def load_params(options, params):
         devs['Sto']['Volume'] = 0.5            # [m³] Medium Storage has a capacity of 500l
     elif options['Sto']['Size'] == 'Large':
         devs['Sto']['Volume'] = 1.0         # [m³] Large Storage has a capacity of 1000l
+    else:
+        print('Please set a supported Storage Size in EasyMPC -> options')
+
+    if options['Sto']['Type'] == 'Puffer':
+        devs['Sto']['T_Sto_min'] == 18 + 273.15
+    elif options['Sto']['Type'] == 'Kombi':
+        devs['Sto']['T_Sto_min'] == 50 + 273.15
+#    elif options['Sto']['Type'] == 'Seperated':
+#        devs['Sto']['T_Sto_min'] ==
+
+    else:
+        print('Please Set a Storage tyoe in EasyMPC -> options')
+
 
 
 
@@ -97,8 +111,6 @@ def load_time_series(params, options):
         # Electrical Load Data (Time steps = 1h)
 # [W] Simulierter Bedarf an elektrischer Energie
     time_series['P_EL_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/ELHour.txt') * 1000
-
-
 
         # Heat Load Data (Time steps = 1h)
 # Simulierter Wärmebedarf für die jeweiligen TRY
