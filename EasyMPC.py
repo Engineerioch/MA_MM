@@ -16,7 +16,7 @@ options = {
     'WeatherData':   {'TRY'                  : 'cold'       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                     },      # [-] 'cold' -> kaltes TRY 2015
-    'Solve'         :   {'MIP_gap'             : 1,
+    'Solve'         :   {'MIP_gap'             : 0.01,
                         'TimeLimit'            : 60,
                         'TimeLimitMax'         : 35491348,
                         'type'                 : 'gurobi',
@@ -41,12 +41,12 @@ options = {
                          },
 }
 #prediction_horizon = 72
-start_time = 8760/2
+start_time = 0
 time_step = 1
-total_runtime = 30           # Iterationsschritte       -> Sollte durch 24 teilbar sein
-control_horizon = 10
+total_runtime = 96           # Iterationsschritte       -> Sollte durch 24 teilbar sein
+control_horizon = 8
 params_opti = {
-    'prediction_horizon'    : 20,
+    'prediction_horizon'    : 24,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
@@ -107,14 +107,14 @@ save_optim_results = {
 #    'P_HP_off'          : [],
 
     'T_Air'             : [],
-##    'T_HP_VL'           : [],
+    'T_HP_VL'           : [],
 ##    'T_HP_RL'           : [],
 ##    'T_Hou_RL'          : [],
-##    'T_Mean'            : [],
+    'T_Mean'            : [],
 ##    'T_Hou_VL'          : [],
-##    'HP_off'            : [],
-##    'HP_mode1'          : [],
-##    'HP_mode2'          : [],
+    'HP_off'            : [],
+    'HP_mode1'          : [],
+    'HP_mode2'          : [],
 ##    'COP_1'             : [],
 ##    'COP_2'             : [],
 ##    'c_grid': [],
