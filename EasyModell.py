@@ -50,6 +50,8 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     m_flow_Hou = devs['Hou']['m_flow_Hou']
     Q_Hou_Input = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
     T_Hou_Gre = devs['Hou']['T_Hou_Gre']
+    T_Spreiz_Hou = devs['Hou']['T_Spreiz_Hou']
+    T_Hou_VL_min = devs['Hou']['T_Hou_VL_min']
 
     # Set Heat Pump parameters
     m_flow_HP = devs['HP']['m_flow_HP']
@@ -235,20 +237,49 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
 ####################---3. Consumer System (Hou) ---####################
 
+    def Limit_delta_Temp_Hou(m,t):
+        return (m.d_Temp_Hou[t] == m.T_Hou_1[t] - m.T_Hou_2[t])
+    model.Limit_delta_Temp_Hou = Constraint(time, rule=Limit_delta_Temp_Hou, name='Limit_delta_Temp_Hou')
+
+#todo change to mflowhou3 , T3
+    def Set_Third_m_flow_Hou(m, t):
+        return(m.m_flow_Hou_1[t] == m_flow_Hou)
+    model.Set_Third_m_flow_Hou = Constraint(time, rule=Set_Third_m_flow_Hou, name='Set_Third_m_flow_Hou')
+
+ #   def Define_Sum_m_flow_Hou(m,t):
+ #       return (m.m_flow_Hou_3[t] == (m.m_flow_Hou_2[t] + m.m_flow_Hou_1[t]))
+ #   model.Define_Sum_m_flow_Hou = Constraint(time, rule=Define_Sum_m_flow_Hou, name='Define_Sum_m_flow_Hou')
+
+    # Calculation of Temp from Storage to House: [K]
+    def Temp_to_House(m, t):
+        return(m.T_Hou_1[t] == m.T_Sto[t] + 2)
+    model.Temp_to_House = Constraint(time, rule=Temp_to_House, name='Temp_to_House')
+
+#    def Heat_Balance_Valve(m, t):
+#        return ((m.m_flow_Hou_3[t] * m.T_Hou_3[t]) == (m.m_flow_Hou_1[t] * m.T_Hou_1[t]) + (m.m_flow_Hou_2[t] * m.T_Hou_2[t]))
+#    model.Heat_Balance_Valve = Constraint(time, rule= Heat_Balance_Valve, name='Heat_Balance_Valve')
+
+#    def Define_Q_Hou(m, t):
+#        return (m.Q_Hou_Dem[t] == (m.m_flow_Hou_3[t] * c_w_water * m.T_Hou_3[t]) - (m.m_flow_Hou_2[t] * c_w_water * m.T_Hou_2[t]))
+#    model.Define_Q_Hou = Constraint(time, rule=Define_Q_Hou, name='Define_Q_Hou')
+
+#    def Limit_Second_m_flow_Hou(m, t):
+#        return(m.m_flow_Hou_3[t] >= m.m_flow_Hou_2[t])
+#    model.Limit_Second_m_flow_Hou = Constraint(time, rule=Limit_Second_m_flow_Hou, name='Limit_Second_m_flow_Hou')
+
+#    def Minimize_T_Hou_3(m, t):
+#        return (m.T_Hou_3[t] >= T_Hou_VL_min)
+#    model.Minimize_T_Hou_3 = Constraint(time, rule=Minimize_T_Hou_3, name='Minimize_T_Hou_3')
+
+    def Heat_Flow_back_to_Storage(m, t):
+        return(m.Q_Hou[t] == m.m_flow_Hou_1[t] * c_w_water * (m.T_Hou_1[t] - m.T_Hou_2[t]))
+    model.Heat_Flow_back_to_Storage = Constraint(time, rule=Heat_Flow_back_to_Storage, name='Heat_Flow_back_to_Storage')
+
+
     # Calculation of Penalty-Heat-Flow: [W]
     def Heat_Sum(m, t): # [W]
         return(m.Q_Hou[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t])
     model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
-
-    # Calculation of Temp from Storage to House: [K]
-    def Temp_to_House(m, t):
-        return(m.T_Hou_VL[t] == m.T_Sto[t] )
-    model.Temp_to_House = Constraint(time, rule=Temp_to_House, name='Temp_to_House')
-
-    # Calculation of Heat flow to House to have the limiting factor of T_Hou_RL: [W]
-    def Power_House(m, t):
-        return (m.Q_Hou[t] == m_flow_Hou * c_w_water * (m.T_Hou_VL[t] - m.T_Hou_RL[t]))
-    model.Power_House = Constraint(time, rule= Power_House, name='Power_House')
 
 ####################---4. Storage System (Sto) ---####################
 
