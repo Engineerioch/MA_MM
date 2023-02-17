@@ -17,6 +17,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     time_range = range(int(prediction_horizon * (1 / params['time_step'])) + 1)
     time = range(int(prediction_horizon / params['time_step']))
     delta_t = params['time_step'] * 3600  # time Step in
+    sum_control =range(int(params['control_horizon']))
 
 
     # Set economic parameters
@@ -57,7 +58,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     T_HP_VL_1 = devs['HP']['T_HP_VL_1']  # [K] Vorlauftemperatur der Wärmepumpe im Modus "1", = 70°C
     T_HP_VL_2 = devs['HP']['T_HP_VL_2']  # [K] Vorlauftemperatur der Wärmepumpe im Modus "2", = 35°C
     T_HP_VL_3 = devs['HP']['T_HP_VL_3']  # [K] Vorlauftemperatur im Modus "Off", = 20°C
-    T_Spreiz  = devs['HP']['T_Spreiz']   # [K] Maximum Change of Temperature between Vorlauf and Rücklauf
+    T_Spreiz_HP  = devs['HP']['T_Spreiz_HP']   # [K] Maximum Change of Temperature between Vorlauf and Rücklauf
 
     # Set Natural Parameters
     c_w_water = devs['Nature']['c_w_water']
@@ -115,10 +116,13 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     model.P_HP_1        = Var(time, within=NonNegativeReals, name='P_HP_1')
     model.P_HP_2        = Var(time, within=NonNegativeReals, name='P_HP_2')
     model.P_HP_off      = Var(time, within=NonNegativeReals, name='P_HP_off')
-    model.costs_total   = Var(within=Reals, name='costs_total', initialize=0)
-    model.c_power       = Var(time, within=Reals, name='c_power')
+    model.costs_total_ph= Var(      within=Reals, name='costs_total_ph', initialize=0)
+    model.costs_total_ch= Var(      within=Reals, name='costs_total_ch', initialize=0)
+    model.c_heat_power  = Var(time, within=Reals, name='c_heat_power')
     model.c_penalty     = Var(time, within=NonNegativeReals, name='c_penalty')
     model.c_revenue     = Var(time, within=NonPositiveReals, name='c_revenue')
+    model.c_el_power    = Var(time, within=NonNegativeReals, name='c_el_power')
+    model.c_el_cost_ch     = Var(   within=Reals,name='c_el_cost_ch')
     model.c_cost        = Var(time, within=Reals,name='c_cost')
     model.HP_off        = Var(time, within=Binary, name='HP_off')
     model.HP_mode1      = Var(time, within=Binary, name='HP_mode1')
@@ -126,7 +130,14 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     model.Mode          = Var(time, within=Reals, name='Mode')
     model.COP_Carnot    = Var(time, within=NonNegativeReals, name='COP_Carnot')
     model.No_Feed_In    = Var(time, within=Binary, name='No_Feed_In')
-    model.d_Temp        = Var(time, within=Reals, name='d_Temp', bounds=(0, T_Spreiz))
+    model.d_Temp_HP     = Var(time, within=Reals, name='d_Temp_HP', bounds=(0, T_Spreiz_HP))
+    model.T_Hou_1       = Var(time, within=NonNegativeReals, name='T_Hou_1')
+    model.m_flow_Hou_1  = Var(time, within=NonNegativeReals, name='m_flow_Hou_1', bounds=(0, m_flow_Hou))
+    model.T_Hou_2       = Var(time, within=NonNegativeReals, name='T_Hou_2')
+    model.m_flow_Hou_2  = Var(time, within=NonNegativeReals, name='m_flow_Hou_2')
+    model.T_Hou_3       = Var(time, within=NonNegativeReals, name='T_Hou_3')
+    model.m_flow_Hou_3  = Var(time, within=NonNegativeReals, name='m_flow_Hou_3')
+    model.d_Temp_Hou    = Var(time, within=Reals, name='d_Temp_Hou', bounds=(0, T_Spreiz_Hou))
 
 
 #    def Test(m,t):
@@ -177,12 +188,6 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         return(m.Q_HP[t] == (m.HP_mode1[t] + m.HP_mode2[t]) * m.Q_HP_Unreal[t] + (m.HP_off[t] * 0))
     model.Actual_Q_HP = Constraint(time, rule=Actual_Q_HP, name='Actual_Q_HP')
 
-    # Calculation of HP-Heat Power with the theoretical T_HP_VL: [W]
-#    def Heat_Power_HP(m, t):
-#        return (m.Q_HP_Unreal[t] == m_flow_HP * c_w_water * (m.T_HP_VL[t] - m.T_HP_RL[t]))
-#    model.Heat_Power_HP = Constraint(time, rule=Heat_Power_HP, name='Heat_Power_HP')
-    #  [W = kg/s  * J/kgK  * K -> kg/s * Ws/kgK * K = W]
-
     def Limit_T_Sto1(m,t):
         return(m.HP_mode1[t] * m.T_Sto[t] <= T_HP_VL_1)
     model.Limit_T_Sto1 = Constraint(time, rule=Limit_T_Sto1, name='Limit_T_Sto1')
@@ -192,12 +197,16 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     model.Limit_T_Sto2 = Constraint(time, rule=Limit_T_Sto2, name='Limit_T_Sto')
 
     def Heat_Power_HP(m, t):
-        return (m.Q_HP[t] == m_flow_HP * c_w_water * m.d_Temp[t])
+        return (m.Q_HP_Unreal[t] == m_flow_HP * c_w_water * m.d_Temp_HP[t])
     model.Heat_Power_HP = Constraint(time, rule=Heat_Power_HP, name='Heat_Power_HP')
 
     def Limit_Temp_Change_HP(m, t):
-        return(m.d_Temp[t] <= T_Spreiz)
+        return(m.d_Temp_HP[t] <= T_Spreiz_HP)
     model.Limit_Temp_Change_HP = Constraint(time, rule=Limit_Temp_Change_HP, name='Limit_Temp_Change_HP')
+
+    def Temp_Change_Not_Zero(m, t):
+        return(m.d_Temp_HP[t] + m.HP_off[t] >= 0.01)
+    model.Temp_Change_Not_Zero = Constraint(time, rule=Temp_Change_Not_Zero, name='Temp_Change_Not_Zero')
 
     # Constrain to Display the Mode: [-]
     def Display_HP_Mode(m,t):
@@ -289,8 +298,16 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
     # Calculation of Cost for Power: [€]
     def Cost_for_Power(m, t):
-        return (m.c_power[t] == m.No_Feed_In[t] * c_grid[t] * m.P_EL[t])
+        return (m.c_el_power[t] == m.No_Feed_In[t] * c_grid[t] * m.P_EL_Dem[t] )
     model.Cost_for_Power = Constraint(time, rule= Cost_for_Power, name= 'Cost_for_Power')
+
+    def Cost_for_HP_Power(m, t):
+        return(m.c_heat_power[t] == c_grid[t] * m.P_EL_HP[t])
+    model.Cost_for_HP_Power = Constraint(time, rule=Cost_for_HP_Power, name='Cost_for_HP_Power')
+
+    def Real_Power_Cost(m, t):
+        return(m.c_el_cost_ch == sum(m.c_heat_power[t] + m.c_el_power[t] - m.c_revenue[t] for t in sum_control))
+    model.Real_Power_Cost = Constraint(time, rule=Real_Power_Cost, name='Real_Power_Cost')
 
     # Calculation of Revenue for PV-Power: [€]
     def Revenue_for_Power(m, t):
@@ -303,18 +320,22 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     model.Costs_of_Penalty = Constraint(time, rule=Costs_of_Penalty, name='Costs_of_Penalty')
 
     def Costs_in_timestep(m,t):
-        return (m.c_cost[t] == m.c_power[t] + m.c_revenue[t] + m.c_penalty[t])
+        return (m.c_cost[t] == m.c_el_power[t] + m.c_revenue[t] + m.c_penalty[t] + m.c_heat_power[t])
     model.Costs_in_timestep = Constraint(time, rule=Costs_in_timestep, name='Costs_in_timestep')
 
     # Calculation of sum of all costs per control-horizon: [€]
-    def PHP(m, t):
-        return (m.costs_total == sum(m.c_power[t] + m.c_revenue[t] + m.c_penalty[t] for t in time))
-    model.PHP = Constraint(time, rule=PHP, name ='PHP')
+    def Cost_in_Prediction_horizon(m, t):
+        return (m.costs_total_ph == sum(m.c_el_power[t] + m.c_heat_power[t] + m.c_revenue[t] + m.c_penalty[t] for t in time))
+    model.Cost_in_Prediction_horizon = Constraint(time, rule=Cost_in_Prediction_horizon, name ='Cost_in_Prediction_horizon')
+
+    def Unreal_Cost_in_Control_horizon(m, t):
+        return(m.costs_total_ch == sum(m.c_el_power[t] + m.c_heat_power[t] + m.c_revenue[t] + m.c_penalty[t] for t in sum_control))
+    model.Unreal_Cost_in_Control_horizon = Constraint(time, rule=Unreal_Cost_in_Control_horizon, name='Unreal_Cost_in_Control_horizon')
 
 ####################---7. Zielfunktion ---####################
 
     def objective_rule(m):
-        return (m.costs_total)
+        return (m.costs_total_ph)
     model.total_costs = Objective(rule = objective_rule, sense = minimize, name = 'Minimize total costs')
 
 ####################--- 8. Set Up of Solver ---####################
@@ -363,14 +384,17 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         'T_Hou_VL'          : [],
         'T_Hou_RL'          : [],
         'T_Mean'            : [],
-        'T_Hou_VL'          : [],
         'T_Sto_Init'        : [],
-        'total_costs'       : [],
+        'total_costs_ph'       : [],
         'c_grid'            : [],
-        'c_power': [],
+        'c_el_power': [],
+        'c_heat_power':[],
         'c_penalty': [],
         'c_revenue': [],
         'c_cost': [],
+        'c_el_cost_ch':   [],
+        'total_costs_ch':[],
+
         'HP_off'            : [],
         'HP_mode1'          : [],
         'HP_mode2'          : [],
@@ -379,7 +403,8 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         'COP_Carnot'        : [],
         'COP_1'             : [],
         'COP_2'             : [],
-
+        'd_Temp_HP'           : [],
+        'd_Temp_Hou'        : [],
     }
     status = 'feasible'
     results_horizon = int((params['control_horizon'] / params['time_step']))
@@ -411,13 +436,15 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         res_control_horizon['T_Air_Input'].append(round(T_Input[t], 2))
         res_control_horizon['T_Air'].append(round(value(model.T_Air[t]), 2))
         res_control_horizon['T_Sto'].append(round(value(model.T_Sto[t]), 2))
-        res_control_horizon['T_Hou_VL'].append(round(value(model.T_Hou_VL[t]), 2))
+#        res_control_horizon['T_Hou_VL'].append(round(value(model.T_Hou_VL[t]), 2))
         res_control_horizon['T_HP_VL'].append(round(value(model.T_HP_VL[t]), 2))
-        res_control_horizon['T_HP_RL'].append(round(value(model.T_HP_RL[t]), 2))
-        res_control_horizon['T_Hou_RL'].append(round(value(model.T_Hou_RL[t]), 2))
+#        res_control_horizon['T_HP_RL'].append(round(value(model.T_HP_RL[t]), 2))
+#        res_control_horizon['T_Hou_RL'].append(round(value(model.T_Hou_RL[t]), 2))
         res_control_horizon['T_Mean'].append(round(T_Mean, 2))
-        res_control_horizon['total_costs'].append(round(value(model.costs_total)  ,4))
-        res_control_horizon['c_power'].append(round(value(model.c_power[t]), 4))
+        res_control_horizon['total_costs_ph'].append(round(value(model.costs_total_ph)  ,4))
+        res_control_horizon['total_costs_ch'].append(round(value(model.costs_total_ch)  ,4))
+        res_control_horizon['c_el_power'].append(round(value(model.c_el_power[t]), 4))
+        res_control_horizon['c_heat_power'].append(round(value(model.c_heat_power[t]), 4))
         res_control_horizon['c_penalty'].append(round(value(model.c_penalty[t]), 4))
         res_control_horizon['c_revenue'].append(round(value(model.c_revenue[t]), 4))
         res_control_horizon['c_grid'].append(c_grid[t])
@@ -430,8 +457,9 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         res_control_horizon['COP_Carnot'].append(round(value(model.COP_Carnot[t]), 3))
         res_control_horizon['COP_1'].append(round(COP_1[t], 3))
         res_control_horizon['COP_2'].append(round(value(COP_2[t]), 3))
-
-
+        res_control_horizon['d_Temp_HP'].append(round(value(model.d_Temp_HP[t]), 1))
+        res_control_horizon['d_Temp_Hou'].append(round(value(model.d_Temp_Hou[t]), 1))
+        res_control_horizon['c_el_cost_ch'].append(round(value(model.c_el_cost_ch), 2))
 
 
 #    model.display

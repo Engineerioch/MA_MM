@@ -30,7 +30,7 @@ def load_params(options, params):
             'T_Sto_min' : 18 + 273.15,                   # [K] Minimum temperature of storage
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
-            'T_Sto_Init': 50 + 273.15,                  # [K] initial Storage Temperature for Optimization
+            'T_Sto_Init': 40 + 273.15,                  # [K] initial Storage Temperature for Optimization
             'U_Sto'     : 0.3,                          # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio' : 2,                            # [-] Ratio of Heat/Diameter
@@ -40,13 +40,14 @@ def load_params(options, params):
     # Set Heat Pump parameter
         'HP'    : {
             'Q_HP_Max'      : 10000,                        # [W]   Maximum Heat Power of Heat Pump
-            'T_HP_VL_1'     : 35 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
+            'T_HP_VL_1'     : 33 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
             'T_HP_VL_2'     : 70 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 2
             'T_HP_VL_3'     : 22 + 273.15,
             'm_flow_HP'     : 1230 / 3600,                   # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg(s zu bekommen)
             'eta_HP'        : 0.4,                          # [-]   Gütegrad HP
             'Q_HP_Min'      : 0,                            # [W]   Minimum Heat power of HP
-            'T_Spreiz'      : 7,                            # [K]   Maximum Change of Temperature between Vorlauf and Rücklauf
+            'T_Spreiz_HP'      : 7,                            # [K]   Maximum Change of Temperature between Vorlauf and Rücklauf
+
         },
 
     # Set PV parameters

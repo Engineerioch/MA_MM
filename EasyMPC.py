@@ -16,7 +16,7 @@ options = {
     'WeatherData':   {'TRY'                  : 'cold'       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                     },      # [-] 'cold' -> kaltes TRY 2015
-    'Solve'         :   {'MIP_gap'             : 0.01,
+    'Solve'         :   {'MIP_gap'             : 0.03,
                         'TimeLimit'            : 60,
                         'TimeLimitMax'         : 35491348,
                         'type'                 : 'gurobi',
@@ -44,9 +44,9 @@ options = {
 start_time = 0
 time_step = 1
 total_runtime = 96           # Iterationsschritte       -> Sollte durch 24 teilbar sein
-control_horizon = 8
+control_horizon = 4
 params_opti = {
-    'prediction_horizon'    : 24,
+    'prediction_horizon'    : 8,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
@@ -97,11 +97,15 @@ save_optim_results = {
     'P_EL_HP'           : [],
     'P_PV': [],
     'COP_Carnot': [],
-    'total_costs': [],
-    'c_cost':[],
-    'c_power': [],
+    'c_grid': [],
+    'c_el_power': [],
+    'c_heat_power': [],
     'c_penalty': [],
     'c_revenue': [],
+    'c_cost': [],
+    'c_el_cost_ch': [],
+    'total_costs_ph':[],
+    'total_costs_ch': [],
     #    'P_HP_1'            : [],
 #    'P_HP_2'            : [],
 #    'P_HP_off'          : [],
@@ -118,10 +122,12 @@ save_optim_results = {
 ##    'COP_1'             : [],
 ##    'COP_2'             : [],
 ##    'c_grid': [],
+    'd_Temp_HP' : [],
+    'd_Temp_Hou' : [],
+
     }
 
 save_results = copy.deepcopy(save_optim_results)
-
 
 # Time Settings
 for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'])):
