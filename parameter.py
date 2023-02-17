@@ -61,10 +61,11 @@ def load_params(options, params):
 
     # Set Consumer parameters (House = Hou)
         'Hou'   : {
-            'T_Hou_delta_max'   :    20 + 273.15,           # [K]    Maximum Difference between T_Hou_Vl and T_Hou_RL
-            'm_flow_Hou'        :    1107 / 3600,           # [kg/s] Constant Mass flow from Storage to House
-            'T_Hou_Gre'         : 273.15 + 15               # [K] Heizgrenztemperatur (Mittelwert über den Tag)
-
+            'm_flow_Hou'        : 1107 / 3600,          # [kg/s] Constant Mass flow from Storage to House
+            'T_Hou_Gre'         : 273.15 + 15,          # [K] Heizgrenztemperatur (Mittelwert über den Tag)
+            'T_Spreiz_Hou'      : 7,
+            'T_Hou_VL_min'      : 35 + 273.15,          # [K] Minimum Temperature to House
+            'T_Hou_VL_max'      : 40 + 273.15,          # Maximum Temperature to House
         },
 
         # Set natural Constant and other constants given by nature

@@ -29,7 +29,7 @@ options = {
                        },
 
     'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
-                        'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
+                        'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
 ### Location of the Single Family House ###
     'Location'      :   {'lat'                  : 52.519*2*3.14/360,            # [°]   Latitude Berlin
@@ -44,9 +44,9 @@ options = {
 start_time = 0
 time_step = 1
 total_runtime = 96           # Iterationsschritte       -> Sollte durch 24 teilbar sein
-control_horizon = 4
+control_horizon = 2
 params_opti = {
-    'prediction_horizon'    : 8,
+    'prediction_horizon'    : 4,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,

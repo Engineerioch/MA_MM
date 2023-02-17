@@ -45,13 +45,14 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
 
     # Set Consumer parameter
-    T_Hou_delta_max = devs['Hou']['T_Hou_delta_max']
+#    T_Hou_delta_max = devs['Hou']['T_Hou_delta_max']
     P_EL_Dem = time_series['P_EL_Dem']
     m_flow_Hou = devs['Hou']['m_flow_Hou']
     Q_Hou_Input = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
     T_Hou_Gre = devs['Hou']['T_Hou_Gre']
     T_Spreiz_Hou = devs['Hou']['T_Spreiz_Hou']
     T_Hou_VL_min = devs['Hou']['T_Hou_VL_min']
+    T_Hou_VL_max = devs['Hou']['T_Hou_VL_max']
 
     # Set Heat Pump parameters
     m_flow_HP = devs['HP']['m_flow_HP']
@@ -103,14 +104,18 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     model.Q_Sto_Energy  = Var(time, within=NonNegativeReals, name='Q_Sto_Energy')
     model.Q_Sto_Power_max=Var(time, within=NonNegativeReals, name='Q_Sto_Power_max')#, bounds=(0,10000))
     model.Q_Hou_Dem     = Var(time, within=Reals, name='Q_Hou_Dem')
+    model.Q_Hou_Del     = Var(time, within=NonNegativeReals, name='Q_Hou_Del')
     model.Q_HP_1        = Var(time, within=NonNegativeReals, name='Q_HP_1')
     model.Q_HP_2        = Var(time, within=NonNegativeReals, name='Q_HP_2')
+    model.Q_1           = Var(time, within= NonNegativeReals, name='Q_1',bounds=(0, 10000))
+    model.Q_2           = Var(time, within= NonNegativeReals, name='Q_2',bounds=(0, 10000))
+    model.Q_3           = Var(time, within= NonNegativeReals, name='Q_3',bounds=(0, 10000))
     model.P_EL_Dem      = Var(time, within=NonNegativeReals, name='P_EL_Dem')#, initialize=initials_test['P_EL_Dem'])
     model.T_Air         = Var(time, within=Reals, name='T_Air')#, initialize=initials_test['T_Air'])
     model.T_HP_VL       = Var(time, within=NonNegativeReals, name='T_HP_VL')
     model.T_HP_RL       = Var(time, within=NonNegativeReals, name='T_HP_RL')
     model.T_Sto         = Var(time, within=NonNegativeReals, bounds=(T_Sto_min, 368.15), name='T_Sto')
-    model.T_Hou_VL      = Var(time, within=NonNegativeReals, name='T_Hou_VL')
+    model.T_Hou_VL      = Var(time, within=NonNegativeReals, name='T_Hou_VL', bounds=(T_Hou_VL_min, T_Hou_VL_max))
     model.T_Hou_RL      = Var(time, within=NonNegativeReals, bounds=(283.15, 400), name='T_Hou_RL')
     model.P_EL_HP       = Var(time, within=NonNegativeReals, name='P_EL_HP', bounds=(0, 10000))
     model.P_EL          = Var(time, within=Reals, name='P_EL')
@@ -237,54 +242,67 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
 ####################---3. Consumer System (Hou) ---####################
 
-    def Limit_delta_Temp_Hou(m,t):
-        return (m.d_Temp_Hou[t] == m.T_Hou_1[t] - m.T_Hou_2[t])
-    model.Limit_delta_Temp_Hou = Constraint(time, rule=Limit_delta_Temp_Hou, name='Limit_delta_Temp_Hou')
+    def Heat_Sto_to_Valve(m, t):
+        return(m.Q_1[t] == m.m_flow_Hou_1[t] * c_w_water * m.T_Sto[t])
+    model.Heat_Sto_to_Valve = Constraint(time, rule=Heat_Sto_to_Valve, name='Heat_Sto_to_Valve')
 
-#todo change to mflowhou3 , T3
+    def House_to_Valve(m, t):
+        return (m.Q_2[t] == m.m_flow_Hou_2[t] * c_w_water * m.T_Hou_2[t])
+    model.House_to_Valve = Constraint(time, rule=House_to_Valve, name='House_to_Valve')
+
+    def Valve_to_Hou(m, t):
+        return(m.Q_3[t] == m.m_flow_Hou_3[t] * c_w_water * m.T_Hou_3[t])
+    model.Valve_to_Hou = Constraint(time, rule=Valve_to_Hou, name='Valve_to_Hou')
+
+    def Heat_Balance_Valve(m, t):
+        return (m.Q_3[t] == m.Q_1[t] + m.Q_2[t])
+    model.Heat_Balance_Valve = Constraint(time, rule= Heat_Balance_Valve, name='Heat_Balance_Valve')
+
+    # Calculation of Penalty-Heat-Flow: [W] #todo im moment ohne strafen
+    def Heat_Sum(m, t): # [W]
+        return(m.Q_Hou_Del[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t])
+    model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
+
+    def Delta_Temp_Hou(m,t):
+        return (m.d_Temp_Hou[t] == m.T_Hou_3[t] - m.T_Hou_2[t])
+    model.Delta_Temp_Hou = Constraint(time, rule=Delta_Temp_Hou, name='Delta_Temp_Hou')
+
     def Set_Third_m_flow_Hou(m, t):
-        return(m.m_flow_Hou_1[t] == m_flow_Hou)
+        return(m.m_flow_Hou_3[t] == m_flow_Hou)
     model.Set_Third_m_flow_Hou = Constraint(time, rule=Set_Third_m_flow_Hou, name='Set_Third_m_flow_Hou')
 
- #   def Define_Sum_m_flow_Hou(m,t):
- #       return (m.m_flow_Hou_3[t] == (m.m_flow_Hou_2[t] + m.m_flow_Hou_1[t]))
- #   model.Define_Sum_m_flow_Hou = Constraint(time, rule=Define_Sum_m_flow_Hou, name='Define_Sum_m_flow_Hou')
+    def Define_Sum_m_flow_Hou(m,t):
+        return (m.m_flow_Hou_3[t] == (m.m_flow_Hou_2[t] + m.m_flow_Hou_1[t]))
+    model.Define_Sum_m_flow_Hou = Constraint(time, rule=Define_Sum_m_flow_Hou, name='Define_Sum_m_flow_Hou')
 
-    # Calculation of Temp from Storage to House: [K]
-    def Temp_to_House(m, t):
-        return(m.T_Hou_1[t] == m.T_Sto[t] + 2)
-    model.Temp_to_House = Constraint(time, rule=Temp_to_House, name='Temp_to_House')
+    def Limit_T_Hou(m, t):
+        return (m.T_Sto[t] >= m.T_Hou_3[t])
+    model.Limit_T_Hou = Constraint(time, rule=Limit_T_Hou, name='Limit_T_Hou')
 
-#    def Heat_Balance_Valve(m, t):
-#        return ((m.m_flow_Hou_3[t] * m.T_Hou_3[t]) == (m.m_flow_Hou_1[t] * m.T_Hou_1[t]) + (m.m_flow_Hou_2[t] * m.T_Hou_2[t]))
-#    model.Heat_Balance_Valve = Constraint(time, rule= Heat_Balance_Valve, name='Heat_Balance_Valve')
-
-#    def Define_Q_Hou(m, t):
-#        return (m.Q_Hou_Dem[t] == (m.m_flow_Hou_3[t] * c_w_water * m.T_Hou_3[t]) - (m.m_flow_Hou_2[t] * c_w_water * m.T_Hou_2[t]))
-#    model.Define_Q_Hou = Constraint(time, rule=Define_Q_Hou, name='Define_Q_Hou')
-
-#    def Limit_Second_m_flow_Hou(m, t):
-#        return(m.m_flow_Hou_3[t] >= m.m_flow_Hou_2[t])
-#    model.Limit_Second_m_flow_Hou = Constraint(time, rule=Limit_Second_m_flow_Hou, name='Limit_Second_m_flow_Hou')
-
-#    def Minimize_T_Hou_3(m, t):
-#        return (m.T_Hou_3[t] >= T_Hou_VL_min)
-#    model.Minimize_T_Hou_3 = Constraint(time, rule=Minimize_T_Hou_3, name='Minimize_T_Hou_3')
+    def Limit_Second_m_flow_Hou(m, t):
+        return(m.m_flow_Hou_3[t] >= m.m_flow_Hou_2[t])
+    model.Limit_Second_m_flow_Hou = Constraint(time, rule=Limit_Second_m_flow_Hou, name='Limit_Second_m_flow_Hou')
 
     def Heat_Flow_back_to_Storage(m, t):
-        return(m.Q_Hou[t] == m.m_flow_Hou_1[t] * c_w_water * (m.T_Hou_1[t] - m.T_Hou_2[t]))
+        return(m.Q_Hou[t] == m.Q_1[t] - m.m_flow_Hou_1[t] * c_w_water * m.T_Hou_2[t])
     model.Heat_Flow_back_to_Storage = Constraint(time, rule=Heat_Flow_back_to_Storage, name='Heat_Flow_back_to_Storage')
 
+    def Heat_Delivery_To_House(m, t):
+        return(m.Q_Hou_Del[t] == m.Q_3[t] - m.Q_2[t])
+    model.Heat_Delivery_To_House = Constraint(time, rule=Heat_Delivery_To_House, name='Heat_Delivery_To_House')
 
-    # Calculation of Penalty-Heat-Flow: [W]
-    def Heat_Sum(m, t): # [W]
-        return(m.Q_Hou[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t])
-    model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
+#    def Limit_House_Delivery(m, t):
+ #       return(m.Q_Hou_Del[t] >= m.Q_Hou[t])
+  #  model.Limit_House_Delivery = Constraint(time, rule=Limit_House_Delivery, name='Limit_House_Delivery')
+
+    def Heat_Balance_Pre_Valve(m, t):
+        return (m.m_flow_Hou_3[t] * c_w_water * m.T_Hou_2[t] == (m.m_flow_Hou_1[t] * c_w_water * m.T_Hou_2[t]) + m.Q_2[t])
+    model.Heat_Balance_Pre_Valve = Constraint(time, rule=Heat_Balance_Pre_Valve, name='Heat_Balance_Pre_Valve')
 
 ####################---4. Storage System (Sto) ---####################
 
     # Calculation of Temperature in Storage in current time step: [K]
-    def Temp_Sto(m, t):  # todo Zeit einfügen / Einheiten
+    def Temp_Sto(m, t):  #
         if t >= 1:
             return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) / delta_t == (m.Q_HP[t] - m.Q_Hou[t] - m.Q_Sto_Loss[t]) )
         else:
@@ -305,6 +323,8 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     def Maximum_Storage_Power(m, t):
         return(m.Q_Sto_Power_max[t] == m.Q_Sto_Energy[t] / delta_t)
     model.Maximum_Storage_Power = Constraint(time, rule=Maximum_Storage_Power, name='Maximum_Storage_Power')
+
+
 
 #    def Storage_Power(m, t):
 #        return(m.Q_Sto_Power[t] == m.Q_Sto_Energy[t] / delta_t)
