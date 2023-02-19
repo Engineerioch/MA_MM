@@ -44,6 +44,12 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     D_Sto_Au   = D_Sto_In + 2 * devs['Sto']['S_Wall']
     A_Sto      = ((math.pi * (D_Sto_Au ** 2)) / 4) * 2 + math.pi * D_Sto_Au * (h_d * D_Sto_In)
 
+    #Set TWW Parameters:
+    T_Sto_TWW_Min = devs['TWW']['T_TWW_Min']
+
+
+    Q_TWW_Dem = time_series['Q_TWW_Dem']
+
 
 
     # Set Consumer parameter
@@ -54,6 +60,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     T_Hou_Gre = devs['Hou']['T_Hou_Gre']
     T_Spreiz_Hou = devs['Hou']['T_Spreiz_Hou']
 #    T_Hou_VL_min = devs['Hou']['T_Hou_VL_min']
+
 
     # Set Heat Pump parameters
     m_flow_HP = devs['HP']['m_flow_HP']
@@ -73,8 +80,8 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     Q_Hou_Input = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
 
 
-    xp = np.arange(0.0, 8761, 1.0)
-    xnew = np.arange(0.0, 8761, time_step)
+    xp = np.arange(0.0, 8760, 1.0)
+    xnew = np.arange(0.0, 8760, time_step)
 
     P_PV = np.interp(xnew, xp, P_PV)
     T_Input = np.interp(xnew, xp, T_Input)
@@ -111,6 +118,12 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         T_Mean = sum(T_Input[start_index: start_index + int(24/time_step)]) / int(24/time_step)
 
             #T_Mean = (sum(T_Input[start_time_help : int((24 / time_step) + start_time_help)]) / (24 / time_step))
+
+    if time_step != 0.25 and time_step != 1:
+        Q_TWW_Dem = np.interp(xnew, xp, Q_TWW_Dem)
+    else:
+        pass
+
 
 
     model = ConcreteModel()

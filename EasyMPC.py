@@ -31,6 +31,10 @@ options = {
     'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
                         'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
+    'TWW'           : {
+                        'Size'                  : 'Norm',   # Define the Size of the TWW-Storage Size
+    },
+
 ### Location of the Single Family House ###
     'Location'      :   {'lat'                  : 52.519*2*3.14/360,            # [°]   Latitude Berlin
                          'lon'                  : 13.408*2*3.14/360,            # [°]   Longitude Berlin

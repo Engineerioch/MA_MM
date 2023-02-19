@@ -34,7 +34,15 @@ def load_params(options, params):
             'U_Sto'     : 0.3,                          # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio' : 2,                            # [-] Ratio of Heat/Diameter
-            'S_Wall'    : 0.15
+            'S_Wall'    : 0.15,
+
+        },
+
+        'TWW': {
+            'T_TWW_Min': 50 + 273.15,  # [K] Minimum Temperature of TWW-Storage
+
+
+
         },
 
     # Set Heat Pump parameter
@@ -205,6 +213,11 @@ def load_time_series(params, options):
         #Todo Varialber Strompreis Daten hinterlegen
  #       if options['Tariff']['Variable']:
 #       time_series['c_grid_var']
+
+    if time_step == 0.25:
+        time_series['Q_TWW_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Zapfprofil_Quarterly.txt') * 1000
+    else:
+        time_series['Q_TWW_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Zapfprofil_Hourly.txt') * 1000
 
 
 
