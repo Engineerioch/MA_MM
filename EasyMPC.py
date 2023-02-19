@@ -40,13 +40,15 @@ options = {
                          'azi_2'                : -90 * (2 * 3.14) / (360)      # [°]   Orientation of roof sides (0: south, -: East, +: West)
                          },
 }
-#prediction_horizon = 72
-start_time = 0
-time_step = 1
-total_runtime = 96           # Iterationsschritte       -> Sollte durch 24 teilbar sein
-control_horizon = 4
+
+start_time = 8                  # start time in hours
+time_step = 0.5                   # step size in hours
+total_runtime = 48             # Iterationsschritte       -> Sollte durch 24 teilbar sein
+control_horizon = 8             #
+prediction_horizon = 24
+
 params_opti = {
-    'prediction_horizon'    : 8,
+    'prediction_horizon'    : prediction_horizon,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
@@ -119,8 +121,8 @@ save_optim_results = {
     'HP_off'            : [],
     'HP_mode1'          : [],
     'HP_mode2'          : [],
-##    'COP_1'             : [],
-##    'COP_2'             : [],
+    'COP_1'             : [],
+    'COP_2'             : [],
 ##    'c_grid': [],
     'd_Temp_HP' : [],
     'd_Temp_Hou' : [],

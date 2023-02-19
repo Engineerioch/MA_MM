@@ -40,7 +40,7 @@ def load_params(options, params):
     # Set Heat Pump parameter
         'HP'    : {
             'Q_HP_Max'      : 10000,                        # [W]   Maximum Heat Power of Heat Pump
-            'T_HP_VL_1'     : 33 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
+            'T_HP_VL_1'     : 35 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
             'T_HP_VL_2'     : 70 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 2
             'T_HP_VL_3'     : 22 + 273.15,
             'm_flow_HP'     : 1230 / 3600,                   # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg(s zu bekommen)
@@ -63,7 +63,8 @@ def load_params(options, params):
         'Hou'   : {
             'T_Hou_delta_max'   :    20 + 273.15,           # [K]    Maximum Difference between T_Hou_Vl and T_Hou_RL
             'm_flow_Hou'        :    1107 / 3600,           # [kg/s] Constant Mass flow from Storage to House
-            'T_Hou_Gre'         : 273.15 + 15               # [K] Heizgrenztemperatur (Mittelwert über den Tag)
+            'T_Hou_Gre'         : 273.15 + 15,               # [K] Heizgrenztemperatur (Mittelwert über den Tag)
+            'T_Spreiz_Hou'      : 7 + 273.15,
 
         },
 

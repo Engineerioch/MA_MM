@@ -1,6 +1,7 @@
 from pyomo.environ import *
 from pyomo.opt import SolverStatus, TerminationCondition
 import math
+import numpy as np
 
 
 
@@ -11,13 +12,16 @@ import math
 def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     # Set parameter
     dt = params['time_step']  # time Step in hours
-    start_time = int(params['start_time'])
+    start_time = int(params['start_time'] / params['time_step'])
+
     prediction_horizon = params['prediction_horizon']
     total_runtime = int(params['total_runtime'])
     time_range = range(int(prediction_horizon * (1 / params['time_step'])) + 1)
     time = range(int(prediction_horizon / params['time_step']))
     delta_t = params['time_step'] * 3600  # time Step in
     sum_control =range(int(params['control_horizon']))
+    time_step = params['time_step']
+    start_time_hour = int(start_time * time_step)
 
 
     # Set economic parameters
@@ -25,8 +29,6 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     c_grid = time_series['c_grid'] / 1000               # [€/Wh] Strompreis bei Netzbezug (Teilung durch 1000 weil Rohdaten in €/kWh
     c_comfort = eco['costs']['c_comfort'] / 1000        # [€/Wh] Strafkosten bei nicht gedeckten Hauswärembedarf
 
-    # Set PV profile
-    P_PV = time_series['P_PV']
 
 
     # Set Heat storage parameters
@@ -40,18 +42,18 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     V_Sto = devs['Sto']['Volume']
     D_Sto_In   =   ((V_Sto * 4)/math.pi * h_d)**(1/float(3))         # Innendurchmesser des Speichers
     D_Sto_Au   = D_Sto_In + 2 * devs['Sto']['S_Wall']
-    A_Sto       = ((math.pi * (D_Sto_Au ** 2)) / 4) * 2 + math.pi * D_Sto_Au * (h_d * D_Sto_In)
+    A_Sto      = ((math.pi * (D_Sto_Au ** 2)) / 4) * 2 + math.pi * D_Sto_Au * (h_d * D_Sto_In)
 
 
 
     # Set Consumer parameter
     T_Hou_delta_max = devs['Hou']['T_Hou_delta_max']
-    P_EL_Dem = time_series['P_EL_Dem']
+
     m_flow_Hou = devs['Hou']['m_flow_Hou']
-    Q_Hou_Input = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
+
     T_Hou_Gre = devs['Hou']['T_Hou_Gre']
     T_Spreiz_Hou = devs['Hou']['T_Spreiz_Hou']
-    T_Hou_VL_min = devs['Hou']['T_Hou_VL_min']
+#    T_Hou_VL_min = devs['Hou']['T_Hou_VL_min']
 
     # Set Heat Pump parameters
     m_flow_HP = devs['HP']['m_flow_HP']
@@ -64,12 +66,25 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
 
     # Set Natural Parameters
     c_w_water = devs['Nature']['c_w_water']
+
+    P_PV = time_series['P_PV']
     T_Input = time_series['T_Air'] + 273.15  # [K]  Außentemperatur
+    P_EL_Dem = time_series['P_EL_Dem']
+    Q_Hou_Input = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
+
+
+    xp = np.arange(0.0, 8761, 1.0)
+    xnew = np.arange(0.0, 8761, time_step)
+
+    P_PV = np.interp(xnew, xp, P_PV)
+    T_Input = np.interp(xnew, xp, T_Input)
+    P_EL_Dem = np.interp(xnew, xp, P_EL_Dem)
+    Q_Hou_Input = np.interp(xnew, xp, Q_Hou_Input)
 
     # Calculation of COP in each mode and in each time step
     Temp_COP = T_Input.tolist()
     COP_1 = []
-    for i in range (start_time, start_time + total_runtime):
+    for i in range (start_time, int(start_time + total_runtime/time_step)):
         COP_if = T_HP_VL_1 / ( T_HP_VL_1 - Temp_COP[i])
         if  COP_if <= 0:
             COP1 = 1
@@ -78,7 +93,7 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
         COP_1.append(COP1)
 
     COP_2 = []
-    for i in range (start_time, start_time + total_runtime):
+    for i in range (start_time, int(start_time + total_runtime/time_step)):
         COP_if = T_HP_VL_2 / (T_HP_VL_2 - Temp_COP[i])
         if  COP_if <= 0:
             COP2 = 1
@@ -88,8 +103,15 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     COP_off = 1
 
 
-    for i in range(0, total_runtime, 24):
-        T_Mean = (sum(T_Input[start_time: 24 + start_time]) / 24)
+    for i in range(0, total_runtime, int(24/time_step)):
+        start_index = start_time
+        if start_time_hour % 24 != 0:
+            start_index -= int((start_time_hour % 24) / time_step)
+      #      T_Mean = (sum(T_Input[start_time_hour: int((24 / time_step) + start_time_hour)]) / (24 / time_step))
+        T_Mean = sum(T_Input[start_index: start_index + int(24/time_step)]) / int(24/time_step)
+
+            #T_Mean = (sum(T_Input[start_time_help : int((24 / time_step) + start_time_help)]) / (24 / time_step))
+
 
     model = ConcreteModel()
 
