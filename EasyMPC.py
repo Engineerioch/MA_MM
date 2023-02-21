@@ -13,7 +13,7 @@ import matplotlib.pyplot as plt
 options = {
     'Tariff'        :   {'Variable'          : False},   # [-] TRUE = 'variable' or FALSE = 'fix' -> Decides if Powerprice is variable or fix
 #    'time_step'     :   {'time_variable'        : ''},
-    'WeatherData':   {'TRY'                  : 'cold'       # [-] 'warm'    -> warmes TRY 2015
+    'WeatherData':   {'TRY'                  : 'warm'       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                     },      # [-] 'cold' -> kaltes TRY 2015
     'Solve'         :   {'MIP_gap'             : 0.03,
@@ -25,8 +25,6 @@ options = {
     'PV'            :   {'PV_factor'           : 1.0,      # Rescale PV- Generation P_PV = n_Mod (default: 750) * 330 W * PV_factor
                          },
 
-    'Initial'       : {'T_HP_VL_Init'           : 35 + 273.15,
-                       },
 
     'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
                         'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
@@ -45,9 +43,9 @@ options = {
                          },
 }
 
-start_time = 8                  # start time in hours
+start_time = 0                  # start time in hours
 time_step = 0.5                   # step size in hours
-total_runtime = 48             # Iterationsschritte       -> Sollte durch 24 teilbar sein
+total_runtime = 24             # Iterationsschritte       -> Sollte durch 24 teilbar sein
 control_horizon = 8             #
 prediction_horizon = 24
 
@@ -232,37 +230,62 @@ elif show == 'Heat':
     print('T_Sto')
     print(save_results['T_Sto'])
 elif show == 'all':
+    l
 
 
 
-    fig, ax = plt.subplots()
 
-    # Werte für Tabelle erstellen
-    table_data = [
-        ["Mode", save_results['Mode']],
-        ["Player 2", save_results['Q_HP']],
-      #  ["Player 3", 33],
-      #  ["Player 4", 25],
-      #  ["Player 5", 12]
-    ]
-
-    # Tabelle erstellen
-    table = ax.table(cellText=table_data, loc='center')
-    plt.show()
 
 elif show== 'Save_Results':
 
 
-     with open('results.csv', 'w', newline='') as csvfile:
-         writer = csv.writer(csvfile)
-         writer.writerow([])
+    with open('D:/lma-mma/Repos/MA_MM/Results/results.csv', 'w', newline='') as csvfile:
 
-         for key, values in save_results.items():
+        # Create a CSV writer object
+        writer = csv.writer(csvfile)
+
+        # Write the headers to the first row
+   #     writer.writerow(save_results.keys())
+        for key, values in save_results.items():
             row = [key] + sum(values, [])
             writer.writerow(row)
+#    writer.close()
+
+    dir_results = 'D:/lma-mma/Repos/MA_MM/Results'
+    options_file = dir_results + '/options.txt'
+    all_options = [options, params_opti]
+    all_options_names = ['options', 'params_opti']
+    pickle.dump(all_options, open(options_file, "wb"))
+    with open(options_file, "w") as file:
+        for key in all_options:
+            file.write(all_options_names[all_options.index(key)])
+            file.write('\n')
+            for x in key:
+                file.write(str(x) + "=")
+                file.write(str(key[x]))
+                file.write('\n')
+            file.write('\n')
+        file.close()
+
+    devs_file = dir_results + '/devs.txt'
+    all_devs = [devs, eco]
+    all_devs_names = ['devs', 'eco']
+    pickle.dump(all_devs, open(devs_file, "wb"))
+    with open(devs_file, "w") as file_devs:
+       for key in all_devs:
+           file_devs.write(all_devs_names[all_devs.index(key)])
+           file_devs.write('\n')
+           for x in key:
+               file_devs.write(str(x) + "=")
+               file_devs.write(str(key[x]))
+               file_devs.write('\n')
+           file_devs.write('\n')
+       file_devs.close()
+
+
+
 
 
 else:
-
     print(save_results['T_Air'])
 #    print(save_results['T_Mean'])

@@ -40,6 +40,11 @@ def load_params(options, params):
 
         'TWW': {
             'T_TWW_Min': 50 + 273.15,  # [K] Minimum Temperature of TWW-Storage
+            'T_TWW_Init': 40 + 273.15,  # [K] initial Storage Temperature for Optimization
+            'U_TWW': 0.3,  # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
+            # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
+            'h_d_ratio': 2,  # [-] Ratio of Heat/Diameter
+            'S_Wall': 0.15,
 
 
 
@@ -93,18 +98,14 @@ def load_params(options, params):
     else:
         print('Please set a supported Storage Size in EasyMPC -> options')
 
-    if options['Sto']['Type'] == 'Puffer':
-        devs['Sto']['T_Sto_min'] == 18 + 273.15
-    elif options['Sto']['Type'] == 'Kombi':
-        devs['Sto']['T_Sto_min'] == 50 + 273.15
-#    elif options['Sto']['Type'] == 'Seperated':
-#        devs['Sto']['T_Sto_min'] ==
-
+    if options['TWW']['Size'] == 'Medium':
+        devs['TWW']['Volume'] = 0.3  # [m³] Medium TWW-Storage has a capacity of 300l
+    elif options['TWW']['Size'] == 'Norm':
+        devs['TWW']['Volume'] = 0.2  # [m³] Norm TWW-Storage has a capacity of 200l
+    elif options['TWW']['Size'] == 'Large':
+        devs['TWW']['Volume'] = 5.0  # [m³] Large TWW-Storage has a capacity of 500l
     else:
-        print('Please Set a Storage tyoe in EasyMPC -> options')
-
-
-
+        print('Please set a supported TWW-Storage Size in EasyMPC -> options')
 
     return eco, devs, year
 

@@ -45,9 +45,17 @@ def runeasyModell(params, options, eco, time_series, devs, ite, T_Sto_Init):
     A_Sto      = ((math.pi * (D_Sto_Au ** 2)) / 4) * 2 + math.pi * D_Sto_Au * (h_d * D_Sto_In)
 
     #Set TWW Parameters:
+
+
     T_Sto_TWW_Min = devs['TWW']['T_TWW_Min']
+    m_TWW_water = devs['TWW']['Volume'] * devs['Nature']['Roh_water']
 
-
+    U_TWW = devs['TWW']['U_TWW']
+    h_d_TWW = devs['TWW']['h_d_ratio']
+    V_TWW = devs['TWW']['Volume']
+    D_TWW_In   =   ((V_TWW * 4)/math.pi * h_d_TWW)**(1/float(3))         # Innendurchmesser des TWW-Speichers
+    D_TWW_Au   = D_TWW_In + 2 * devs['TWW']['S_Wall']
+    A_TWW      = ((math.pi * (D_TWW_Au ** 2)) / 4) * 2 + math.pi * D_TWW_Au * (h_d * D_TWW_In)
     Q_TWW_Dem = time_series['Q_TWW_Dem']
 
 
