@@ -44,7 +44,7 @@ options = {
 }
 
 start_time = 0                  # start time in hours
-time_step = 1                   # step size in hours
+time_step = 0.5                   # step size in hours
 total_runtime = 24             # Iterationsschritte       -> Sollte durch 24 teilbar sein
 control_horizon = 8             #
 prediction_horizon = 24
