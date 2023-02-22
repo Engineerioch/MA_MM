@@ -40,7 +40,7 @@ def load_params(options, params):
 
         'TWW': {
             'T_TWW_Min': 50 + 273.15,  # [K] Minimum Temperature of TWW-Storage
-            'T_TWW_Init': 40 + 273.15,  # [K] initial Storage Temperature for Optimization
+            'T_TWW_Init': 55 + 273.15,  # [K] initial Storage Temperature for Optimization
             'U_TWW': 0.3,  # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio': 2,  # [-] Ratio of Heat/Diameter

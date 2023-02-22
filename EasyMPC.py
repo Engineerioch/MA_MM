@@ -27,7 +27,7 @@ options = {
 
 
     'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
-                        'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
+                        'Type'                  : 'Seperated',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
     'TWW'           : {
                         'Size'                  : 'Norm',   # Define the Size of the TWW-Storage Size
@@ -44,7 +44,7 @@ options = {
 }
 
 start_time = 0                  # start time in hours
-time_step = 0.5                   # step size in hours
+time_step = 1                   # step size in hours
 total_runtime = 24             # Iterationsschritte       -> Sollte durch 24 teilbar sein
 control_horizon = 8             #
 prediction_horizon = 24
@@ -123,11 +123,16 @@ save_optim_results = {
     'HP_off'            : [],
     'HP_mode1'          : [],
     'HP_mode2'          : [],
+    'HP_TWW'            : [],
     'COP_1'             : [],
     'COP_2'             : [],
 ##    'c_grid': [],
     'd_Temp_HP' : [],
     'd_Temp_Hou' : [],
+    'T_TWW' :[],
+    'Q_TWW_Dem'         : [],
+    'Q_TWW_Loss'        : [],
+
 
     }
 
@@ -141,9 +146,13 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
     print('New start time is:', params_opti['start_time'])
     if iter == 0:
         T_Sto_Init = devs['Sto']['T_Sto_Init']
+        T_TWW_Init = devs['TWW']['T_TWW_Init']
     else:
         T_Sto_Init = save_results['T_Sto'][iter-1][end]
-    results_optim = mpc.runeasyModell(params_opti, options, eco, time_series, devs, iter, T_Sto_Init)
+        T_TWW_Init = save_results['T_TWW'][iter-1][end]
+
+
+    results_optim = mpc.runeasyModell(params_opti, options, eco, time_series, devs, iter, T_Sto_Init, T_TWW_Init)
     print('Optimization is running....')
 
 
@@ -239,7 +248,7 @@ elif show == 'all':
 elif show== 'Save_Results':
 
 
-    with open('D:/lma-mma/Repos/MA_MM/Results/results.csv', 'w', newline='') as csvfile:
+    with open('D:/lma-mma/Repos/MA_MM/Results/Real_Results/results.csv', 'w', newline='') as csvfile:
 
         # Create a CSV writer object
         writer = csv.writer(csvfile)
