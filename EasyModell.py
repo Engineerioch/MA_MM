@@ -216,9 +216,17 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         return(m.P_PV[t] == P_PV[t + start_time] * time_step)
     model.PV_Import = Constraint(time, rule=PV_Import, name='PV_Import')
 
-    def TWW_Demand_Import(m ,t):
-        return(m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time] * time_step)
-    model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
+    # Import TWW- Demand
+    if time_step != 0.25:
+        def TWW_Demand_Import(m ,t):
+            return(m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time] * time_step)
+        model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
+
+    else:
+        def TWW_Demand_Import(m ,t):
+            return(m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time])
+        model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
+
 
     # Read T-Mean for each time-step and Set Q-Hou_Dem = 0 wenn T_Mean> T_Heiz_Grenz
     # If T_Mean < T_Heiz_Grenz then read the Q_Hou_Dem Data: [Wh]
@@ -226,10 +234,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         if T_Mean >= T_Hou_Gre:
             return(m.Q_Hou[t] == 0)
         else:
-            if time_step != 0.25:
-                return(m.Q_Hou_Dem[t] == Q_Hou_Input[t+start_time] * time_step)
-            else:
-                return (m.Q_Hou_Dem[t] == Q_Hou_Input[t + start_time])
+            return(m.Q_Hou_Dem[t] == Q_Hou_Input[t+start_time] * time_step)
     model.House_Demand = Constraint(time, rule=House_Demand, name='House_Demant')
 
 
@@ -409,7 +414,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 # todo: mit Q_Hou_Del wenn 3 Wege Ventil, mit Q_Hou wenn 3 Wege Ventil
     # Calculation of Penalty-Heat-Flow: [W]
     def Heat_Sum(m, t): # [W]
-        return(m.Q_Hou_Del[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t])
+        return(m.Q_Hou[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t])
     model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
 
 ####################---4. Storage System (Sto) ---####################
@@ -452,12 +457,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 ####################---5. Calculate HP_Mode depending on the TWW-Demand and Delivery Data---####################
 
 
-
-
     if options['Sto']['Type'] == 'Seperated':
-
- #       def Useable_TWW_Energy(m, T):
- #           return (m.Q_TWW_Dem == m_flow_HP * c_w_water * )
 
     # Calculation of Heat-Loss in TWW-Storage: [W]
         def TWW_Loss(m, t):
@@ -511,7 +511,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         model.HP_TWW_off = Constraint(time, rule=HP_TWW_off, name='HP_TWW_off')
 
         def Smth_for_Q_Max(m,t):
-            return(m.Q_TWW_Max[t] ==50)
+            return(m.Q_TWW_Max[t] == 50)
         model.Smth_for_Q_Max = Constraint(time, rule=Smth_for_Q_Max, name='Smth_for_Q_Max')
 
 

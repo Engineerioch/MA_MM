@@ -27,7 +27,7 @@ options = {
 
 
     'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
-                        'Type'                  : 'Seperated',  # Define what type of storage one has (Puffer, Kombi, Seperated)
+                        'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
     'TWW'           : {
                         'Size'                  : 'Norm',   # Define the Size of the TWW-Storage Size
@@ -45,7 +45,7 @@ options = {
 
 start_time = 24*15                  # start time in hours
 time_step = 0.5                   # step size in hours
-total_runtime = 24            # Iterationsschritte       -> Sollte durch 24 teilbar sein
+total_runtime = 48            # Iterationsschritte       -> Sollte durch 24 teilbar sein
 control_horizon = 2             #
 prediction_horizon = 8
 
