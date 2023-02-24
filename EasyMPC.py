@@ -13,10 +13,10 @@ import matplotlib.pyplot as plt
 options = {
     'Tariff'        :   {'Variable'          : False},   # [-] TRUE = 'variable' or FALSE = 'fix' -> Decides if Powerprice is variable or fix
 #    'time_step'     :   {'time_variable'        : ''},
-    'WeatherData':   {'TRY'                  : 'warm'       # [-] 'warm'    -> warmes TRY 2015
+    'WeatherData':   {'TRY'                  : 'cold'       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                     },      # [-] 'cold' -> kaltes TRY 2015
-    'Solve'         :   {'MIP_gap'             : 0.03,
+    'Solve'         :   {'MIP_gap'             : 0.01,
                         'TimeLimit'            : 60,
                         'TimeLimitMax'         : 35491348,
                         'type'                 : 'gurobi',
@@ -43,11 +43,11 @@ options = {
                          },
 }
 
-start_time = 0                  # start time in hours
+start_time = 24*15                  # start time in hours
 time_step = 0.5                   # step size in hours
-total_runtime = 24             # Iterationsschritte       -> Sollte durch 24 teilbar sein
-control_horizon = 8             #
-prediction_horizon = 24
+total_runtime = 24            # Iterationsschritte       -> Sollte durch 24 teilbar sein
+control_horizon = 2             #
+prediction_horizon = 8
 
 params_opti = {
     'prediction_horizon'    : prediction_horizon,
@@ -84,42 +84,50 @@ solving_time = {
 
 
 # Define variables to be saved
+
 save_optim_results = {
 #    'solving_time': [],
     'Mode'              : [],
     'Q_HP'              : [],
     'Q_Penalty': [],
     'Q_Hou': [],
-    'Q_Hou_Dem'         : [],
+    'Q_Hou_Dem': [],
+    'Q_Sto_Power_max': [],
+    'T_TWW': [],
+    'Q_TWW_Max': [],
+    'Q_TWW_Dem': [],
+
     'T_Sto': [],
-    'Q_Sto_Power':[],
     'Q_Sto_Loss'        : [],
     'Q_Sto_Energy'      : [],
-    'Q_Sto_Power_max'   : [],
-    'P_EL'              : [],
-#    'P_EL_Dem': [],
-    'P_EL_HP'           : [],
-    'P_PV': [],
+
     'COP_Carnot': [],
-    'c_grid': [],
+    'COP_HP':[],
+    'T_Air': [],
+    'T_Mean': [],
     'c_el_power': [],
     'c_heat_power': [],
+    'total_costs_ch': [],
+    'P_EL'              : [],
+    'P_EL_Dem'          : [],
+    'P_EL_HP'           : [],
+    'P_PV'              : [],
+    'd_Temp_HP': [],
+    'd_Temp_Hou': [],
+    'c_grid': [],
+
     'c_penalty': [],
     'c_revenue': [],
     'c_cost': [],
     'c_el_cost_ch': [],
     'total_costs_ph':[],
-    'total_costs_ch': [],
-    #    'P_HP_1'            : [],
-#    'P_HP_2'            : [],
-#    'P_HP_off'          : [],
 
-    'T_Air'             : [],
+    'P_HP_1'            : [],
+    'P_HP_2'            : [],
+
+
     'T_HP_VL'           : [],
-##    'T_HP_RL'           : [],
-##    'T_Hou_RL'          : [],
-    'T_Mean'            : [],
-##    'T_Hou_VL'          : [],
+
     'HP_off'            : [],
     'HP_mode1'          : [],
     'HP_mode2'          : [],
@@ -127,13 +135,9 @@ save_optim_results = {
     'COP_1'             : [],
     'COP_2'             : [],
 ##    'c_grid': [],
-    'd_Temp_HP' : [],
-    'd_Temp_Hou' : [],
-    'T_TWW' :[],
-    'Q_TWW_Dem'         : [],
+
+
     'Q_TWW_Loss'        : [],
-
-
     }
 
 save_results = copy.deepcopy(save_optim_results)
@@ -158,7 +162,7 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
 
 
     params_opti['start_time'] = params_opti['start_time'] + params_opti['control_horizon']
-    end = int(params_opti['control_horizon']) - 1
+    end = int(params_opti['control_horizon'] * (1/ time_step)) - 1
 
 
 
@@ -183,10 +187,6 @@ if show == 'HP':
     print(save_results['T_Sto'])
     print('T_Air')
     print(save_results['T_Air'])
-    #print('P_EL_HP')
-    #print(save_optim_results_opti['P_EL_HP'])
-    #print('COP_HP')
-    #print(save_optim_results_opti['COP_HP'])
 elif show == 'Sto':
     print('T_Sto')
     print(save_results['T_Sto'])
@@ -239,14 +239,19 @@ elif show == 'Heat':
     print('T_Sto')
     print(save_results['T_Sto'])
 elif show == 'all':
-    l
 
+    zh
 
 
 
 
 elif show== 'Save_Results':
 
+    time_to_save = [0]
+    ende = int(start_time + params_opti['total_runtime'])
+    for i in range(start_time, ende + 1):
+        for j in range(0, int(1 / time_step)):
+            time_to_save.append(i + (j * time_step))
 
     with open('D:/lma-mma/Repos/MA_MM/Results/Real_Results/results.csv', 'w', newline='') as csvfile:
 
@@ -254,7 +259,7 @@ elif show== 'Save_Results':
         writer = csv.writer(csvfile)
 
         # Write the headers to the first row
-   #     writer.writerow(save_results.keys())
+        writer.writerow(time_to_save)
         for key, values in save_results.items():
             row = [key] + sum(values, [])
             writer.writerow(row)

@@ -40,20 +40,18 @@ def load_params(options, params):
 
         'TWW': {
             'T_TWW_Min': 50 + 273.15,  # [K] Minimum Temperature of TWW-Storage
-            'T_TWW_Init': 55 + 273.15,  # [K] initial Storage Temperature for Optimization
+            'T_TWW_Init': 60 + 273.15,  # [K] initial Storage Temperature for Optimization
             'U_TWW': 0.3,  # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio': 2,  # [-] Ratio of Heat/Diameter
             'S_Wall': 0.15,
-
-
 
         },
 
     # Set Heat Pump parameter
         'HP'    : {
             'Q_HP_Max'      : 10000,                        # [W]   Maximum Heat Power of Heat Pump
-            'T_HP_VL_1'     : 35 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
+            'T_HP_VL_1'     : 40 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
             'T_HP_VL_2'     : 70 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 2
             'T_HP_VL_3'     : 22 + 273.15,
             'm_flow_HP'     : 1230 / 3600,                   # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg(s zu bekommen)
@@ -85,6 +83,7 @@ def load_params(options, params):
         'Nature'    : {
             'c_w_water'         : 4.18 * 1000,              # [Ws/kgK] Spezifische Wärmekapazität von Wasser 1.163WH/kgK
             'Roh_water'         : 995,                      # [kg/m^3] konstante Dichte von Wasser irgendwo zwischen 30 und 40 Grad
+            'T_Ref'             : 0,
 
         },
     }
