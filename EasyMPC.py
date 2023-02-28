@@ -16,7 +16,7 @@ options = {
     'WeatherData':   {'TRY'                  : 'cold'       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                     },      # [-] 'cold' -> kaltes TRY 2015
-    'Solve'         :   {'MIP_gap'             : 0.01,
+    'Solve'         :   {'MIP_gap'             : 0.03,
                         'TimeLimit'            : 60,
                         'TimeLimitMax'         : 35491348,
                         'type'                 : 'gurobi',
@@ -27,7 +27,7 @@ options = {
 
 
     'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
-                        'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
+                        'Type'                  : 'Seperated',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
     'TWW'           : {
                         'Size'                  : 'Norm',   # Define the Size of the TWW-Storage Size
@@ -43,11 +43,11 @@ options = {
                          },
 }
 
-start_time = 24*15                  # start time in hours
+start_time = 24                  # start time in hours
 time_step = 0.5                   # step size in hours
-total_runtime = 48            # Iterationsschritte       -> Sollte durch 24 teilbar sein
-control_horizon = 2             #
-prediction_horizon = 8
+total_runtime = 24            # Iterationsschritte       -> Sollte durch 24 teilbar sein
+control_horizon = 12             #
+prediction_horizon = 24
 
 params_opti = {
     'prediction_horizon'    : prediction_horizon,
@@ -93,11 +93,12 @@ save_optim_results = {
     'Q_Hou': [],
     'Q_Hou_Dem': [],
     'Q_Sto_Power_max': [],
-    'T_TWW': [],
+    'T_Sto': [],
+
     'Q_TWW_Max': [],
     'Q_TWW_Dem': [],
+    'T_TWW': [],
 
-    'T_Sto': [],
     'Q_Sto_Loss'        : [],
     'Q_Sto_Energy'      : [],
 
@@ -113,7 +114,7 @@ save_optim_results = {
     'P_EL_HP'           : [],
     'P_PV'              : [],
     'd_Temp_HP': [],
-    'd_Temp_Hou': [],
+ #   'd_Temp_Hou': [],
     'c_grid': [],
 
     'c_penalty': [],
@@ -295,9 +296,6 @@ elif show== 'Save_Results':
                file_devs.write('\n')
            file_devs.write('\n')
        file_devs.close()
-
-
-
 
 
 else:

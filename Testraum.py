@@ -67,15 +67,11 @@ def get_solar_radiation_forecast(prediction_horizon, time_step, year, hour_of_ye
 #L = np.zeros([35 + 1])
 #for t in range(35 + 1):
 #   L[t] = P_PV[t]
+Q_TWW_Dem = []
+for i in range(0, 365):
 
-
-#print(dTCold)
-
-
-dH = pd.read_csv('input_data/P_PV_TRY_cold.csv')
-P_PV_list = dH.values.tolist()
-dH = [item for sublist in P_PV_list for item in sublist]
-#print(dH[0:10])
-for i in range(0, 10):
-    print(dH[i])
-print(dH[10])
+    Test = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Zapfprofil_Quarterly.txt') * 1000
+    for j in Test:
+        print(Test)
+       # Q_TWW_Dem.append(Test[j])
+#print(Q_TWW_Dem)

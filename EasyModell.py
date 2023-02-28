@@ -26,12 +26,13 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
     # Set economic parameters
     c_payment = eco['costs']['c_payment']  # [Euro/kWh]    Feed in tariff
-    c_grid = time_series['c_grid'] / 1000               # [€/Wh] Strompreis bei Netzbezug (Teilung durch 1000 weil Rohdaten in €/kWh
+#    c_grid = time_series['c_grid'] / 1000               # [€/Wh] Strompreis bei Netzbezug (Teilung durch 1000 weil Rohdaten in €/kWh
     c_comfort = eco['costs']['c_comfort'] / 1000        # [€/Wh] Strafkosten bei nicht gedeckten Hauswärembedarf
 
 
 
     # Set Heat storage parameters
+    T_Sto_Ersatz = devs['Sto']['T_Sto_Ersatz']
     T_Sto_max = devs['Sto']['T_Sto_max']
     T_Sto_min = devs['Sto']['T_Sto_min']
 
@@ -67,6 +68,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     T_Hou_Gre = devs['Hou']['T_Hou_Gre']
     T_Spreiz_Hou = devs['Hou']['T_Spreiz_Hou']
     T_Ref       = devs['Nature']['T_Ref']
+    T_Hou_VL_min  = devs['Hou']['T_Hou_VL_min']
 
 
     # Set Heat Pump parameters
@@ -87,6 +89,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     T_Input = time_series['T_Air'] + 273.15  # [K]  Außentemperatur
     P_EL_Dem = time_series['P_EL_Dem']
     Q_Hou_Input = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
+    c_grid = time_series['c_grid'] / 1000
     if options['Sto']['Type'] == 'Seperated':
         Q_TWW_Dem = time_series['Q_TWW_Dem']
     else:
@@ -95,11 +98,11 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
     xp = np.arange(0.0, 8760, 1.0)
     xnew = np.arange(0.0, 8760, time_step)
-
     P_PV = np.interp(xnew, xp, P_PV)
     T_Input = np.interp(xnew, xp, T_Input)
     P_EL_Dem = np.interp(xnew, xp, P_EL_Dem)
     Q_Hou_Input = np.interp(xnew, xp, Q_Hou_Input)
+    c_grid = np.interp(xnew, xp, c_grid)
     if time_step != 1 and time_step != 0.25:
         Q_TWW_Dem = np.interp(xnew,xp, Q_TWW_Dem)
     else:
@@ -140,14 +143,13 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
 #    model.P_PV = Var(time, within=NonNegativeReals , name = 'P_PV')
     model.Q_Hou         = Var(time, within= NonNegativeReals, name='Q_Hou')#, initialize=initials_test['Q_Hou'])
-    model.Q_HP          = Var(time, within= NonNegativeReals, name='Q_HP',bounds=(0, 10000 * time_step))
+    model.Q_HP          = Var(time, within= NonNegativeReals, name='Q_HP',bounds=(0, 10000))
     model.Q_HP_Unreal   = Var(time, within=NonNegativeReals, name='Q_HP_Unreal', bounds=(0, 10000))
     model.Q_Penalty     = Var(time, within=NonNegativeReals, name='Q_Penalty')
     model.Q_Sto_Power   = Var(time, within=NonNegativeReals, name='Q_Sto_Power')
     model.Q_Sto_Loss    = Var(time, within=Reals, name='Q_Sto_Loss')
     model.Q_Sto_Energy  = Var(time, within=NonNegativeReals, name='Q_Sto_Energy')
     model.Q_Sto_Power_max=Var(time, within=NonNegativeReals, name='Q_Sto_Power_max')#, bounds=(0,10000))
-    model.Q_Hou_Dem     = Var(time, within=Reals, name='Q_Hou_Dem')
     model.Q_HP_1        = Var(time, within=NonNegativeReals, name='Q_HP_1')
     model.Q_HP_2        = Var(time, within=NonNegativeReals, name='Q_HP_2')
     model.P_EL_Dem      = Var(time, within=NonNegativeReals, name='P_EL_Dem')#, initialize=initials_test['P_EL_Dem'])
@@ -179,24 +181,19 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     model.COP_HP        = Var(time, within=NonNegativeReals, name='COP_HP')
     model.No_Feed_In    = Var(time, within=Binary, name='No_Feed_In')
     model.d_Temp_HP     = Var(time, within=Reals, name='d_Temp_HP', bounds=(0, T_Spreiz_HP))
-    model.T_Hou_1       = Var(time, within=NonNegativeReals, name='T_Hou_1')
-    model.m_flow_Hou_1  = Var(time, within=NonNegativeReals, name='m_flow_Hou_1', bounds=(0, m_flow_Hou))
-    model.T_Hou_2       = Var(time, within=NonNegativeReals, name='T_Hou_2')
-    model.m_flow_Hou_2  = Var(time, within=NonNegativeReals, name='m_flow_Hou_2')
-    model.T_Hou_3       = Var(time, within=NonNegativeReals, name='T_Hou_3')
-    model.m_flow_Hou_3  = Var(time, within=NonNegativeReals, name='m_flow_Hou_3')
-    model.Q_1_1         = Var(time, within=NonNegativeReals, name='Q_1_1')
-    model.Q_1_2         = Var(time, within=NonNegativeReals, name='Q_1_2')
-    model.Q_2_2         = Var(time, within=NonNegativeReals, name='Q_2_2')
-    model.Q_3_3         = Var(time, within=NonNegativeReals, name='Q_3_3')
-    model.Q_3_2         = Var(time, within=NonNegativeReals, name='Q_3_2')
-    model.Q_Hou_Del = Var(time, within=NonNegativeReals, name='Q_Hou_Del')
+    model.m_flow_Hou  = Var(time, within=NonNegativeReals, name='m_flow_Hou_1', bounds=(0, m_flow_Hou))
     model.d_Temp_Hou    = Var(time, within=Reals, name='d_Temp_Hou', bounds=(0, T_Spreiz_Hou))
     model.Q_TWW_Loss    = Var(time, within=NonNegativeReals, name='Q_TWW_Loss')
     model.T_TWW = Var(time, within=NonNegativeReals, name='T_TWW')
     model.Q_TWW_Dem = Var(time, within=NonNegativeReals, name='Q_TWW_Dem')
     model.HP_TWW = Var(time, within=Binary, name='HP_TWW')
     model.Q_TWW_Max = Var(time, within=NonNegativeReals, name='Q_TWW_Max')
+    model.Sto_Penalty = Var(time, within=Binary, name='Sto_Penalty')
+    model.Q_Hou_Dem = Var(time, within=NonNegativeReals, name='Q_Hou_Dem')
+
+    def Test(m,t):
+        return(m.HP_off[0] == 1)
+    model.Test = Constraint(time, rule=Test, name='Test')
 
 
 ####################---1. Read of Input Data and Set it to the corresponding Variable ---####################
@@ -217,15 +214,14 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     model.PV_Import = Constraint(time, rule=PV_Import, name='PV_Import')
 
     # Import TWW- Demand
-    if time_step != 0.25:
-        def TWW_Demand_Import(m ,t):
-            return(m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time] * time_step)
-        model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
-
-    else:
-        def TWW_Demand_Import(m ,t):
-            return(m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time])
-        model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
+ #   if time_step != 0.25:
+ #       def TWW_Demand_Import(m ,t):
+ #           return(m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time] * time_step)
+ #       model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
+ #   else:
+    def TWW_Demand_Import(m ,t):
+        return(m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time])
+    model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
 
 
     # Read T-Mean for each time-step and Set Q-Hou_Dem = 0 wenn T_Mean> T_Heiz_Grenz
@@ -234,10 +230,11 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         if T_Mean >= T_Hou_Gre:
             return(m.Q_Hou[t] == 0)
         else:
-            return(m.Q_Hou_Dem[t] == Q_Hou_Input[t+start_time] * time_step)
-    model.House_Demand = Constraint(time, rule=House_Demand, name='House_Demant')
-
-
+ #           if time_step != 0.25:
+                return(m.Q_Hou_Dem[t] == Q_Hou_Input[t+start_time] * time_step)
+#            else:
+  #              return (m.Q_Hou_Dem[t] == Q_Hou_Input[t + start_time])
+    model.House_Demand = Constraint(time, rule=House_Demand, name='House_Demand')
 
 ####################---2. Calculate the HP- Datas depending on Mode ---####################
 
@@ -306,133 +303,45 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         return(m.COP_HP[t] == eta_HP *  ((1 - m.HP_off[t]) * (m.HP_mode1[t] * COP_1[t] + (m.HP_mode2[t] + m.HP_TWW[t]) * COP_2[t])))
     model.Cop_HP = Constraint(time, rule=Cop_HP, name='Cop_HP')
 
-
 ####################---3. Consumer System (Hou) ---####################
 
-
-
-
-
-    def Limit_delta_Temp_Hou(m,t):
-        return (m.d_Temp_Hou[t] == m.T_Hou_3[t] - m.T_Hou_2[t])
-    model.Limit_delta_Temp_Hou = Constraint(time, rule=Limit_delta_Temp_Hou, name='Limit_delta_Temp_Hou')
-
-#todo change to mflowhou3 , T3
-    def Set_Third_m_flow_Hou(m, t):
-        return(m.m_flow_Hou_3[t] == m_flow_Hou * time_step)
-    model.Set_Third_m_flow_Hou = Constraint(time, rule=Set_Third_m_flow_Hou, name='Set_Third_m_flow_Hou')
-
-    def Massenerhaltungssatz(m, t):
-        return(m.m_flow_Hou_1[t] + m.m_flow_Hou_2[t] == m.m_flow_Hou_3[t])
-    model.Massenerhaltungssatz = Constraint(time, rule= Massenerhaltungssatz, name='Massenerhaltungssatz')
-
-    def Define_Q_11(m, t):
-        return(m.Q_1_1[t] == m.m_flow_Hou_1[t] * c_w_water * (m.T_Hou_1[t] - T_Ref))
-    model.Define_Q_11 = Constraint(time, rule=Define_Q_11, name='Define_Q_11')
-
-    def Define_Q_12(m, t):
-        return(m.Q_1_2[t] == m.m_flow_Hou_1[t] * c_w_water * (m.T_Hou_2[t] - T_Ref))
-    model.Define_Q_12 = Constraint(time, rule=Define_Q_12, name='Define_Q_12')
-
-    def Test_1(m, t):
-        return(m.m_flow_Hou_2[t] == 0)
-    model.Test_1 = Constraint(time, rule=Test_1, name='Test_1')
-
-
-    def Define_Q_22(m, t):
-        return(m.Q_2_2[t] == m.m_flow_Hou_2[t] * c_w_water * (m.T_Hou_2[t] - T_Ref))
-    model.Define_Q_22 = Constraint(time, rule=Define_Q_22, name='Define_Q_22')
-
-    def Define_Q_32(m, t):
-        return(m.Q_3_2[t] == m.m_flow_Hou_3[t] * c_w_water * (m.T_Hou_2[t] - T_Ref))
-    model.Define_Q_32= Constraint(time, rule=Define_Q_32, name='Define_Q_32')
-
-    def Define_Q_33(m, t):
-        return(m.Q_3_3[t] == m.m_flow_Hou_3[t] * c_w_water * (m.T_Hou_3[t] - T_Ref))
-    model.Define_Q_33= Constraint(time, rule=Define_Q_33, name='Define_Q_33')
-
-    def Define_Q_Hou_Del(m, t):
-        return(m.Q_Hou_Del[t] == m.Q_3_3[t] - m.Q_3_2[t])
-    model.Define_Q_Hou_Del = Constraint(time, rule=Define_Q_Hou_Del, name='Define_Q_Hou_Del')
-
-    def Define_Q_Hou(m, t):
-        return(m.Q_Hou[t] == (m.Q_1_1[t] - m.Q_1_2[t]))
-    model.Define_Q_Hou = Constraint(time, rule=Define_Q_Hou, name='Define_Q_Hou')
+#    def Limit_delta_Temp_Hou(m,t):
+#        return (m.d_Temp_Hou[t] <= T_Spreiz_Hou)
+#    model.Limit_delta_Temp_Hou = Constraint(time, rule=Limit_delta_Temp_Hou, name='Limit_delta_Temp_Hou')
 
     def Maximize_Q_Hou(m, t):
-        return(m.Q_Hou[t] <= m.Q_Hou_Del[t])
+        return(m.Q_Hou[t] == m.Q_Hou_Dem[t])
     model.Maximize_Q_Hou = Constraint(time, rule=Maximize_Q_Hou, name='Maximize_Q_Hou')
 
-    def Power_Balance_Valve(m,t):
-        return (m.Q_1_1[t] + m.Q_2_2[t] == m.Q_3_3[t])
-    model.Power_Balance_Valve = Constraint(time, rule=Power_Balance_Valve, name='Power_Balance_Valve')
-
-    def Power_Balance_Before_Valve(m, t):
-        return(m.Q_3_2[t] == m.Q_1_2[t] + m.Q_2_2[t])
-    model.Power_Balance_Before_Valve = Constraint(time, rule=Power_Balance_Before_Valve, name='Power_Balance_Before_Valve')
-##    (m.Q_1_1[t] == m.m_flow_Hou_1[t] * c_w_water * (m.T_Hou_1[t] - T_Ref))
-##    (m.Q_1_2[t] == m.m_flow_Hou_1[t] * c_w_water * (m.T_Hou_2[t] - T_Ref))
-##    (m.Q_2_2[t] == m.m_flow_Hou_2[t] * c_w_water * (m.T_Hou_2[t] - T_Ref))
-##    (m.Q_3_2[t] == m.m_flow_Hou_3[t] * c_w_water * (m.T_Hou_2[t] - T_Ref))
-##    (m.Q_3_3[t] == m.m_flow_Hou_3[t] * c_w_water * (m.T_Hou_3[t] - T_Ref))
-
-
-##    (m.m_flow_Hou_1[t] + m.m_flow_Hou_2[t] == m.m_flow_Hou_3[t]) -> Massenerhaltungssatz
-##    (m.m_flow_Hou_3[t] == m_flow_Hou * time_step)
-
-##    (m.T_Hou_3[t] - m.T_Hou_2[t] == m.d_Temp_Hou[t])
-##    (m.Q_Hou_Del[t] == m.Q_Hou_3_3[t] - m.Q_Hou_3_2[t])
-##    m.Q_Hou[t] == (m.Q_1_1[t] - m.Q_1_2[t])
-##    m.Q_Hou[t] <= m.Q_Hou_Del[t]
-#    m.Q_Hou_Del[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t]
-
-##    m.Q_1_1[t] + m.Q_2_2[t] == m.Q_3_3[t]
-
-##    m.Q_3_2[t] = m.Q_1_2[t] + m.Q_2_2[t]
-
-
     # Calculation of Temp from Storage to House: [K]
- #   def Temp_to_House(m, t):
- #       return(m.T_Hou_1[t] == m.T_Sto[t])
- #   model.Temp_to_House = Constraint(time, rule=Temp_to_House, name='Temp_to_House')
+#    def Temp_to_House(m, t):
+#        return(m.T_Hou_1[t] == m.T_Sto[t] + m.Sto_Penalty[t] * T_Sto_Ersatz)
+#    model.Temp_to_House = Constraint(time, rule=Temp_to_House, name='Temp_to_House')
 
-
-
-    def Limit_Second_m_flow_Hou(m, t):
-
-        return(m.m_flow_Hou_3[t] >= m.m_flow_Hou_2[t])
-    model.Limit_Second_m_flow_Hou = Constraint(time, rule=Limit_Second_m_flow_Hou, name='Limit_Second_m_flow_Hou')
-
-#    def Minimize_T_Hou_3(m, t):
-#        return (m.T_Hou_3[t] >= T_Hou_VL_min)
-#    model.Minimize_T_Hou_3 = Constraint(time, rule=Minimize_T_Hou_3, name='Minimize_T_Hou_3')
-
-    def Heat_Flow_back_to_Storage(m, t):
-        return(m.Q_Hou[t] == m.m_flow_Hou_1[t] * c_w_water * (m.T_Hou_1[t] - m.T_Hou_2[t]))
-    model.Heat_Flow_back_to_Storage = Constraint(time, rule=Heat_Flow_back_to_Storage, name='Heat_Flow_back_to_Storage')
-
-# todo: mit Q_Hou_Del wenn 3 Wege Ventil, mit Q_Hou wenn 3 Wege Ventil
-    # Calculation of Penalty-Heat-Flow: [W]
-    def Heat_Sum(m, t): # [W]
-        return(m.Q_Hou[t] + m.Q_Penalty[t] >= m.Q_Hou_Dem[t])
-    model.Heat_Sum = Constraint(time, rule=Heat_Sum, name='Heat_Sum')
+#    def Heat_Flow_back_to_Storage(m, t):
+#        return(m.Q_Hou[t] == m_flow_Hou * c_w_water * m.d_Temp_Hou[t] * time_step)
+#    model.Heat_Flow_back_to_Storage = Constraint(time, rule=Heat_Flow_back_to_Storage, name='Heat_Flow_back_to_Storage')
 
 ####################---4. Storage System (Sto) ---####################
 
+    def Storage_Penalty(m, t):
+        return(m.Sto_Penalty[t] >= T_Sto_Ersatz - m.T_Sto[t])
+    model.Storage_Penalty = Constraint(time, rule=Storage_Penalty, name='Storage_Penalty')
+
     # Calculation of Temperature in Storage in current time step: [K]
-    def Temp_Sto(m, t):  # todo Zeit einfügen / Einheiten
+    def Temp_Sto(m, t):
         if t >= 1:
-            return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) * time_step / delta_t == ((m.Q_HP[t] *(1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
+            return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) * time_step / delta_t == ((m.Q_HP[t] * (1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
         else:
             if iter == 0:
                 return(m.T_Sto[t] == T_Sto_Init)
             else:
-                return(((m.T_Sto[t] - T_Sto_Init) * m_Sto_water * c_w_water) * time_step / delta_t == ((m.Q_HP[t] *(1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
+                return(((m.T_Sto[t] - T_Sto_Init) * m_Sto_water * c_w_water) * time_step / delta_t == ((m.Q_HP[t] * (1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
     model.Temp_Sto = Constraint(time, rule=Temp_Sto, name='Temp_Sto')
 
     # Calculation of useable Energy in Storage [J] = [Ws] -> [Ws] * 3600 = [Wh]
     def Storage_Energy(m, t):
-        return(m.Q_Sto_Energy[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - T_Sto_Env))
+        return(m.Q_Sto_Energy[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - (T_Sto_Ersatz - T_Spreiz_Hou)))
     model.Storage_Energy = Constraint(time, rule=Storage_Energy, name='Storage_Energy')
 
     # Calculation of Heat-Loss during storage time: [W]
@@ -445,14 +354,14 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         return(m.Q_Sto_Power_max[t] == m.Q_Sto_Energy[t] * time_step / (delta_t))
     model.Maximum_Storage_Power = Constraint(time, rule=Maximum_Storage_Power, name='Maximum_Storage_Power')
 
-#    def Storage_Power(m, t):
-#        return(m.Q_Sto_Power[t] == m.Q_Sto_Energy[t] / delta_t)
-#    model.Storage_Power = Constraint(time, rule=Storage_Power, name='Storage_Power')
+    def Storage_Power(m, t):
+        return(m.Sto_Penalty[t] * (m.T_Sto[t] - (35 + 273.15)) == m.Q_Penalty[t] / (m_Sto_water * c_w_water))
+    model.Storage_Power = Constraint(time, rule=Storage_Power, name='Storage_Power')
 
     # Heat-Power to House is smaller than Maximum Power in Storage: [-]
-    def Limit_to_Storage_Power(m, t): # [W]
-        return(m.Q_Sto_Power_max[t] >= m.Q_Hou[t])
-    model.Limit_to_Storage_Power = Constraint(time, rule=Limit_to_Storage_Power, name='Limit_to_Storage_Power')
+#    def Limit_to_Storage_Power(m, t): # [W]
+#        return(m.Q_Sto_Power_max[t] >= m.Q_Hou[t])
+#    model.Limit_to_Storage_Power = Constraint(time, rule=Limit_to_Storage_Power, name='Limit_to_Storage_Power')
 
 ####################---5. Calculate HP_Mode depending on the TWW-Demand and Delivery Data---####################
 
@@ -530,11 +439,11 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
     # Calculation of Cost for Power: [€]
     def Cost_for_Power(m, t):
-        return (m.c_el_power[t] == m.No_Feed_In[t] * c_grid[t] * m.P_EL_Dem[t] )
+        return (m.c_el_power[t] == m.No_Feed_In[t] * c_grid[t + start_time] * m.P_EL_Dem[t] )
     model.Cost_for_Power = Constraint(time, rule= Cost_for_Power, name= 'Cost_for_Power')
 
     def Cost_for_HP_Power(m, t):
-        return(m.c_heat_power[t] == c_grid[t] * m.P_EL_HP[t])
+        return(m.c_heat_power[t] == c_grid[t + start_time] * m.P_EL_HP[t])
     model.Cost_for_HP_Power = Constraint(time, rule=Cost_for_HP_Power, name='Cost_for_HP_Power')
 
     def Real_Power_Cost(m, t):
@@ -636,7 +545,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         'COP_1'             : [],
         'COP_2'             : [],
         'd_Temp_HP'         : [],
-        'd_Temp_Hou'        : [],
+#        'd_Temp_Hou'        : [],
         'T_TWW'             : [],
         'Q_TWW_Max'         : [],
         'Q_TWW_Dem'         : [],
@@ -679,7 +588,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         res_control_horizon['c_heat_power'].append(round(value(model.c_heat_power[t]), 4))
         res_control_horizon['c_penalty'].append(round(value(model.c_penalty[t]), 4))
         res_control_horizon['c_revenue'].append(round(value(model.c_revenue[t]), 4))
-        res_control_horizon['c_grid'].append(c_grid[t])
+        res_control_horizon['c_grid'].append(c_grid[t + start_time] * 1000)
         res_control_horizon['c_cost'].append(round(value(model.c_cost[t]), 2))
         res_control_horizon['HP_off'].append(int(value(model.HP_off[t])))
         res_control_horizon['HP_mode1'].append(int(value(model.HP_mode1[t])))
@@ -692,7 +601,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         res_control_horizon['COP_1'].append(round(COP_1[t], 3))
         res_control_horizon['COP_2'].append(round(value(COP_2[t]), 3))
         res_control_horizon['d_Temp_HP'].append(round(value(model.d_Temp_HP[t]), 1))
-        res_control_horizon['d_Temp_Hou'].append(round(value(model.d_Temp_Hou[t]), 1))
+#        res_control_horizon['d_Temp_Hou'].append(round(value(model.d_Temp_Hou[t]), 1))
         res_control_horizon['c_el_cost_ch'].append(round(value(model.c_el_cost_ch), 2))
         res_control_horizon['T_TWW'].append(round(value(model.T_TWW[t]), 2))
         res_control_horizon['Q_TWW_Max'].append(round(value(model.Q_TWW_Max[t]), 2))

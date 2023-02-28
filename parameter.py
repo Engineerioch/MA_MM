@@ -27,10 +27,11 @@ def load_params(options, params):
     devs = {
     # Set Heat Storage parameter
         'Sto'   : {
+            'T_Sto_Ersatz' : 35 + 273.15,
             'T_Sto_min' : 18 + 273.15,                   # [K] Minimum temperature of storage
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
-            'T_Sto_Init': 40 + 273.15,                  # [K] initial Storage Temperature for Optimization
+            'T_Sto_Init': 38 + 273.15,                  # [K] initial Storage Temperature for Optimization
             'U_Sto'     : 0.3,                          # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio' : 2,                            # [-] Ratio of Heat/Diameter
@@ -76,6 +77,7 @@ def load_params(options, params):
             'm_flow_Hou'        :    1107 / 3600,           # [kg/s] Constant Mass flow from Storage to House
             'T_Hou_Gre'         : 273.15 + 15,               # [K] Heizgrenztemperatur (Mittelwert über den Tag)
             'T_Spreiz_Hou'      : 7 + 273.15,
+            'T_Hou_VL_min'      : 35 + 273.15,
 
         },
 
