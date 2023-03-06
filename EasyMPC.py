@@ -93,17 +93,16 @@ save_optim_results = {
     'Q_Hou': [],
     'Q_Hou_Dem': [],
     'Q_Sto_Power_max': [],
-    'T_Sto': [],
-
-    'Q_TWW_Max': [],
-    'Q_TWW_Dem': [],
     'T_TWW': [],
+  #  'Q_TWW_Max': [],
+    'Q_TWW_Dem': [],
 
+    'T_Sto': [],
     'Q_Sto_Loss'        : [],
     'Q_Sto_Energy'      : [],
 
     'COP_Carnot': [],
-    'COP_HP':[],
+  #  'COP_HP':[],
     'T_Air': [],
     'T_Mean': [],
     'c_el_power': [],
@@ -114,7 +113,7 @@ save_optim_results = {
     'P_EL_HP'           : [],
     'P_PV'              : [],
     'd_Temp_HP': [],
- #   'd_Temp_Hou': [],
+    'd_Temp_Hou': [],
     'c_grid': [],
 
     'c_penalty': [],
