@@ -19,7 +19,7 @@ def load_params(options, params):
         'costs'     : {
             #todo: Array für die Strompreise & Vergütungen erstellen -> für fixen Strompreis erledgit
             'c_payment'     : 0.06 / 1000,                   # [Euro/kWh] Feed in tariff (Einspeisevergütung)
-            'c_comfort'     : 0.7,                             # [€/Wh]
+            'c_comfort'     : 0.7,                             # [€/kWh]
         }
     }
     # Set component parameters
@@ -31,7 +31,7 @@ def load_params(options, params):
             'T_Sto_min' : 18 + 273.15,                   # [K] Minimum temperature of storage
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
-            'T_Sto_Init': 38 + 273.15,                  # [K] initial Storage Temperature for Optimization
+            'T_Sto_Init': 36 + 273.15,                  # [K] initial Storage Temperature for Optimization
             'U_Sto'     : 0.3,                          # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio' : 2,                            # [-] Ratio of Heat/Diameter
@@ -122,7 +122,7 @@ def load_time_series(params, options):
 
         # Electrical Load Data (Time steps = 1h)
 # [W] Simulierter Bedarf an elektrischer Energie
-    time_series['P_EL_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/ELHour.txt') * 1000
+    time_series['P_EL_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Test/ELHour.txt') * 1000
 
         # Heat Load Data (Time steps = 1h)
 # Simulierter Wärmebedarf für die jeweiligen TRY
@@ -131,7 +131,7 @@ def load_time_series(params, options):
         #  dann wird die Summe der Zeilen gebildet (sum)
     time_series['Q_Hou_Dem'] = []
     if options['WeatherData']['TRY']    == 'cold':
-        dQ = pd.read_csv('input_data/Q_Dem/Q_Heat_Dem_cold.csv')
+        dQ = pd.read_csv('input_data/Test/Q_Heat_Dem_cold.csv')
     elif options['WeatherData']['TRY']  == 'normal':
         dQ = pd.read_csv('input_data/Q_Dem/Q_Heat_Dem_normal.csv')
     elif options['WeatherData']['TRY']  == 'warm':
@@ -148,14 +148,14 @@ def load_time_series(params, options):
         dC = pd.read_csv('input_data/VariablePowerPrice.csv', skiprows=0)
         time_series['c_grid'] = dC.iloc[:, 0]
     else:
-        dC = pd.read_csv('input_data/FixPowerPrice.csv', skiprows=0)
+        dC = pd.read_csv('input_data/Test/FixPowerPrice.csv', skiprows=0)
         time_series['c_grid'] = dC.iloc[:,0]
 
 
     time_series['T_Air'] = []
         # Einlesen der Außentemperatur abhängig vom ausgewählten TRY
     if options['WeatherData']['TRY']    == "cold":
-        dT = pd.read_csv('input_data/Temperature_Berlin.csv', skiprows=0)
+        dT = pd.read_csv('input_data/Test/Temperature_Berlin.csv', skiprows=0)
         time_series['T_Air'] = dT.iloc[:, 3]
     elif options['WeatherData']['TRY']  == 'normal':
         dT = pd.read_csv('input_data/Temperature_Berlin.csv', skiprows=0)
@@ -182,7 +182,7 @@ def load_time_series(params, options):
 
 ##        # Load PV-Data
     if options['WeatherData']['TRY']    == 'cold':
-        P_PV_list = pd.read_csv('input_data/P_PV_TRY_cold.csv')
+        P_PV_list = pd.read_csv('input_data/Test/P_PV_TRY_cold.csv')
 #        P_PV_list = np.loadtxt('D:/lma-mma/MA_MM_Python/input_data/P_PV_TRY_cold.csv')
     elif options['WeatherData']['TRY']    == 'normal':
         P_PV_list = pd.read_csv('input_data/P_PV_TRY_normal.csv')
@@ -216,10 +216,8 @@ def load_time_series(params, options):
  #       if options['Tariff']['Variable']:
 #       time_series['c_grid_var']
 
-    if time_step == 0.25:
-        time_series['Q_TWW_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Zapfprofil_Quarterly.txt') * 1000
-    else:
-        time_series['Q_TWW_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Zapfprofil_Hourly.txt') * 1000
+
+    time_series['Q_TWW_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Test/Zapfprofil_Hourly.txt') * 1000
 
 
 

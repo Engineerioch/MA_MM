@@ -96,14 +96,14 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         Q_TWW_Dem = np.zeros(8760)
 
 
-    xp = np.arange(0.0, 8760, 1.0)
-    xnew = np.arange(0.0, 8760, time_step)
+    xp = np.arange(0.0, 8783, 1.0)
+    xnew = np.arange(0.0, 8783, time_step)
     P_PV = np.interp(xnew, xp, P_PV)
     T_Input = np.interp(xnew, xp, T_Input)
     P_EL_Dem = np.interp(xnew, xp, P_EL_Dem)
     Q_Hou_Input = np.interp(xnew, xp, Q_Hou_Input)
     c_grid = np.interp(xnew, xp, c_grid)
-    if time_step != 1 and time_step != 0.25:
+    if options['Sto']['Type'] == 'Seperated':
         Q_TWW_Dem = np.interp(xnew,xp, Q_TWW_Dem)
     else:
         pass
