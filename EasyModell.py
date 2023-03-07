@@ -19,6 +19,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     time_range = range(int(prediction_horizon * (1 / params['time_step'])) + 1)
     time = range(int(prediction_horizon / params['time_step']))
     delta_t = params['time_step'] * 3600  # time Step in
+    sek_in_hour = 3600
     sum_control =range(int(params['control_horizon'] / params['time_step']))
     time_step = params['time_step']
     start_time_hour = int(start_time * time_step)
@@ -96,15 +97,15 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         Q_TWW_Dem = np.zeros(8760)
 
 
-    xp = np.arange(0.0, 8783, 1.0)
-    xnew = np.arange(0.0, 8783, time_step)
+    xp = np.arange(0.0, 8760, 1.0)
+    xnew = np.arange(0.0, 8760, time_step)
     P_PV = np.interp(xnew, xp, P_PV)
     T_Input = np.interp(xnew, xp, T_Input)
     P_EL_Dem = np.interp(xnew, xp, P_EL_Dem)
     Q_Hou_Input = np.interp(xnew, xp, Q_Hou_Input)
     c_grid = np.interp(xnew, xp, c_grid)
     if options['Sto']['Type'] == 'Seperated':
-        Q_TWW_Dem = np.interp(xnew,xp, Q_TWW_Dem)
+        Q_TWW_Dem = np.interp(xnew, xp, Q_TWW_Dem)
     else:
         pass
 
@@ -215,7 +216,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
             return(m.Q_Hou_Dem[t] == Q_Hou_Input[t+start_time] * time_step)
     model.House_Demand = Constraint(time, rule=House_Demand, name='House_Demant')
 
-
+    # Define what happens, if the Mean Temperature of a Day is above the Heating Limit Temperature:
     if T_Mean >= T_Hou_Gre:
         def Heat_House_Summer(m, t):
             return (m.Q_Hou[t] == 0)
@@ -230,7 +231,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         model.Sto_House_Summer = Constraint(time, rule=Sto_House_Summer, name='Sto_House_Summer')
     else:
         def Sto_House_Summer(m, t):
-            return (m.T_Sto[t] >= T_Sto_Ersatz)
+            return (m.T_Sto[t] >= T_Sto_Ersatz) # Todo: hier kann die Straftemperatur im Speicher mit rein)
         model.Sto_House_Summer = Constraint(time, rule=Sto_House_Summer, name='Sto_House_Summer')
 
         def House_Power_Binary(m, t):
@@ -240,7 +241,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
 ####################---2. Calculate the HP- Datas depending on Mode ---####################
 
-    # Constraint to set minimum and maximum one mode: [-]
+    # Constraint to set HP-mode: [-]
     def HP_Modes(m, t):
        return(m.HP_off[t] + m.HP_mode1[t] + m.HP_mode2[t] + m.HP_TWW[t] == 1)
     model.HP_Modes = Constraint(time, rule= HP_Modes, name='HP_Modes')
@@ -255,22 +256,27 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         return(m.Q_HP[t] == (m.HP_mode1[t] + m.HP_mode2[t] + m.HP_TWW[t]) * m.Q_HP_Unreal[t] + (m.HP_off[t] * 0))
     model.Actual_Q_HP = Constraint(time, rule=Actual_Q_HP, name='Actual_Q_HP')
 
+    # Constraint to not use Mode 1 if T_Sto > TVL1
     def Limit_T_Sto1(m,t):
         return(m.HP_mode1[t] * m.T_Sto[t] <= T_HP_VL_1)
     model.Limit_T_Sto1 = Constraint(time, rule=Limit_T_Sto1, name='Limit_T_Sto1')
 
+    # Constraint to not use Mode 2 if T_Sto > TVL2
     def Limit_T_Sto2(m, t):
         return (m.HP_mode2[t] * m.T_Sto[t] <= T_HP_VL_2)
     model.Limit_T_Sto2 = Constraint(time, rule=Limit_T_Sto2, name='Limit_T_Sto')
 
+    # Calculation of HP-Power independent of Mode
     def Heat_Power_HP(m, t):
         return (m.Q_HP_Unreal[t] == m_flow_HP * c_w_water * m.d_Temp_HP[t] * time_step)
     model.Heat_Power_HP = Constraint(time, rule=Heat_Power_HP, name='Heat_Power_HP')
 
+    # Constraint to limit the Temperature-Change of HP to Heat-Change from dimensioning
     def Limit_Temp_Change_HP(m, t):
         return(m.d_Temp_HP[t] <= T_Spreiz_HP)
     model.Limit_Temp_Change_HP = Constraint(time, rule=Limit_Temp_Change_HP, name='Limit_Temp_Change_HP')
 
+    # Constraint to set Mode Off
     def Temp_Change_Not_Zero(m, t):
         return(m.d_Temp_HP[t] + m.HP_off[t] >= 0.01)
     model.Temp_Change_Not_Zero = Constraint(time, rule=Temp_Change_Not_Zero, name='Temp_Change_Not_Zero')
@@ -305,29 +311,29 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         return(m.COP_HP[t] == eta_HP *  ((1 - m.HP_off[t]) * (m.HP_mode1[t] * COP_1[t] + (m.HP_mode2[t] + m.HP_TWW[t]) * COP_2[t])))
     model.Cop_HP = Constraint(time, rule=Cop_HP, name='Cop_HP')
 
-
 ####################---3. Consumer System (Hou) ---####################
 
-    def Set_Third_m_flow_Hou(m, t):
-        return(m.m_flow_Hou[t] == m_flow_Hou * time_step)
-    model.Set_Third_m_flow_Hou = Constraint(time, rule=Set_Third_m_flow_Hou, name='Set_Third_m_flow_Hou')
-
+    # Constraint to limit the Temperature-Change of Hou to Heat-Change from dimensioning
     def Limit_delta_Temp_Hou(m,t):
         return (m.d_Temp_Hou[t] <= T_Spreiz_Hou)
     model.Limit_delta_Temp_Hou = Constraint(time, rule=Limit_delta_Temp_Hou, name='Limit_delta_Temp_Hou')
 
+    # Constraint to Limit the Q_Hou to the demand # todo equalization
     def Maximize_Q_Hou(m, t):
         return(m.Q_Hou[t] <= m.Q_Hou_Dem[t])
     model.Maximize_Q_Hou = Constraint(time, rule=Maximize_Q_Hou, name='Maximize_Q_Hou')
 
+    # Limit Q_Hou to the maximum Storage Power, as the Storage Power depends on T_Sto and provides the Temeperature for Heaeting
     def Maxmium_Heat_Flow_From_Storage(m ,t):
-        return(m.Q_Hou[t]  <= m.Q_Sto_Power_max[t] * m.B_Hou[t])
+        return(m.Q_Hou[t] <= m.Q_Sto_Power_max[t] * m.B_Hou[t])
     model.Maxmium_Heat_Flow_From_Storage = Constraint(time, rule=Maxmium_Heat_Flow_From_Storage, name='Maxmium_Heat_Flow_From_Storage')
 
+    # Constraint to Limit Q_Hou depending on the maximum Heat Change in House # todo redundant
     def Heat_Flow_back_to_Storage(m, t):
-        return(m.Q_Hou[t] == m.m_flow_Hou[t] * c_w_water * m.d_Temp_Hou[t])
+        return(m.Q_Hou[t] == m_flow_Hou * c_w_water * m.d_Temp_Hou[t] * time_step)
     model.Heat_Flow_back_to_Storage = Constraint(time, rule=Heat_Flow_back_to_Storage, name='Heat_Flow_back_to_Storage')
 
+    # Define Penalty if Q_Hou can not be reached
     def Penalty_Heat_Flow(m,t):
         return (m.Q_Hou[t] + m.Q_Penalty[t] == m.Q_Hou_Dem[t])
     model.Penalty_Heat_Flow = Constraint(time, rule=Penalty_Heat_Flow, name='Penalty_Heat_Flow')
@@ -335,20 +341,20 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
 ####################---4. Storage System (Sto) ---####################
 
-    # Calculation of Temperature in Storage in current time step: [K]
+    # Calculation of Temperature in Storage in current time step: [K] # todo Einheiten
     def Temp_Sto(m, t):
         if t >= 1:
-            return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) * time_step / delta_t == ((m.Q_HP[t] * (1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
+            return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) * time_step / sek_in_hour == ((m.Q_HP[t] * (1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
         else:
             if iter == 0:
                 return(m.T_Sto[t] == T_Sto_Init)
             else:
-                return(((m.T_Sto[t] - T_Sto_Init) * m_Sto_water * c_w_water) * time_step / delta_t == ((m.Q_HP[t] * (1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
+                return(((m.T_Sto[t] - T_Sto_Init) * m_Sto_water * c_w_water) * time_step/ sek_in_hour == ((m.Q_HP[t] * (1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
     model.Temp_Sto = Constraint(time, rule=Temp_Sto, name='Temp_Sto')
 
     # Calculation of useable Energy in Storage [J] = [Ws] -> [Ws] * 3600 = [Wh]
     def Storage_Energy(m, t):
-        return(m.Q_Sto_Energy[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - T_Sto_Env) * time_step / 3600)
+        return(m.Q_Sto_Energy[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - T_Sto_Env) / delta_t)
     model.Storage_Energy = Constraint(time, rule=Storage_Energy, name='Storage_Energy')
 
     # Calculation of Heat-Loss during storage time: [W]
@@ -356,9 +362,9 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         return (m.Q_Sto_Loss[t] == U_Sto * A_Sto * (m.T_Sto[t] - T_Sto_Env) * time_step)
     model.Loss_Sto = Constraint(time, rule= Loss_Sto, name='Loss_Sto')
 
-    # Maximum Power by Storage per hour: [Wh] ?
+    # Maximum Power by Storage per hour: [Wh] # todo die Temperaturklammer mal gscheit)
     def Maximum_Storage_Power(m, t):
-        return(m.Q_Sto_Power_max[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - (T_Sto_Ersatz- T_Spreiz_Hou)) * time_step / 3600)
+        return(m.Q_Sto_Power_max[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - (T_Sto_Ersatz)) * time_step / sek_in_hour)
     model.Maximum_Storage_Power = Constraint(time, rule=Maximum_Storage_Power, name='Maximum_Storage_Power')
 
 #    def Storage_Power(m, t):
@@ -367,28 +373,31 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
 ####################---5. Calculate HP_Mode depending on the TWW-Demand and Delivery Data---####################
 
-
     if options['Sto']['Type'] == 'Seperated':
-    # Calculation of Heat-Loss in TWW-Storage: [W]
+        # Calculation of Heat-Loss in TWW-Storage: [W]
         def TWW_Loss(m, t):
             return (m.Q_TWW_Loss[t] == U_TWW * A_TWW * (m.T_TWW[t] - T_Sto_Env) * time_step)
         model.TWW_Loss = Constraint(time, rule=TWW_Loss, name='TWW_Loss')
 
-        # Energy-Balance of TWW-Storage: [W]
+        def Import_Q_TWW(m,t):
+            return(m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time] * time_step)
+        model.Import_Q_TWW = Constraint(time, rule=Import_Q_TWW, name='Import_Q_TWW')
+
+        # Energy-Balance of TWW-Storage: [W] # todo Einheit anschauen
         def TWW_Balance(m, t):
             if t >= 1:
-                return ((m.T_TWW[t] - m.T_TWW[t - 1]) * m_TWW_water * c_w_water * time_step / delta_t == (m.Q_HP[t] * m.HP_TWW[t]) - m.Q_TWW_Dem[t] - m.Q_TWW_Loss[t])
+                return ((m.T_TWW[t] - m.T_TWW[t - 1]) * m_TWW_water * c_w_water * time_step / sek_in_hour == (m.Q_HP[t] * m.HP_TWW[t]) - m.Q_TWW_Dem[t] - m.Q_TWW_Loss[t])
             else:
                 if iter == 0:
                     return (m.T_TWW[t] == T_TWW_Init)
                 else:
-                    return (((m.T_TWW[t] - T_TWW_Init) * m_Sto_water * c_w_water) * time_step / delta_t == (m.Q_HP[t] * m.HP_TWW[t]) - m.Q_TWW_Dem[t] - m.Q_TWW_Loss[t])
+                    return (((m.T_TWW[t] - T_TWW_Init) * m_Sto_water * c_w_water) * time_step / sek_in_hour == (m.Q_HP[t] * m.HP_TWW[t]) - m.Q_TWW_Dem[t] - m.Q_TWW_Loss[t])
         model.TWW_Balance = Constraint(time, rule=TWW_Balance, name='TWW_Balance')
 
         # Energy in TWW-Storage [W]
-        def Maximize_Flow_of_TWW(m, t):
-            return (m_TWW_water * c_w_water * (m.T_TWW[t] - T_TWW_Min) * time_step/ (delta_t) == m.Q_TWW_Max[t])
-        model.Maximize_Flow_of_TWW = Constraint(time, rule=Maximize_Flow_of_TWW, name='Maximize_Flow_of_TWW')
+        def Maximum_Useable_TWW_Power(m, t):
+            return (m_TWW_water * c_w_water * (m.T_TWW[t] - T_TWW_Min) * time_step / sek_in_hour == m.Q_TWW_Max[t])
+        model.Maximum_Useable_TWW_Power = Constraint(time, rule=Maximum_Useable_TWW_Power, name='Maximum_Useable_TWW_Power')
 
         # Energy in TWW-Storage always higher than Demand [W]
         def Demand_Smaller_Than_TWW_Energy(m, t):
@@ -400,44 +409,37 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
             return (m.T_TWW[t] >= T_TWW_Min)
         model.Minimize_T_TWW = Constraint(time, rule=Minimize_T_TWW, name='Minimize_T_TWW')
 
-        # Temeperature in TWW-Storage never above T_TWW_min: [K]
+        # Temeperature in TWW-Storage never above T_HP_VL_Max: [K]
         def Maximize_T_TWW(m, t):
             return (m.T_TWW[t] <= T_HP_VL_2)
         model.Maximize_T_TWW = Constraint(time, rule=Maximize_T_TWW, name='Maximize_T_TWW')
 
-        # Import TWW- Demand
-        def TWW_Demand_Import(m, t):
-            return (m.Q_TWW_Dem[t] == Q_TWW_Dem[t + start_time] * time_step)
-        model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
-
     else:
+        # Energy-Balance of TWW-Storage: [W] # todo Einheit anschauen
         def TWW_Balance(m, t):
                 return (m.T_TWW[t] == T_TWW_Init)
         model.TWW_Balance = Constraint(time, rule=TWW_Balance, name='TWW_Balance')
 
+        # Calculation of Heat-Loss in TWW-Storage: [W]
         def TWW_Loss(m, t):
             return (m.Q_TWW_Loss[t] == 0)
         model.TWW_Loss = Constraint(time, rule=TWW_Loss, name='TWW_Loss')
 
+        # No Operation in Mode TWW
         def HP_TWW_off(m, t):
             return(m.HP_TWW[t] == 0)
         model.HP_TWW_off = Constraint(time, rule=HP_TWW_off, name='HP_TWW_off')
 
+        # Set any value to avoid a python failure
         def Smth_for_Q_Max(m,t):
             return(m.Q_TWW_Max[t] == 50)
         model.Smth_for_Q_Max = Constraint(time, rule=Smth_for_Q_Max, name='Smth_for_Q_Max')
 
-        # Import TWW- Demand
+        # Set any value to avoid a python failure
         def TWW_Demand_Import(m, t):
             return (m.Q_TWW_Dem[t] == 0)
 
         model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
-
-
-
-
-
-
 
 ####################---6. Linking of all Systems ---####################
 
