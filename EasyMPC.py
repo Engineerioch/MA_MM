@@ -297,6 +297,41 @@ elif show== 'Save_Results':
        file_devs.close()
 
 
+    # Create a file which saves only the Modes and one which only saves the Input-Data
+    timestep = str(time_step)
+    ts = timestep.replace('.', '')
+    Modefile = 'Modes_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+        control_horizon) + '_' + str(prediction_horizon) + '.csv'
+    Inputfile = 'Data_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+        control_horizon) + '_' + str(prediction_horizon) + '.csv'
+    Modus = [val for sublist in save_results["Mode"] for val in sublist]
+
+    with open(Modefile, "w", newline="") as m:
+        writer = csv.writer(m)
+        for val in Modus:
+            writer.writerow([val])
+
+    T_Air = [val for sublist in save_results["T_Air"] for val in sublist]
+    Q_Hou = [val for sublist in save_results["Q_Hou_Dem"] for val in sublist]
+    P_PV = [val for sublist in save_results["P_PV"] for val in sublist]
+    P_EL = [val for sublist in save_results["P_EL"] for val in sublist]
+
+    Data = list(zip(T_Air, Q_Hou, P_PV, P_EL))
+    Inputfile = 'Data_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+        control_horizon) + '_' + str(prediction_horizon) + '.csv'
+    with open(Inputfile, "w", newline="") as I:
+        writer = csv.writer(I)
+        for values in Data:
+            writer.writerow(values)
+
+
+
+
+    print(save_results['P_PV'])
+
+
+
 else:
     print(save_results['T_Air'])
 #    print(save_results['T_Mean'])
+
