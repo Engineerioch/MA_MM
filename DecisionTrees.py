@@ -2,6 +2,8 @@ import sklearn
 from sklearn.datasets import load_iris
 from sklearn import tree
 import graphviz
+import numpy as np
+import csv
 
 
 
@@ -15,19 +17,35 @@ print(data)
 print(data.target_names)
 
 
+
+
 from sklearn import tree
 iris = load_iris()
-x, y = iris.data, iris.target
+
+data = []
+with open ("Data_1440_1_168_4_24.csv") as file:
+    reader = csv.reader(file, delimiter=",")
+    for row in reader:
+        row_values = [float(val) for val in row]
+        data.append(row_values)
+
+
+
+y_Opti = np.loadtxt("Modes_1440_1_168_4_24.csv")
+
+
+x, y = data, y_Opti
 clf = tree.DecisionTreeClassifier()
 clf = clf.fit(x, y)
+print (x , y)
 
 #tree.plot_tree(clf)
 
 
 
 dot_data = tree.export_graphviz(clf, out_file=None,
-                     feature_names=iris.feature_names,
-                     class_names=iris.target_names,
+                     feature_names= ('T_Air', 'Q_Hou_Dem', 'P_PV', 'P_EL_Dem'),
+                     #class_names=data,
                      filled=True, rounded=True,
                      special_characters=True)
 graph = graphviz.Source(dot_data)
