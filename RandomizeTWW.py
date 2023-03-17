@@ -22,11 +22,11 @@ for i in range(12):
     # Combine the fixed and shuffled data to create the new data
     new_data = fixed_data + remaining_data
 
-    with open(f"outcome_{i + 1}.csv", "w", newline="") as f:
+    with open(f"input_data/Medoid/TWW/outcome_{i + 1}.csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(new_data)
     # Print the new data
-    print(f"Outcome {i + 1}: {new_data}")
+#    print(f"input_data/Medoid/TWW/Outcome {i + 1}: {new_data}")
 
 
 #listTWWPower= [0,0,0,0,0,0,0,1.715,3.815,0.21,0.105,0.21,0.315,0,0.105,0.105,0.105,0,0.315,0.105,0.735,3.705,0,0,]
