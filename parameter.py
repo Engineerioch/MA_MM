@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import csv
 
 #from Optimization import T_Hou_delta_max
 
@@ -104,7 +105,7 @@ def load_params(options, params):
     elif options['TWW']['Size'] == 'Norm':
         devs['TWW']['Volume'] = 0.2  # [m³] Norm TWW-Storage has a capacity of 200l
     elif options['TWW']['Size'] == 'Large':
-        devs['TWW']['Volume'] = 5.0  # [m³] Large TWW-Storage has a capacity of 500l
+        devs['TWW']['Volume'] = 0.5  # [m³] Large TWW-Storage has a capacity of 500l
     else:
         print('Please set a supported TWW-Storage Size in EasyMPC -> options')
 
@@ -120,105 +121,130 @@ def load_time_series(params, options):
         # Load inputs
     time_series         = {}
 
-        # Electrical Load Data (Time steps = 1h)
-# [W] Simulierter Bedarf an elektrischer Energie
-    time_series['P_EL_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/ELHour.txt')
 
-        # Heat Load Data (Time steps = 1h)
-# Simulierter Wärmebedarf für die jeweiligen TRY
-        ## Erklärung: Zuerst wird die Datei durch pandas eingelesen
-        #  danach wird die erste Spalte (time) gelöscht (iloc)
-        #  dann wird die Summe der Zeilen gebildet (sum)
-    time_series['Q_Hou_Dem'] = []
-    if options['WeatherData']['TRY']    == 'cold':
-        dQ = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_cold.csv')
-    elif options['WeatherData']['TRY']  == 'normal':
-        dQ = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_normal.csv')
-    elif options['WeatherData']['TRY']  == 'warm':
-        dQ = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_warm.csv')
-    else:
-        print('Please tell which TRY you want to be simulated in parameter.py -> Options')
-        #Anpassung des Q_Heat_Dem sodass der Array nur noch die Summe der Wärmebedarfe der Einzelräume beinhaltet
-    dQ                          = dQ.iloc[: , 1:]
-    time_series['Q_Hou_Dem']    = dQ.sum(axis=1)
-
-# Einlesen des Strompreises [€/kWh]
+    # Einlesen des Strompreises [€/kWh]
     time_series['c_grid'] = []
     if options['Tariff']['Variable']:
         dC = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/VarPowerPrice.csv', skiprows=0)
         time_series['c_grid'] = dC.iloc[:, 0]
     else:
         dC = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/FixPowerPrice.csv', skiprows=0)
-        time_series['c_grid'] = dC.iloc[:,0]
+        time_series['c_grid'] = dC.iloc[:, 0]
 
 
-    time_series['T_Air'] = []
-        # Einlesen der Außentemperatur abhängig vom ausgewählten TRY
-    if options['WeatherData']['TRY']    == "cold":
-        dT = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Temperature_Berlin.csv', skiprows=0)
-        time_series['T_Air'] = dT.iloc[:, 3]
-    elif options['WeatherData']['TRY']  == 'normal':
-        dT = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Temperature_Berlin.csv', skiprows=0)
-        time_series['T_Air'] = dT.iloc[:, 1]
-    elif options['WeatherData']['TRY']  == 'warm':
-        dT = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Temperature_Berlin.csv', skiprows=0)
-        time_series['T_Air'] = dT.iloc[:, 2]
-
-#    time_series['T_Air'] = dT.sum(axis=1)
-#    time_series['T_Air'] = [item for sublist in dT for item in sublist]
-
-        # Load of Sun Radiation Data
-    dH = []
-    if options['WeatherData']['TRY']    == 'cold':
-        dH = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Global_Radiation_Berlin.csv', skiprows=0)
-        time_series['HGloHor'] = dH.iloc[:, 3]
-    elif options['WeatherData']['TRY']    == 'normal':
-        dH = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Global_Radiation_Berlin.csv', skiprows=0)
-        time_series['HGloHor'] = dH.iloc[:, 1]
-    elif options['WeatherData']['TRY']    == 'warm':
-        dH = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Global_Radiation_Berlin.csv', skiprows=0)
-        time_series['HGloHor'] = dH.iloc[:, 2]
 
 
-##        # Load PV-Data
-    if options['WeatherData']['TRY']    == 'cold':
-         P_PV_list = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/P_PV_TRY_cold.csv')
-        #P_PV_list = pd.read_csv('input_data/Test/P_PV_TRY_cold.csv')
-#        P_PV_list = np.loadtxt('D:/lma-mma/MA_MM_Python/input_data/Test.csv.csv')
-    elif options['WeatherData']['TRY']    == 'normal':
-        P_PV_list = pd.read_csv('/input_data/Medoid/P_PV_TRY_normal.csv')
- #       P_PV_list = np.loadtxt('D:/lma-mma/MA_MM_Python/input_data/P_PV_TRY_normal_east.txt')
-    elif options['WeatherData']['TRY']    == 'warm':
-        P_PV_list = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/P_PV_TRY_warm.csv')
-#        P_PV_list = np.loadtxt('D:/lma-mma/MA_MM_Python/input_data/P_PV_TRY_warm.txt')
-    P_PV_list = P_PV_list.values.tolist()
-    time_series['P_PV'] = [item for sublist in P_PV_list for item in sublist]
+    # This is the Input-Data if the Optimization is running with the Original TRY-Data
+    if options['WeatherData']['Input_Data'] == 'TRY':
 
-#    P_PV = np.loadtxt('input_data/Test.csv.csv', delimiter=';')
-#    time_series['P_PV'] = np.zeros([prediction_horizon + 1])
-#    for t in range(prediction_horizon + 1):
-#        time_series['P_PV'] = P_PV[t]
+        # Electrical Load Data (Time steps = 1h)
+        # [W] Simulierter Bedarf an elektrischer Energie
+        time_series['P_EL_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/ELHour.txt')
 
-
-        # Load Wind Speed Data
-    dW = []
-    if options['WeatherData']['TRY']    == 'cold':
-        dW = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Wind_Speed_Berlin.csv', skiprows=0)
-        time_series['Win_Speed'] = dW.iloc[:, 3]
-    elif options['WeatherData']['TRY']    == 'normal':
-        dW = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Wind_Speed_Berlin.csv', skiprows=0)
-        time_series['Win_Speed'] = dW.iloc[:, 1]
-    elif options['WeatherData']['TRY']    == 'warm':
-        dW = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Wind_Speed_Berlin.csv', skiprows=0)
-        time_series['Win_Speed'] = dW.iloc[:, 2]
-
-        # Costs of Power supply by the grid if option is fix or variable
-        #Todo Varialber Strompreis Daten hinterlegen
- #       if options['Tariff']['Variable']:
-#       time_series['c_grid_var']
+        # Heat Load Data (Time steps = 1h)
+        # Simulierter Wärmebedarf für die jeweiligen TRY
+        ## Erklärung: Zuerst wird die Datei durch pandas eingelesen
+        #  danach wird die erste Spalte (time) gelöscht (iloc)
+        #  dann wird die Summe der Zeilen gebildet (sum)
+        time_series['Q_Hou_Dem'] = []
+        if options['WeatherData']['TRY']    == 'cold':
+            dQ = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_cold.csv')
+        elif options['WeatherData']['TRY']  == 'normal':
+            dQ = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_normal.csv')
+        elif options['WeatherData']['TRY']  == 'warm':
+            dQ = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Q_Dem/Q_Heat_Dem_warm.csv')
+        else:
+            print('Please tell which TRY you want to be simulated in parameter.py -> Options')
+            #Anpassung des Q_Heat_Dem sodass der Array nur noch die Summe der Wärmebedarfe der Einzelräume beinhaltet
+        dQ                          = dQ.iloc[: , 1:]
+        time_series['Q_Hou_Dem']    = dQ.sum(axis=1)
 
 
-    time_series['Q_TWW_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Zapfprofil_Hourly.txt') * 1000
 
+
+        time_series['T_Air'] = []
+            # Einlesen der Außentemperatur abhängig vom ausgewählten TRY
+        if options['WeatherData']['TRY']    == "cold":
+            dT = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Temperature_Berlin.csv', skiprows=0)
+            time_series['T_Air'] = (dT.iloc[:, 3] + 273.15)
+        elif options['WeatherData']['TRY']  == 'normal':
+            dT = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Temperature_Berlin.csv', skiprows=0)
+            time_series['T_Air'] = (dT.iloc[:, 1] + 273.15)
+        elif options['WeatherData']['TRY']  == 'warm':
+            dT = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Temperature_Berlin.csv', skiprows=0)
+            time_series['T_Air'] = (dT.iloc[:, 2] +273.15)
+
+
+            # Load of Sun Radiation Data
+        dH = []
+        if options['WeatherData']['TRY']    == 'cold':
+            dH = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Global_Radiation_Berlin.csv', skiprows=0)
+            time_series['HGloHor'] = dH.iloc[:, 3]
+        elif options['WeatherData']['TRY']    == 'normal':
+            dH = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Global_Radiation_Berlin.csv', skiprows=0)
+            time_series['HGloHor'] = dH.iloc[:, 1]
+        elif options['WeatherData']['TRY']    == 'warm':
+            dH = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Global_Radiation_Berlin.csv', skiprows=0)
+            time_series['HGloHor'] = dH.iloc[:, 2]
+
+
+    ##        # Load PV-Data
+        if options['WeatherData']['TRY']    == 'cold':
+             P_PV_list = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/P_PV_TRY_cold.csv')
+            #P_PV_list = pd.read_csv('input_data/Test/P_PV_TRY_cold.csv')
+    #        P_PV_list = np.loadtxt('D:/lma-mma/MA_MM_Python/input_data/Test.csv.csv')
+        elif options['WeatherData']['TRY']    == 'normal':
+            P_PV_list = pd.read_csv('/input_data/Medoid/P_PV_TRY_normal.csv')
+     #       P_PV_list = np.loadtxt('D:/lma-mma/MA_MM_Python/input_data/P_PV_TRY_normal_east.txt')
+        elif options['WeatherData']['TRY']    == 'warm':
+            P_PV_list = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/P_PV_TRY_warm.csv')
+    #        P_PV_list = np.loadtxt('D:/lma-mma/MA_MM_Python/input_data/P_PV_TRY_warm.txt')
+        P_PV_list = P_PV_list.values.tolist()
+        time_series['P_PV'] = [item for sublist in P_PV_list for item in sublist]
+
+            # Load Wind Speed Data
+        dW = []
+        if options['WeatherData']['TRY']    == 'cold':
+            dW = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Wind_Speed_Berlin.csv', skiprows=0)
+            time_series['Win_Speed'] = dW.iloc[:, 3]
+        elif options['WeatherData']['TRY']    == 'normal':
+            dW = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Wind_Speed_Berlin.csv', skiprows=0)
+            time_series['Win_Speed'] = dW.iloc[:, 1]
+        elif options['WeatherData']['TRY']    == 'warm':
+            dW = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/Wind_Speed_Berlin.csv', skiprows=0)
+            time_series['Win_Speed'] = dW.iloc[:, 2]
+
+
+        time_series['Q_TWW_Dem']     = np.loadtxt('D:/lma-mma/Repos/MA_MM/input_data/Zapfprofil_Hourly.txt') * 1000
+
+    elif options['WeatherData']['Input_Data'] == 'Cluster':
+        if options['WeatherData']['TRY'] == 'cold':
+#            with open("input_data/ClusteredYear/ClusteredYear_cold.csv", 'r') as file:
+#                reader = csv.reader(file)
+            File = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/ClusteredYear/ClusteredYear_cold.csv')
+            time_series['T_Air']    = File.iloc[:, 0] + 273.15
+            time_series['Q_Hou_Dem']= File.iloc[:,1]
+            time_series['P_PV']     = File.iloc[:,2]
+            time_series['P_EL_Dem'] = File.iloc[:,3]
+            time_series['Q_TWW_Dem']= File.iloc[:,4] * 1000
+
+        elif options['WeatherData']['TRY'] == 'normal':
+            File = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/ClusteredYear/ClusteredYear_normal.csv')
+            time_series['T_Air']    = File.iloc[:, 0] + 273.15
+            time_series['Q_Hou_Dem']= File.iloc[:,1]
+            time_series['P_PV']     = File.iloc[:,2]
+            time_series['P_EL_Dem'] = File.iloc[:,3]
+            time_series['Q_TWW_Dem']= File.iloc[:,4] * 1000
+
+        elif options['WeatherData']['TRY'] == 'warm':
+            File = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/ClusteredYear/ClusteredYear_warm.csv')
+            time_series['T_Air']    = File.iloc[:, 0] + 273.15
+            time_series['Q_Hou_Dem']= File.iloc[:, 1]
+            time_series['P_PV']     = File.iloc[:, 2]
+            time_series['P_EL_Dem'] = File.iloc[:, 3]
+            time_series['Q_TWW_Dem']= File.iloc[:, 4] * 1000
+
+    else:
+        print("Please tell which TRY should the Optimization be running for")
     return time_series
 

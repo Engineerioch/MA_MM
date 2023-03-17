@@ -85,10 +85,9 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     c_w_water = devs['Nature']['c_w_water']
 
 
-    # Input Input-Data
     P_PV = time_series['P_PV']
-    T_Input = time_series['T_Air'] + 273.15  # [K]  Außentemperatur
-    P_EL_Dem = time_series['P_EL_Dem']
+    T_Input = time_series['T_Air']            # [K]  Außentemperatur
+    P_EL_Dem = time_series['P_EL_Dem'] * 1000
     Q_Hou_Input = time_series['Q_Hou_Dem']  # [W] Heat Demand of House
     c_grid = time_series['c_grid'] / 1000
     if options['Sto']['Type'] == 'Seperated':
@@ -623,7 +622,6 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         res_control_horizon['Q_TWW_Max'].append(round(value(model.Q_TWW_Max[t]), 2))
         res_control_horizon['Q_TWW_Dem'].append(int(value(model.Q_TWW_Dem[t])))
         res_control_horizon['Q_TWW_Loss'].append(int(value(model.Q_TWW_Loss[t])))
-
 
 
 #    model.display

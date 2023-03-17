@@ -13,10 +13,13 @@ import matplotlib.pyplot as plt
 options = {
     'Tariff'        :   {'Variable'          : False},   # [-] TRUE = 'variable' or FALSE = 'fix' -> Decides if Powerprice is variable or fix
 #    'time_step'     :   {'time_variable'        : ''},
-    'WeatherData':   {'TRY'                  : 'cold'       # [-] 'warm'    -> warmes TRY 2015
+    'WeatherData':   {'TRY'                  : 'cold',       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
-                                                    },      # [-] 'cold' -> kaltes TRY 2015
-    'Solve'         :   {'MIP_gap'             : 0.03,
+                                                            # [-] 'cold' -> kaltes TRY 2015
+                        'Input_Data' : 'Cluster',               # Which Input-Data should be used: TRY = Data from original TRY
+                                                            # Cluster = Clustered Data
+                        },
+    'Solve'         :   {'MIP_gap'             : 0.01,
                         'TimeLimit'            : 60,
                         'TimeLimitMax'         : 35491348,
                         'type'                 : 'gurobi',
@@ -56,6 +59,7 @@ params_opti = {
     'start_time'            : start_time,
     'total_runtime'         : total_runtime,
 }
+
 if control_horizon >= params_opti['prediction_horizon']:
     print('Control Horizon has to be smaller than the prediction horizon')
 
@@ -81,6 +85,7 @@ pickle.dump(eco, open(eco_file, "wb"))
 solving_time = {
     'solving_time':[]
 }
+
 
 
 # Define variables to be saved
@@ -204,8 +209,7 @@ elif show == 'Power':
     print('P_EL_HP')
     print(save_results['P_EL_HP'])
 elif show == 'costs':
-#    print('c_grid')
-#    print(save_optim_results_opti['c_grid'])
+
     print('c_power')
     print(save_results['c_power'])
     print('c_revenue')
@@ -240,7 +244,7 @@ elif show == 'Heat':
     print(save_results['T_Sto'])
 elif show == 'all':
 
-    zh
+    irgendwas
 
 
 
@@ -263,7 +267,7 @@ elif show== 'Save_Results':
         for key, values in save_results.items():
             row = [key] + sum(values, [])
             writer.writerow(row)
-#    writer.close()
+        #writer.close()
 
     dir_results = 'D:/lma-mma/Repos/MA_MM/Results'
     options_file = dir_results + '/options.txt'
