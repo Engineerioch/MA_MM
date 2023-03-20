@@ -353,7 +353,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
     # Calculation of useable Energy in Storage [J] = [Ws] -> [Ws] * 3600 = [Wh]
     def Storage_Energy(m, t):
-        return(m.Q_Sto_Energy[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - T_Sto_Env) / delta_t)
+        return(m.Q_Sto_Energy[t] == (m_Sto_water * c_w_water * (m.T_Sto[t] - T_Sto_Env) / sek_in_hour) * time_step)
     model.Storage_Energy = Constraint(time, rule=Storage_Energy, name='Storage_Energy')
 
     # Calculation of Heat-Loss during storage time: [W]
