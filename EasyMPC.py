@@ -13,10 +13,10 @@ import matplotlib.pyplot as plt
 options = {
     'Tariff'        :   {'Variable'          : False},   # [-] TRUE = 'variable' or FALSE = 'fix' -> Decides if Powerprice is variable or fix
 #    'time_step'     :   {'time_variable'        : ''},
-    'WeatherData':   {'TRY'                  : 'cold',       # [-] 'warm'    -> warmes TRY 2015
+    'WeatherData':   {'TRY'                  : 'normal',       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                             # [-] 'cold' -> kaltes TRY 2015
-                        'Input_Data' : 'Cluster',               # Which Input-Data should be used: TRY = Data from original TRY
+                        'Input_Data' : 'TRY',               # Which Input-Data should be used: TRY = Data from original TRY
                                                             # Cluster = Clustered Data
                         },
     'Solve'         :   {'MIP_gap'             : 0.01,
@@ -28,13 +28,13 @@ options = {
     'PV'            :   {'PV_factor'           : 1.0,      # Rescale PV- Generation P_PV = n_Mod (default: 750) * 330 W * PV_factor
                          },
 
-
-    'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
+    'Sto'           : {'Size'                   : 'Large',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
                         'Type'                  : 'Seperated',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
+
     'TWW'           : {
                         'Size'                  : 'Norm',   # Define the Size of the TWW-Storage Size
-    },
+                        },
 
 ### Location of the Single Family House ###
     'Location'      :   {'lat'                  : 52.519*2*3.14/360,            # [°]   Latitude Berlin
@@ -46,10 +46,10 @@ options = {
                          },
 }
 
-start_time = 24                  # start time in hours
-time_step = 0.5                   # step size in hours
-total_runtime = 24            # Iterationsschritte       -> Sollte durch 24 teilbar sein
-control_horizon = 12             #
+start_time = 1416                 # start time in hours
+time_step = 0.25                # step size in hours
+total_runtime = 24 * 31              # Iterationsschritte       -> Sollte durch 24 teilbar sein
+control_horizon = 4             #
 prediction_horizon = 24
 
 params_opti = {
@@ -302,12 +302,37 @@ elif show== 'Save_Results':
 
 
     # Create a file which saves only the Modes and one which only saves the Input-Data
+    if options["WeatherData"]["Input_Data"] == "TRY":
+        Input_type = '_TRY'
+        if options['WeatherData']['TRY'] == 'cold':
+            TRY_name = '_cold'
+        elif options['WeatherData']['TRY'] == 'normal':
+            TRY_name = '_normal'
+        elif options['WeatherData']['TRY'] == 'warm':
+            TRY_name = '_warm'
+    else:
+        Input_type = '_Cluster'
+        if options['WeatherData']['TRY'] == 'cold':
+            TRY_name = '_cold'
+        elif options['WeatherData']['TRY'] == 'normal':
+            TRY_name = '_normal'
+        elif options['WeatherData']['TRY'] == 'warm':
+            TRY_name = '_warm'
+
+    if options['Sto']['Type'] == 'Puffer':
+        Sto_name = '_Puffer'
+    else:
+        Sto_name = '_TWW'
+
+
     timestep = str(time_step)
+    Ordner = 'Results/Optimierung/'
     ts = timestep.replace('.', '')
-    Modefile = 'Modes_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
-        control_horizon) + '_' + str(prediction_horizon) + '.csv'
-    Inputfile = 'Data_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
-        control_horizon) + '_' + str(prediction_horizon) + '.csv'
+    Modefile = (Ordner +'Modes_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+        control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + Sto_name + '.csv')
+
+    Inputfile = (Ordner + 'Data_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+        control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + Sto_name + '.csv')
     Modus = [val for sublist in save_results["Mode"] for val in sublist]
 
     with open(Modefile, "w", newline="") as m:
@@ -319,10 +344,22 @@ elif show== 'Save_Results':
     Q_Hou = [val for sublist in save_results["Q_Hou_Dem"] for val in sublist]
     P_PV = [val for sublist in save_results["P_PV"] for val in sublist]
     P_EL = [val for sublist in save_results["P_EL"] for val in sublist]
+    T_Sto = [val for sublist in save_results["T_Sto"] for val in sublist]
+    if options['Sto']['Type'] == 'Seperated':
+        T_TWW = [val for sublist in save_results["T_TWW"] for val in sublist]
+        Q_TWW = [val for sublist in save_results["Q_TWW_Dem"] for val in sublist]
+    else:
+        pass
+    COP_1 =[val for sublist in save_results["COP_1"] for val in sublist]
+    COP_2 = [val for sublist in save_results["COP_2"] for val in sublist]
+    T_Mean = [val for sublist in save_results["T_Mean"] for val in sublist]
 
-    Data = list(zip(T_Air, Q_Hou, P_PV, P_EL))
-    Inputfile = 'Data_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
-        control_horizon) + '_' + str(prediction_horizon) + '.csv'
+
+
+    if options['Sto']['Type'] == 'Puffer':
+        Data = list(zip(T_Air, Q_Hou, P_PV, P_EL, T_Sto, COP_1, COP_2, T_Mean))
+    else:
+        Data = list(zip(T_Air, Q_Hou, P_PV, P_EL, T_Sto, T_TWW, Q_TWW, COP_1, COP_2, T_Mean))
     with open(Inputfile, "w", newline="") as I:
         writer = csv.writer(I)
         for values in Data:
