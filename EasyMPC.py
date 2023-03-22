@@ -11,14 +11,8 @@ import matplotlib.pyplot as plt
 
 
 options = {
-    'Tariff'        :   {'Variable'          : False},   # [-] TRUE = 'variable' or FALSE = 'fix' -> Decides if Powerprice is variable or fix
-#    'time_step'     :   {'time_variable'        : ''},
-    'WeatherData':   {'TRY'                  : 'normal',       # [-] 'warm'    -> warmes TRY 2015
-                                                            # [-] 'normal'  -> normales TRY 2015
-                                                            # [-] 'cold' -> kaltes TRY 2015
-                        'Input_Data' : 'TRY',               # Which Input-Data should be used: TRY = Data from original TRY
-                                                            # Cluster = Clustered Data
-                        },
+
+
     'Solve'         :   {'MIP_gap'             : 0.01,
                         'TimeLimit'            : 60,
                         'TimeLimitMax'         : 35491348,
@@ -28,8 +22,17 @@ options = {
     'PV'            :   {'PV_factor'           : 1.0,      # Rescale PV- Generation P_PV = n_Mod (default: 750) * 330 W * PV_factor
                          },
 
-    'Sto'           : {'Size'                   : 'Large',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
-                        'Type'                  : 'Seperated',  # Define what type of storage one has (Puffer, Kombi, Seperated)
+    'Tariff'        :   {'Variable'          : True},   # [-] TRUE = 'variable' or FALSE = 'fix' -> Decides if Powerprice is variable or fix
+
+
+    'WeatherData':   {'TRY'                  : 'normal',       # [-] 'warm'    -> warmes TRY 2015
+                                                            # [-] 'normal'  -> normales TRY 2015
+                                                            # [-] 'cold' -> kaltes TRY 2015
+                        'Input_Data' : 'Cluster',               # Which Input-Data should be used: TRY = Data from original TRY
+                                                            # Cluster = Clustered Data
+                        },
+    'Sto'           : {'Size'                   : 'Medium',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
+                        'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
 
     'TWW'           : {
@@ -58,6 +61,7 @@ params_opti = {
     'time_step'             : time_step,
     'start_time'            : start_time,
     'total_runtime'         : total_runtime,
+    'safe_start_time'       : start_time,           # only for saving
 }
 
 if control_horizon >= params_opti['prediction_horizon']:
@@ -67,19 +71,17 @@ end = 0
 # Define paths and directories for results
 path_file = str(os.path.dirname(os.path.realpath(__file__)))
 #print(path_file)
-dir_results = path_file + "/Results/" + str(datetime.now().strftime('%Y-%m-%d'))
-if not os.path.exists(dir_results):
-    os.makedirs(dir_results)
+
 
 
 # Load Parameter
 eco, devs, year = parameters.load_params(options, params_opti)
 
 # save paramater settings of devices an economic assumptions to pickle file
-devs_file = dir_results + '/devs.pkl'
-eco_file = dir_results + '/eco.pkl'
-pickle.dump(devs, open(devs_file, "wb"))
-pickle.dump(eco, open(eco_file, "wb"))
+##devs_file = dir_results + '/devs.pkl'
+##eco_file = dir_results + '/eco.pkl'
+##pickle.dump(devs, open(devs_file, "wb"))
+##pickle.dump(eco, open(eco_file, "wb"))
 
 # Save solving time of iterations
 solving_time = {
@@ -101,13 +103,11 @@ save_optim_results = {
     'T_TWW': [],
   #  'Q_TWW_Max': [],
     'Q_TWW_Dem': [],
-
     'T_Sto': [],
     'Q_Sto_Loss'        : [],
     'Q_Sto_Energy'      : [],
-
     'COP_Carnot': [],
-  #  'COP_HP':[],
+    'COP_HP':[],
     'T_Air': [],
     'T_Mean': [],
     'c_el_power': [],
@@ -120,28 +120,20 @@ save_optim_results = {
     'd_Temp_HP': [],
     'd_Temp_Hou': [],
     'c_grid': [],
-
     'c_penalty': [],
     'c_revenue': [],
     'c_cost': [],
     'c_el_cost_ch': [],
     'total_costs_ph':[],
-
     'P_HP_1'            : [],
     'P_HP_2'            : [],
-
-
     'T_HP_VL'           : [],
-
     'HP_off'            : [],
     'HP_mode1'          : [],
     'HP_mode2'          : [],
     'HP_TWW'            : [],
     'COP_1'             : [],
     'COP_2'             : [],
-##    'c_grid': [],
-
-
     'Q_TWW_Loss'        : [],
     }
 
@@ -172,9 +164,7 @@ for iter in range(int(params_opti['total_runtime']/params_opti['control_horizon'
 
 
     for res in save_results:
-       # for t in range(params_opti['prediction_horizon']):
-
-            save_results[res].append(results_optim[res])
+        save_results[res].append(results_optim[res])
 
 
 show = 'Save_Results'
@@ -209,7 +199,6 @@ elif show == 'Power':
     print('P_EL_HP')
     print(save_results['P_EL_HP'])
 elif show == 'costs':
-
     print('c_power')
     print(save_results['c_power'])
     print('c_revenue')
@@ -243,7 +232,6 @@ elif show == 'Heat':
     print('T_Sto')
     print(save_results['T_Sto'])
 elif show == 'all':
-
     irgendwas
 
 
@@ -269,36 +257,7 @@ elif show== 'Save_Results':
             writer.writerow(row)
         #writer.close()
 
-    dir_results = 'D:/lma-mma/Repos/MA_MM/Results'
-    options_file = dir_results + '/options.txt'
-    all_options = [options, params_opti]
-    all_options_names = ['options', 'params_opti']
-    pickle.dump(all_options, open(options_file, "wb"))
-    with open(options_file, "w") as file:
-        for key in all_options:
-            file.write(all_options_names[all_options.index(key)])
-            file.write('\n')
-            for x in key:
-                file.write(str(x) + "=")
-                file.write(str(key[x]))
-                file.write('\n')
-            file.write('\n')
-        file.close()
 
-    devs_file = dir_results + '/devs.txt'
-    all_devs = [devs, eco]
-    all_devs_names = ['devs', 'eco']
-    pickle.dump(all_devs, open(devs_file, "wb"))
-    with open(devs_file, "w") as file_devs:
-       for key in all_devs:
-           file_devs.write(all_devs_names[all_devs.index(key)])
-           file_devs.write('\n')
-           for x in key:
-               file_devs.write(str(x) + "=")
-               file_devs.write(str(key[x]))
-               file_devs.write('\n')
-           file_devs.write('\n')
-       file_devs.close()
 
 
     # Create a file which saves only the Modes and one which only saves the Input-Data
@@ -324,15 +283,58 @@ elif show== 'Save_Results':
     else:
         Sto_name = '_TWW'
 
+    if options['Tariff']['Variable']:
+        PowerPrice = '_Var'
+    else:
+        PowerPrice = '_Fix'
+
+    if options['Sto']['Size'] == 'Small':
+        Sto_type = '_Small'
+    elif options['Sto']['Size'] == 'Medium':
+        Sto_type = '_Medium'
+    elif options['Sto']['Size'] == 'Large':
+        Sto_type = '_Large'
+
+    if options['TWW']['Size'] == 'Norm':
+        TWW_type = '_Norm'
+    elif options['TWW']['Size'] == 'Medium':
+        TWW_type = '_Medium'
+    elif options['TWW']['Size'] == 'Large':
+        TWW_type = '_Large'
 
     timestep = str(time_step)
-    Ordner = 'Results/Optimierung/'
+    Ordner = 'Results/Optimierung/Puffer'
     ts = timestep.replace('.', '')
-    Modefile = (Ordner +'Modes_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
-        control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + Sto_name + '.csv')
+    if options['Sto']['Type'] == 'Puffer':
+        Ordner = 'Results/Optimierung/Puffer/'
+        Modefile = (Ordner +'Modes_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + '.csv')
+        Datafile = (Ordner + 'Data_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + '.csv')
+        Inputfile = (Ordner + 'Import_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + '.csv')
+        Optionsfile = (Ordner + 'Options_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + '.txt')
+        Devsfile = (Ordner + 'Devs_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + '.txt')
 
-    Inputfile = (Ordner + 'Data_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
-        control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + Sto_name + '.csv')
+    else:
+        Ordner = 'Results/Optimierung/TWW/'
+        Modefile = (Ordner +'Modes_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.csv')
+        Datafile = (Ordner + 'Data_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.csv')
+        Inputfile = (Ordner + 'Input_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.csv')
+        Optionsfile = (Ordner + 'Options_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.txt')
+        Devsfile = (Ordner + 'Devs_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.txt')
+    dir_results = Ordner
+    if not os.path.exists(dir_results):
+        os.makedirs(dir_results)
+
+
     Modus = [val for sublist in save_results["Mode"] for val in sublist]
 
     with open(Modefile, "w", newline="") as m:
@@ -343,8 +345,9 @@ elif show== 'Save_Results':
     T_Air = [val for sublist in save_results["T_Air"] for val in sublist]
     Q_Hou = [val for sublist in save_results["Q_Hou_Dem"] for val in sublist]
     P_PV = [val for sublist in save_results["P_PV"] for val in sublist]
-    P_EL = [val for sublist in save_results["P_EL"] for val in sublist]
+    P_EL_Dem = [val for sublist in save_results["P_EL_Dem"] for val in sublist]
     T_Sto = [val for sublist in save_results["T_Sto"] for val in sublist]
+    c_grid = [val for sublist in save_results["c_grid"] for val in sublist]
     if options['Sto']['Type'] == 'Seperated':
         T_TWW = [val for sublist in save_results["T_TWW"] for val in sublist]
         Q_TWW = [val for sublist in save_results["Q_TWW_Dem"] for val in sublist]
@@ -354,23 +357,95 @@ elif show== 'Save_Results':
     COP_2 = [val for sublist in save_results["COP_2"] for val in sublist]
     T_Mean = [val for sublist in save_results["T_Mean"] for val in sublist]
 
-
-
     if options['Sto']['Type'] == 'Puffer':
-        Data = list(zip(T_Air, Q_Hou, P_PV, P_EL, T_Sto, COP_1, COP_2, T_Mean))
+        Data = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, T_Sto, COP_1, COP_2, T_Mean, c_grid))
     else:
-        Data = list(zip(T_Air, Q_Hou, P_PV, P_EL, T_Sto, T_TWW, Q_TWW, COP_1, COP_2, T_Mean))
-    with open(Inputfile, "w", newline="") as I:
+        Data = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, T_Sto, T_TWW, Q_TWW, COP_1, COP_2, T_Mean. c_grid))
+    with open(Datafile, "w", newline="") as I:
         writer = csv.writer(I)
         for values in Data:
             writer.writerow(values)
 
+    if options['Sto']['Type'] == 'Puffer':
+        Input = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, c_grid))
+    else:
+        Input = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, Q_TWW, c_grid))
 
+    with open(Inputfile, "w", newline="") as I:
+        writer = csv.writer(I)
+        for values in Input:
+            writer.writerow(values)
 
+    dir_results = Ordner
+    if not os.path.exists(dir_results):
+        os.makedirs(dir_results)
 
-    print(save_results['P_PV'])
+    dir_results = Ordner
+    options_file = Optionsfile
+    all_options = [options, params_opti]
+    all_options_names = ['options', 'params_opti']
+    pickle.dump(all_options, open(options_file, "wb"))
+    with open(options_file, "w") as file:
+        for key in all_options:
+            file.write(all_options_names[all_options.index(key)])
+            file.write('\n')
+            for x in key:
+                file.write(str(x) + "=")
+                file.write(str(key[x]))
+                file.write('\n')
+            file.write('\n')
+        file.close()
 
+    devs_file = Devsfile
+    all_devs = [devs, eco]
+    all_devs_names = ['devs', 'eco']
+    pickle.dump(all_devs, open(devs_file, "wb"))
+    with open(devs_file, "w") as file_devs:
+        for key in all_devs:
+            file_devs.write(all_devs_names[all_devs.index(key)])
+            file_devs.write('\n')
+            for x in key:
+                file_devs.write(str(x) + "=")
+                file_devs.write(str(key[x]))
+                file_devs.write('\n')
+            file_devs.write('\n')
+        file_devs.close()
 
+    Mode0_File = Ordner + 'Mode0_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.csv'
+    Mode1_File = Ordner + 'Mode1_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.csv'
+    Mode2_File = Ordner + 'Mode2_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.csv'
+    Mode3_File = Ordner + 'Mode3_' + str(start_time) + '_' + ts + '_' + str(total_runtime) + '_' + str(
+            control_horizon) + '_' + str(prediction_horizon) + Input_type + TRY_name + PowerPrice + Sto_name + Sto_type + TWW_type + '.csv'
+
+    HP_off = [val for sublist in save_results["HP_off"] for val in sublist]
+    with open(Mode0_File, "w", newline="") as m:
+        writer = csv.writer(m)
+        for val in HP_off:
+            writer.writerow([val])
+
+    HP_1 = [val for sublist in save_results["HP_mode1"] for val in sublist]
+    with open(Mode1_File, "w", newline="") as m:
+        writer = csv.writer(m)
+        for val in HP_1:
+            writer.writerow([val])
+
+    HP_2 = [val for sublist in save_results["HP_mode2"] for val in sublist]
+    with open(Mode2_File, "w", newline="") as m:
+        writer = csv.writer(m)
+        for val in HP_2:
+            writer.writerow([val])
+
+    if options['Sto']['Type'] == 'Seperated':
+        HP_3 = [val for sublist in save_results["HP_TWW"] for val in sublist]
+        with open(Mode3_File, "w", newline="") as m:
+            writer = csv.writer(m)
+            for val in HP_3:
+                writer.writerow([val])
+    else:
+        pass
 
 else:
     print(save_results['T_Air'])
