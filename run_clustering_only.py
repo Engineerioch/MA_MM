@@ -13,9 +13,12 @@ import matplotlib.pyplot as plt
 import csv
 import pandas as pd
 import pickle as pickle
-
+from plot_results_to_files import latex_base
 import clustering_medoid as clustering
 from sklearn.metrics import r2_score
+plt.rcParams.update(latex_base)
+
+
 #from EasyMPC import options
 # Set the TRY-Type here
 TRY = 'warm'
@@ -68,11 +71,11 @@ w_T = 3
 w_Q = 4
 w_PPV = 2
 w_PEL = 1
-Mip_Gap = 0.01
+Mip_Gap = 0.05
 typedays = range(first,last,distance)
 
 
-clustered = {}
+
 diff = {}
 diff["T_Air"] = 0
 diff["Q_Hou_Dem"] = 0
@@ -85,7 +88,7 @@ R_Square["R_Q_Hou_Dem"] = 0
 R_Square["R_P_PV"] = 0
 R_Square["R_P_EL_Dem"] = 0
 R_Square["R_Gesamt"] = 0
-
+R_Square["R_Gesamt2"] = 0
 
 
 # clustering various inputs
@@ -149,8 +152,7 @@ for i in typedays:
     clustered_P_PV =[]
     clustered_P_EL_Dem = []
 
-
-
+#
     for m in range(len(z)):
         for n in range(len(z)):
             if map_days[n,m] > 0:
@@ -158,14 +160,14 @@ for i in typedays:
                 clustered_Q_Hou_Dem = np.append(clustered_Q_Hou_Dem,clustered["Q_Hou_Dem_"+ str(i)][int(map_days[n,m] -1)])
                 clustered_P_PV = np.append(clustered_P_PV,clustered["P_PV_"+ str(i)][int(map_days[n,m] -1)])
                 clustered_P_EL_Dem = np.append(clustered_P_EL_Dem,clustered["P_EL_Dem_"+ str(i)][int(map_days[n,m] -1)])
-
-
+#
+#
     diff_T_Air = np.abs(clustered_T_Air - raw_inputs["T_Air"])
     diff_Q_Hou_Dem = np.abs(clustered_Q_Hou_Dem - raw_inputs["Q_Hou_Dem"])
     diff_P_PV = np.abs(clustered_P_PV - raw_inputs["P_PV"])
     diff_P_EL_Dem = np.abs(clustered_P_EL_Dem - raw_inputs["P_EL_Dem"])
-
-
+#
+#
     diff["T_Air"] = np.append(diff["T_Air"], np.sum(diff_T_Air))
     diff["Q_Hou_Dem"] = np.append(diff["Q_Hou_Dem"], np.sum(diff_Q_Hou_Dem))
     diff["P_PV"] = np.append(diff["P_PV"], np.sum(diff_P_PV))
@@ -193,33 +195,41 @@ for i in typedays:
 
     ##Summe der Gewichtungsfaktoren
     Sum_weights = w_T + w_Q + w_PPV + w_PEL
-    R_Ges = (R_T_Air * w_T + R_Q_Hou_Dem * w_Q + R_P_PV * w_PPV + R_P_EL_Dem * w_PEL) / Sum_weights
+    R_Ges1 = (R_T_Air * w_T + R_Q_Hou_Dem * w_Q + R_P_PV * w_PPV + R_P_EL_Dem * w_PEL) / Sum_weights
+    R_Ges2 = (R_T_Air / 4) + (R_Q_Hou_Dem / 4) + (R_P_PV / 4) + (R_P_EL_Dem / 4)
 
     # Append to dictionary
     R_Square["R_T_Air"] = np.append(R_Square["R_T_Air"], R_T_Air)
     R_Square["R_Q_Hou_Dem"] = np.append(R_Square["R_Q_Hou_Dem"], R_Q_Hou_Dem)
     R_Square["R_P_PV"] = np.append(R_Square["R_P_PV"], R_P_PV)
     R_Square["R_P_EL_Dem"] = np.append(R_Square["R_P_EL_Dem"], R_P_EL_Dem)
-    R_Square["R_Gesamt"] = np.append(R_Square["R_Gesamt"], R_Ges)
+    R_Square["R_Gesamt"] = np.append(R_Square["R_Gesamt"], R_Ges1)
+    R_Square["R_Gesamt2"] = np.append(R_Square["R_Gesamt2"], R_Ges2)
 
-
-plt.xlabel('Number of typedays')
-
-plt.ylabel('Total-Deviation from TRY-Data in %')
-plt.plot (typedays, diff["T_Air"][1:len(typedays)+1]/ abs_T_Air * 100, label="T_Air")
-plt.plot (typedays, diff["Q_Hou_Dem"][1:len(typedays)+1]/abs_Q_Hou_Dem*100, label="Q_Hou_Dem")
-plt.plot (typedays, diff["P_PV"][1:len(typedays)+1]/abs_P_PV*100, label="P_PV")
+plt.xlabel('Anzahl der Typtage')
+plt.ylabel('Abweichung von den TRY-Daten in %')
+#plt.plot (typedays, diff["T_Air"][1:len(typedays)+1]/ abs_T_Air * 100, label="T_Air")
+#plt.plot (typedays, diff["Q_Hou_Dem"][1:len(typedays)+1]/abs_Q_Hou_Dem*100, label="Q_Hou_Dem")
+#plt.plot (typedays, diff["P_PV"][1:len(typedays)+1]/abs_P_PV*100, label="P_PV")
 plt.plot (typedays, diff["P_EL_Dem"][1:len(typedays)+1]/abs_P_EL_Dem*100, label="P_EL_Dem")
-plt.style.use("D://lma-mma/Repos/MA_MM/ebc.paper.mplstyle")
+#plt.style.use("D://lma-mma/Repos/MA_MM/ebc.paper.mplstyle")
 
-#plt.ylabel('Determinationskoeffizient R²')
+#filename = "D://lma-mma/Repos/MA_MM/Cluster/Dev" + dataname
+#plt.savefig(filename+".svg", dpi=600)
+#plt.show()
+
+plt.ylabel('Determinationskoeffizient R²')
 #plt.plot (typedays, R_Square["R_T_Air"][1:(len(typedays)+1)], label="T_Air")
 #plt.plot (typedays, R_Square["R_Q_Hou_Dem"][1:(len(typedays)+1)], label="Q_Hou_Dem")
 #plt.plot (typedays, R_Square["R_P_PV"][1:(len(typedays)+1)], label="P_PV")
-#plt.plot (typedays, R_Square["R_P_EL_Dem"][1:(len(typedays)+1)], label="P_EL_Dem")
-#plt.plot (typedays, R_Square["R_Gesamt"][1:(len(typedays)+1)], label="R_Gesamt")
+plt.plot (typedays, R_Square["R_P_EL_Dem"][1:(len(typedays)+1)], label="P_EL_Dem")
+#plt.plot (typedays, R_Square["R_Gesamt"][1:(len(typedays)+1)], label="R_Gesamt,Gewichtet")
+#plt.plot (typedays, R_Square["R_Gesamt2"][1:(len(typedays)+1)], label="R-Gesamt")
 
-
+#filename = "D://lma-mma/Repos/MA_MM/Cluster/Det_" + dataname
+#plt.savefig(filename+".pdf", dpi=600)
+#plt.savefig(filename+".svg")
+#plt.show()
 #plt.legend(loc='upper left')
 
 #plt.rcParams.update(latex_base)
@@ -229,116 +239,150 @@ plt.rcParams
 #plt.rcParams["font.family"] = "Helvetica"
 #plt.rcParams["font.efficiency"] = 22
 
-filename = "D://lma-mma/Repos/MA_MM/Cluster/"+dataname
-#plt.savefig(filename+".png", dpi=600)
+filename = "D://lma-mma/Repos/MA_MM/Cluster/" + dataname
+#plt.savefig(filename+".pdf", dpi=600)
+#plt.savefig(filename+".svg")
 #plt.show()
 
-#with open(filename+".pkl", 'wb') as f_in:
-#   pickle.dump(clustered, f_in, pickle.HIGHEST_PROTOCOL)
+with open(filename+".pkl", 'wb') as f_in:
+   pickle.dump(clustered, f_in, pickle.HIGHEST_PROTOCOL)
 #   pickle.dump(diff, f_in, pickle.HIGHEST_PROTOCOL)
 #   pickle.dump(deviation_diff, f_in, pickle.HIGHEST_PROTOCOL)
 #   pickle.dump(R_Square, f_in, pickle.HIGHEST_PROTOCOL)
 
 
+c_grid = []
+#for i in range(0,8760):
+#    c_grid.append(clustered_c_grid[i])
+#print(type(clustered_c_grid))
+xp = np.arange(0.0, 8760, 1.0)
+xnew = np.arange(0.0, 8760, 0.25)
+#T = clustered_T_Air.tolist()
+
+T_Air = np.interp(xnew, xp, clustered_T_Air) #Liste1)
+Q_Hou= np.interp(xnew, xp, clustered_Q_Hou_Dem)
+PPV= np.interp(xnew, xp, clustered_P_PV)
+PEL= np.interp(xnew, xp, clustered_P_EL_Dem)
+print(len(c_grid))
+#c =  np.interp(xnew, xp, c_grid)
+
+
 clustered_TWW = []
+clustered_TWW1 = []
+clustered_TWW2 = []
+clustered_TWW3 = []
+clustered_c_grid = []
 for i in range(0,len(clustered_T_Air)):
     if i % 24 == 0:
         if round(clustered_T_Air[i], 2) == round(clustered["T_Air_8"][0][0], 2):
-            with open("input_data/Medoid/TWW/outcome_1.csv", 'r') as file:
+            with open("input_data/Medoid/TWW/"+TRY+"/outcome_1.csv", 'r') as file:
                 reader = csv.reader(file)
-                first = [float(row[0]) for row in reader]
-                second = [float(row[1]) for row in reader]
-                third = [float(row[2]) for row in reader]
-                fourth = [float(row[3]) for row in reader]
+                for row in reader:
+                    first = float(row[0])
+                    second = float(row[1])
+                    third = float(row[2])
+                    fourth = float(row[3])
+                    clustered_TWW.append(first)
+                    clustered_TWW1.append(second)
+                    clustered_TWW2.append(third)
+                    clustered_TWW3.append(fourth)
         elif clustered_T_Air[i] == clustered["T_Air_8"][1][0]:
-            with open("input_data/Medoid/TWW/outcome_2.csv", 'r') as file:
+            with open("input_data/Medoid/TWW/"+TRY+"/outcome_2.csv", 'r') as file:
                 reader = csv.reader(file)
-                first = [float(row[0]) for row in reader]
-                second = [float(row[1]) for row in reader]
-                third = [float(row[2]) for row in reader]
-                fourth = [float(row[3]) for row in reader]
+                for row in reader:
+                    first = float(row[0])
+                    second = float(row[1])
+                    third = float(row[2])
+                    fourth = float(row[3])
+                    clustered_TWW.append(first)
+                    clustered_TWW1.append(second)
+                    clustered_TWW2.append(third)
+                    clustered_TWW3.append(fourth)
         elif round(clustered_T_Air[i], 2) == round(clustered["T_Air_8"][2][0], 2):
-            with open("input_data/Medoid/TWW/outcome_3.csv", 'r') as file:
+            with open("input_data/Medoid/TWW/"+TRY+"/outcome_3.csv", 'r') as file:
                 reader = csv.reader(file)
-                first = [float(row[0]) for row in reader]
-                second = [float(row[1]) for row in reader]
-                third = [float(row[2]) for row in reader]
-                fourth = [float(row[3]) for row in reader]
- #               print("True")
+                for row in reader:
+                    first = float(row[0])
+                    second = float(row[1])
+                    third = float(row[2])
+                    fourth = float(row[3])
+                    clustered_TWW.append(first)
+                    clustered_TWW1.append(second)
+                    clustered_TWW2.append(third)
+                    clustered_TWW3.append(fourth)
+                print("True")
         elif clustered_T_Air[i] == clustered["T_Air_8"][3][0]:
-            with open("input_data/Medoid/TWW/outcome_4.csv", 'r') as file:
+            with open("input_data/Medoid/TWW/"+TRY+"/outcome_4.csv", 'r') as file:
                 reader = csv.reader(file)
-                first = [float(row[0]) for row in reader]
-                second = [float(row[1]) for row in reader]
-                third = [float(row[2]) for row in reader]
-                fourth = [float(row[3]) for row in reader]
+                for row in reader:
+                    first = float(row[0])
+                    second = float(row[1])
+                    third = float(row[2])
+                    fourth = float(row[3])
+                    clustered_TWW.append(first)
+                    clustered_TWW1.append(second)
+                    clustered_TWW2.append(third)
+                    clustered_TWW3.append(fourth)
         elif clustered_T_Air[i] == clustered["T_Air_8"][4][0]:
-            with open("input_data/Medoid/TWW/outcome_5.csv", 'r') as file:
+            with open("input_data/Medoid/TWW/"+TRY+"/outcome_5.csv", 'r') as file:
                 reader = csv.reader(file)
-                first = [float(row[0]) for row in reader]
-                second = [float(row[1]) for row in reader]
-                third = [float(row[2]) for row in reader]
-                fourth = [float(row[3]) for row in reader]
+                for row in reader:
+                    first = float(row[0])
+                    second = float(row[1])
+                    third = float(row[2])
+                    fourth = float(row[3])
+                    clustered_TWW.append(first)
+                    clustered_TWW1.append(second)
+                    clustered_TWW2.append(third)
+                    clustered_TWW3.append(fourth)
+
         elif clustered_T_Air[i] == clustered["T_Air_8"][5][0]:
-            with open("input_data/Medoid/TWW/outcome_6.csv", 'r') as file:
+            with open("input_data/Medoid/TWW/"+TRY+"/outcome_6.csv", 'r') as file:
                 reader = csv.reader(file)
-                first = [float(row[0]) for row in reader]
-                second = [float(row[1]) for row in reader]
-                third = [float(row[2]) for row in reader]
-                fourth = [float(row[3]) for row in reader]
+                for row in reader:
+                    first = float(row[0])
+                    second = float(row[1])
+                    third = float(row[2])
+                    fourth = float(row[3])
+                    clustered_TWW.append(first)
+                    clustered_TWW1.append(second)
+                    clustered_TWW2.append(third)
+                    clustered_TWW3.append(fourth)
         elif clustered_T_Air[i] == clustered["T_Air_8"][6][0]:
-            with open("input_data/Medoid/TWW/outcome_7.csv", 'r') as file:
+            with open("input_data/Medoid/TWW/"+TRY+"/outcome_7.csv", 'r') as file:
                 reader = csv.reader(file)
-                first = [float(row[0]) for row in reader]
-                second = [float(row[1]) for row in reader]
-                third = [float(row[2]) for row in reader]
-                fourth = [float(row[3]) for row in reader]
+                for row in reader:
+                    first = float(row[0])
+                    second = float(row[1])
+                    third = float(row[2])
+                    fourth = float(row[3])
+                    clustered_TWW.append(first)
+                    clustered_TWW1.append(second)
+                    clustered_TWW2.append(third)
+                    clustered_TWW3.append(fourth)
         elif clustered_T_Air[i] == clustered["T_Air_8"][7][0]:
-            with open("input_data/Medoid/TWW/outcome_8.csv", 'r') as file:
+            with open("input_data/Medoid/TWW/"+TRY+"/outcome_8.csv", 'r') as file:
                 reader = csv.reader(file)
-                first = [float(row[0]) for row in reader]
-                second = [float(row[1]) for row in reader]
-                third = [float(row[2]) for row in reader]
-                fourth = [float(row[3]) for row in reader]
- #       elif clustered_T_Air[i] == clustered["T_Air_12"][8][0]:
- #           with open("input_data/Medoid/TWW/outcome_9.csv", 'r') as file:
- #               reader = csv.reader(file)
- #               first = [float(row[0]) for row in reader]
- #               second = [float(row[1]) for row in reader]
- #               third = [float(row[2]) for row in reader]
- #               fourth = [float(row[3]) for row in reader]
- #       elif clustered_T_Air[i] == clustered["T_Air_12"][9][0]:
- #           with open("input_data/Medoid/TWW/outcome_10.csv", 'r') as file:
- #               reader = csv.reader(file)
- #               first = [float(row[0]) for row in reader]
- #               second = [float(row[1]) for row in reader]
- #               third = [float(row[2]) for row in reader]
- #               fourth = [float(row[3]) for row in reader]
- #       elif clustered_T_Air[i] == clustered["T_Air_12"][10][0]:
- #           with open("input_data/Medoid/TWW/outcome_11.csv", 'r') as file:
- #               reader = csv.reader(file)
- #               first = [float(row[0]) for row in reader]
- #               second = [float(row[1]) for row in reader]
-  #              third = [float(row[2]) for row in reader]
-  #              fourth = [float(row[3]) for row in reader]
-  #      elif clustered_T_Air[i] == clustered["T_Air_12"][11][0]:
-  #          with open("input_data/Medoid/TWW/outcome_12.csv", 'r') as file:
-  #              reader = csv.reader(file)
-  #              first = [float(row[0]) for row in reader]
-  #              second = [float(row[1]) for row in reader]
-  #              third = [float(row[2]) for row in reader]
-  #              fourth = [float(row[3]) for row in reader]
+                for row in reader:
+                    first = float(row[0])
+                    second = float(row[1])
+                    third = float(row[2])
+                    fourth = float(row[3])
+                    clustered_TWW.append(first)
+                    clustered_TWW1.append(second)
+                    clustered_TWW2.append(third)
+                    clustered_TWW3.append(fourth)
 
-        for j in range(len(first)):
-            clustered_TWW.append(first[j])
-    else:
-        pass
 
-data = list(zip(clustered_T_Air, clustered_Q_Hou_Dem, clustered_P_PV, clustered_P_EL_Dem, clustered_TWW))
-with open(f"ClusteredYear_warm.csv", "w", newline="") as f:
+
+
+
+header = 'T_Air', 'Q_Hou', 'PPV', 'PEL', 'QTWW','Tp','Tmin','f',
+
+data = list(zip(T_Air, Q_Hou, PPV, PEL, clustered_TWW, clustered_TWW1, clustered_TWW2, clustered_TWW3))
+with open(f"input_data/ClusteredYear/ClusteredYear_"+TRY+".csv", "w", newline="") as f:
     writer = csv.writer(f)
-    for values in zip(clustered_T_Air, clustered_Q_Hou_Dem, clustered_P_PV, clustered_P_EL_Dem, clustered_TWW):
+    writer.writerow([g for g in header])
+    for values in data:
         writer.writerow(values)
-
-
 

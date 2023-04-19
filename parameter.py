@@ -28,7 +28,7 @@ def load_params(options, params):
     devs = {
     # Set Heat Storage parameter
         'Sto'   : {
-            'T_Sto_Ersatz' : 28 + 273.15,
+            'T_Sto_Ersatz' : 32 + 273.15,
             'T_Sto_min' : 18 + 273.15,                   # [K] Minimum temperature of storage
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
@@ -37,16 +37,18 @@ def load_params(options, params):
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio' : 2,                            # [-] Ratio of Heat/Diameter
             'S_Wall'    : 0.15,
-
+            'T_Sto_Use' : 25 + 273.15
         },
 
+
         'TWW': {
-            'T_TWW_Min': 50 + 273.15,  # [K] Minimum Temperature of TWW-Storage
+            'T_TWW_Min': 40 + 273.15,  # [K] Minimum Temperature of TWW-Storage
             'T_TWW_Init': 60 + 273.15,  # [K] initial Storage Temperature for Optimization
-            'U_TWW': 0.3,  # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
-            # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
+            'U_TWW': 0.3,  # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)            # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio': 2,  # [-] Ratio of Heat/Diameter
             'S_Wall': 0.15,
+            'T_TWW_Max' : 65 + 273.15,
+            'T_TWW_Soll' : 50 + 273.15
 
         },
 
@@ -55,7 +57,7 @@ def load_params(options, params):
             'Q_HP_Max'      : 10000,                        # [W]   Maximum Heat Power of Heat Pump
             'T_HP_VL_1'     : 40 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
             'T_HP_VL_2'     : 70 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 2
-            'T_HP_VL_3'     : 22 + 273.15,
+            'T_HP_VL_3'     : 65 + 273.15,
             'm_flow_HP'     : 1230 / 3600,                   # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg(s zu bekommen)
             'eta_HP'        : 0.4,                          # [-]   Gütegrad HP
             'Q_HP_Min'      : 0,                            # [W]   Minimum Heat power of HP
@@ -118,7 +120,7 @@ def load_time_series(params, options):
     start_time          = params['start_time']
     prediction_horizon  = params['prediction_horizon']
 
-        # Load inputs
+    # Load inputs
     time_series         = {}
 
 
@@ -215,13 +217,15 @@ def load_time_series(params, options):
             time_series['Win_Speed'] = dW.iloc[:, 2]
 
 
-        time_series['Q_TWW_Dem']     = np.loadtxt('input_data/Opti_Input/Zapfprofil_Hourly.txt') * 1000
+        TWW     = pd.read_csv('input_data/Opti_Input/TWW_Opti.csv', skiprows=0) * 1000
+        time_series["Q_TWW_Dem"] = TWW.iloc[:,0]
+
 
     elif options['WeatherData']['Input_Data'] == 'Cluster':
         if options['WeatherData']['TRY'] == 'cold':
-#            with open("input_data/ClusteredYear/ClusteredYear_cold.csv", 'r') as file:
+#            with open("input_data/ClusteredYear/ALT_ClusteredYear_cold.csv", 'r') as file:
 #                reader = csv.reader(file)
-            File = pd.read_csv('D://lma-mma/Repos/MA_MM/input_data/ClusteredYear/ClusteredYear_cold.csv')
+            File = pd.read_csv('D:/lma-mma/Repos/MA_MM/input_data/ClusteredYear/ClusteredYear_cold.csv', skiprows=0)
             time_series['T_Air']    = File.iloc[:, 0] + 273.15
             time_series['Q_Hou_Dem']= File.iloc[:,1]
             time_series['P_PV']     = File.iloc[:,2]
@@ -244,7 +248,49 @@ def load_time_series(params, options):
             time_series['P_EL_Dem'] = File.iloc[:, 3]
             time_series['Q_TWW_Dem']= File.iloc[:, 4] * 1000
 
+
+    elif options['WeatherData']['Input_Data'] == 'Clusterday':
+        Tagesnummer = str(options['WeatherData']['DayNumber'])
+        if options['WeatherData']['TRY'] == 'cold':
+            File = pd.read_csv('D:/lma-mma/Repos/MA_MM/input_data/ClusteredDay/cold/DreiClusterTage_cold_' + Tagesnummer+ '.csv', skiprows=0)
+            time_series['T_Air'] = File.iloc[:, 0] + 273.15
+            time_series['Q_Hou_Dem'] = File.iloc[:, 1]
+            time_series['P_PV'] = File.iloc[:, 2]
+            time_series['P_EL_Dem'] = File.iloc[:, 3]
+            time_series['Q_TWW_Dem'] = File.iloc[:, 4] * 1000
+
+        elif options['WeatherData']['TRY'] == 'normal':
+            File = pd.read_csv('input_data/ClusteredDay/Normal/DreiClusterTage_normal_' + Tagesnummer + '.csv', skiprows=0)
+            time_series['T_Air'] = File.iloc[:, 0] + 273.15
+            time_series['Q_Hou_Dem'] = File.iloc[:, 1]
+            time_series['P_PV'] = File.iloc[:, 2]
+            time_series['P_EL_Dem'] = File.iloc[:, 3]
+            time_series['Q_TWW_Dem'] = File.iloc[:, 4] * 1000
+
+        elif options['WeatherData']['TRY'] == 'warm':
+            File = pd.read_csv('input_data/ClusteredDay/Warm/DreiClusterTage_warm_' + Tagesnummer + '.csv', skiprows=0)
+            time_series['T_Air'] = File.iloc[:, 0] + 273.15
+            time_series['Q_Hou_Dem'] = File.iloc[:, 1]
+            time_series['P_PV'] = File.iloc[:, 2]
+            time_series['P_EL_Dem'] = File.iloc[:, 3]
+            time_series['Q_TWW_Dem'] = File.iloc[:, 4] * 1000
     else:
         print("Please tell which TRY should the Optimization be running for")
+
+    if options['Sto']['Type'] == 'Seperated':
+        if options['WeatherData']['TRY'] == 'cold':
+            TWW = pd.read_csv('D:/lma-mma/Repos/MA_MM/input_data/ClusteredYear/ClusteredYear_cold.csv', skiprows=0)
+        elif options['WeatherData']['TRY'] == 'normal':
+            TWW = pd.read_csv('D:/lma-mma/Repos/MA_MM/input_data/ClusteredYear/ClusteredYear_normal.csv', skiprows=0)
+        elif options['WeatherData']['TRY'] == 'warm':
+            TWW = pd.read_csv('D:/lma-mma/Repos/MA_MM/input_data/ClusteredYear/ClusteredYear_warm.csv', skiprows=0)
+        else:
+            pass
+
+        time_series["Q_TWW_Dem"] = TWW.iloc[:, 4] * 1000
+
+
+
+
     return time_series
 

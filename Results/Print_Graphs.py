@@ -20,6 +20,7 @@ fig, ax = plt.subplots()
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 # Read CSV file and store data in a Pandas DataFrame
 df = pd.read_csv('Real_Results/results.csv', delimiter=',')
 
@@ -39,7 +40,7 @@ YValues3 = []
 
 YValues1 = df.iloc[0,:].values
 YValues2 = df.iloc[1,:].values
-YValues3 = df.iloc[39,:].values
+YValues3 = df.iloc[20,:].values
 ## Don't change this. This will add the Name of the Data and delete it from the list to plot the values###
 ## It also defines the lenght of the plot ##
 yachse1 = YValues1[0]
@@ -53,13 +54,13 @@ time_step = XValues
 
 # Create a line graph of Q_HP vs time-step
 
-plt.yticks(np.arange(0, 4, step=1))
+#plt.yticks(np.arange(290, 310, step=2))
 
 ax2 = ax.twinx()
 ax.plot(time_step, YValues1, color='r')
 
 #ax2.plot(time_step,YValues3, color='g', label='COP_1')
-ax2.plot(time_step, YValues2 * 2, color='b', label='Q_HP')
+ax2.plot(time_step, YValues2 , color='b', label='Q_HP')
 
 plt.xlabel('Time-step')
 ax.set_ylabel(yachse1, color='r')
