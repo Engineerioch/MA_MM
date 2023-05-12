@@ -25,15 +25,16 @@ options = {
     'Tariff'        :   {'Variable'          : False},   # [-] TRUE = 'variable' or FALSE = 'fix' -> Decides if Powerprice is variable or fix
 
 
-    'WeatherData':   {'TRY'                  : 'cold',       # [-] 'warm'    -> warmes TRY 2015
+    'WeatherData':   {'TRY'                  : 'warm',       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                             # [-] 'cold' -> kaltes TRY 2015
                         'Input_Data' : 'TRY',               # Which Input-Data should be used: TRY = Data from original TRY
                                                             # Cluster = Clustered Data
                                                             # Clusterday = 3 same Clusterdays in a row
-                        'DayNumber' : 5
+                        'DayNumber' : 6
                         },
-    'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
+    'Sto'           : {'Size'                   : 'Small',
+                                                     # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
                         'Type'                  : 'Seperated',  # Define what type of storage one has (Puffer, Kombi, Seperated)
                        },
 
@@ -42,13 +43,15 @@ options = {
                         },
     }
 
-start_time = 0                    # start time in hours
+start_time = 1416                     # start time in hours
 time_step = 0.25                     # step size in hours
-total_runtime = 744                  # Iterationsschritte -> Sollte durch 24 teilbar sein
+total_runtime = 744
+# Iterationsschritte -> Sollte durch 24 teilbar sein
 control_horizon = 4
 prediction_horizon = 24
 
 if options['WeatherData']['Input_Data'] == 'Clusterday':
+    start_time = 0
     total_runtime = 48
 else:
     pass
@@ -109,7 +112,7 @@ save_optim_results = {
     'T_Air': [],
     'T_Mean': [],
     'c_el_power': [],
-    'c_heat_power': [],
+#    'c_heat_power': [],
     'total_costs_ch': [],
     'P_EL'              : [],
     'P_EL_Dem'          : [],
@@ -135,6 +138,7 @@ save_optim_results = {
     'Q_TWW_Loss'        : [],
     'Q_Penalty_TWW'     : [],
     'TWW_Penalty'       : [],
+    'T_Mean_Next'       : [],
     }
 
 save_results = copy.deepcopy(save_optim_results)
@@ -310,7 +314,7 @@ elif show== 'Save_Results':
         Data = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, T_Mean, c_grid, T_Sto, COP_1, COP_2, Q_Penalty))
         Input = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, T_Mean, c_grid))
     else:
-        Data = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, T_Mean, c_grid, Q_TWW, T_Sto, T_TWW, COP_1, COP_2, Q_HP,  Q_Penalty))
+        Data = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, T_Mean, c_grid, Q_TWW, T_Sto, T_TWW, COP_1, COP_2, Q_HP, Q_Penalty))
         Input = list(zip(T_Air, Q_Hou, P_PV, P_EL_Dem, T_Mean, c_grid, Q_TWW))
 
     with open(Modefile, "w", newline="") as m:

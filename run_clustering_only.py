@@ -13,6 +13,9 @@ import matplotlib.pyplot as plt
 import csv
 import pandas as pd
 import pickle as pickle
+
+import tikzplotlib
+
 from plot_results_to_files import latex_base
 import clustering_medoid as clustering
 from sklearn.metrics import r2_score
@@ -21,7 +24,7 @@ plt.rcParams.update(latex_base)
 
 #from EasyMPC import options
 # Set the TRY-Type here
-TRY = 'warm'
+TRY = 'normal'
 Tariff = 'Fix'
 
 RG = []
@@ -71,7 +74,7 @@ w_T = 3
 w_Q = 4
 w_PPV = 2
 w_PEL = 1
-Mip_Gap = 0.05
+Mip_Gap = 0.01
 typedays = range(first,last,distance)
 
 
@@ -208,40 +211,39 @@ for i in typedays:
 
 plt.xlabel('Anzahl der Typtage')
 plt.ylabel('Abweichung von den TRY-Daten in %')
-#plt.plot (typedays, diff["T_Air"][1:len(typedays)+1]/ abs_T_Air * 100, label="T_Air")
-#plt.plot (typedays, diff["Q_Hou_Dem"][1:len(typedays)+1]/abs_Q_Hou_Dem*100, label="Q_Hou_Dem")
-#plt.plot (typedays, diff["P_PV"][1:len(typedays)+1]/abs_P_PV*100, label="P_PV")
-plt.plot (typedays, diff["P_EL_Dem"][1:len(typedays)+1]/abs_P_EL_Dem*100, label="P_EL_Dem")
+plt.rcParams.update(latex_base)
+plt.plot (typedays, diff["T_Air"][1:len(typedays)+1]/ abs_T_Air * 100, label="T_Außen")
+plt.plot (typedays, diff["Q_Hou_Dem"][1:len(typedays)+1]/abs_Q_Hou_Dem*100, label="Q_Haus,Bed")
+plt.plot (typedays, diff["P_PV"][1:len(typedays)+1]/abs_P_PV*100, label="P_PV")
+plt.plot (typedays, diff["P_EL_Dem"][1:len(typedays)+1]/abs_P_EL_Dem*100, label="P_El,Bed")
 #plt.style.use("D://lma-mma/Repos/MA_MM/ebc.paper.mplstyle")
-
-#filename = "D://lma-mma/Repos/MA_MM/Cluster/Dev" + dataname
-#plt.savefig(filename+".svg", dpi=600)
+plt.legend()
+filename = "D://lma-mma/Repos/MA_MM/Cluster/Dev" + dataname
+#plt.savefig(filename+".svg")
+#plt.savefig(filename+".pdf")
+#tikzplotlib.save(filename+'.tex')
 #plt.show()
 
 plt.ylabel('Determinationskoeffizient R²')
-#plt.plot (typedays, R_Square["R_T_Air"][1:(len(typedays)+1)], label="T_Air")
-#plt.plot (typedays, R_Square["R_Q_Hou_Dem"][1:(len(typedays)+1)], label="Q_Hou_Dem")
-#plt.plot (typedays, R_Square["R_P_PV"][1:(len(typedays)+1)], label="P_PV")
-plt.plot (typedays, R_Square["R_P_EL_Dem"][1:(len(typedays)+1)], label="P_EL_Dem")
-#plt.plot (typedays, R_Square["R_Gesamt"][1:(len(typedays)+1)], label="R_Gesamt,Gewichtet")
-#plt.plot (typedays, R_Square["R_Gesamt2"][1:(len(typedays)+1)], label="R-Gesamt")
+plt.plot (typedays, R_Square["R_T_Air"][1:(len(typedays)+1)], label="T_Außen")
+plt.plot (typedays, R_Square["R_Q_Hou_Dem"][1:(len(typedays)+1)], label="Q_Haus,Bed")
+plt.plot (typedays, R_Square["R_P_PV"][1:(len(typedays)+1)], label="P_PV")
+plt.plot (typedays, R_Square["R_P_EL_Dem"][1:(len(typedays)+1)], label="P_El,Bed")
+plt.plot (typedays, R_Square["R_Gesamt"][1:(len(typedays)+1)], label="R_Gesamt,Gewichtet")
+plt.plot (typedays, R_Square["R_Gesamt2"][1:(len(typedays)+1)], label="R-Gesamt")
 
-#filename = "D://lma-mma/Repos/MA_MM/Cluster/Det_" + dataname
-#plt.savefig(filename+".pdf", dpi=600)
-#plt.savefig(filename+".svg")
-#plt.show()
-#plt.legend(loc='upper left')
-
-#plt.rcParams.update(latex_base)
+filename = "D://lma-mma/Repos/MA_MM/Cluster/" + dataname
+plt.rcParams.update(latex_base)
 #rc('font', **{'family':'san-serif','sans-serif':['Times']})
 #rc('text', usetex = True)
-plt.rcParams
+#plt.rcParams
 #plt.rcParams["font.family"] = "Helvetica"
 #plt.rcParams["font.efficiency"] = 22
 
-filename = "D://lma-mma/Repos/MA_MM/Cluster/" + dataname
-#plt.savefig(filename+".pdf", dpi=600)
+#plt.legend()
+#plt.savefig(filename+".pdf")
 #plt.savefig(filename+".svg")
+#tikzplotlib.save(filename+'.tex')
 #plt.show()
 
 with open(filename+".pkl", 'wb') as f_in:
@@ -251,7 +253,7 @@ with open(filename+".pkl", 'wb') as f_in:
 #   pickle.dump(R_Square, f_in, pickle.HIGHEST_PROTOCOL)
 
 
-c_grid = []
+#c_grid = []
 #for i in range(0,8760):
 #    c_grid.append(clustered_c_grid[i])
 #print(type(clustered_c_grid))
@@ -263,10 +265,13 @@ T_Air = np.interp(xnew, xp, clustered_T_Air) #Liste1)
 Q_Hou= np.interp(xnew, xp, clustered_Q_Hou_Dem)
 PPV= np.interp(xnew, xp, clustered_P_PV)
 PEL= np.interp(xnew, xp, clustered_P_EL_Dem)
-print(len(c_grid))
+#print(len(c_grid))
 #c =  np.interp(xnew, xp, c_grid)
 
 
+
+print(len(T_Air.tolist()))
+print(clustered["T_Air_8"])
 clustered_TWW = []
 clustered_TWW1 = []
 clustered_TWW2 = []
@@ -286,6 +291,7 @@ for i in range(0,len(clustered_T_Air)):
                     clustered_TWW1.append(second)
                     clustered_TWW2.append(third)
                     clustered_TWW3.append(fourth)
+
         elif clustered_T_Air[i] == clustered["T_Air_8"][1][0]:
             with open("input_data/Medoid/TWW/"+TRY+"/outcome_2.csv", 'r') as file:
                 reader = csv.reader(file)
@@ -298,6 +304,7 @@ for i in range(0,len(clustered_T_Air)):
                     clustered_TWW1.append(second)
                     clustered_TWW2.append(third)
                     clustered_TWW3.append(fourth)
+
         elif round(clustered_T_Air[i], 2) == round(clustered["T_Air_8"][2][0], 2):
             with open("input_data/Medoid/TWW/"+TRY+"/outcome_3.csv", 'r') as file:
                 reader = csv.reader(file)
@@ -310,7 +317,7 @@ for i in range(0,len(clustered_T_Air)):
                     clustered_TWW1.append(second)
                     clustered_TWW2.append(third)
                     clustered_TWW3.append(fourth)
-                print("True")
+                #print("True")
         elif clustered_T_Air[i] == clustered["T_Air_8"][3][0]:
             with open("input_data/Medoid/TWW/"+TRY+"/outcome_4.csv", 'r') as file:
                 reader = csv.reader(file)
@@ -372,10 +379,11 @@ for i in range(0,len(clustered_T_Air)):
                     clustered_TWW1.append(second)
                     clustered_TWW2.append(third)
                     clustered_TWW3.append(fourth)
+        else:
+            print('False')
 
 
-
-
+print(T_Air.tolist())
 
 header = 'T_Air', 'Q_Hou', 'PPV', 'PEL', 'QTWW','Tp','Tmin','f',
 

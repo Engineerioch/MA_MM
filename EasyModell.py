@@ -190,7 +190,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
         COP_3 = []
         for i in range(0, int(8784 / time_step)):
-            COP_if = T_HP_VL_2 / (T_HP_VL_3 - Temp_COP[i])
+            COP_if = T_HP_VL_3 / (T_HP_VL_3 - Temp_COP[i])
             if COP_if <= 0:
                 COP3 = 1
             else:
@@ -199,10 +199,19 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
     for i in range(0, total_runtime, int(24/time_step)):
         start_index = start_time
+        start_index_next = start_index + 96
         if start_time_hour % 24 != 0:
             start_index -= int((start_time_hour % 24) / time_step)
+            start_index_next -= int(((start_time_hour + 24) % 24) / time_step)
         T_Mean = sum(T_Input[start_index: start_index + int(24/time_step)]) / int(24/time_step)
+        T_Mean_Next = sum(T_Input[start_index_next : start_index_next + int(24/time_step)]) / int(24/time_step)
 
+
+#    for i in range(0, total_runtime, int(24/time_step)):
+#        start_index_next = start_time + 24
+#        if start_time_hour % 24 != 0:
+#            start_index_next -= int((start_time_hour % 24) / time_step)
+#        T_Mean_Next = sum(T_Input[start_index_next: start_index_next + int(24/time_step)]) / int(24/time_step)
 
     model = ConcreteModel()
 
@@ -214,7 +223,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     model.Q_Sto_Power   = Var(time, within=NonNegativeReals, name='Q_Sto_Power')
     model.Q_Sto_Loss    = Var(time, within=Reals, name='Q_Sto_Loss')
     model.Q_Sto_Energy  = Var(time, within=Reals, name='Q_Sto_Energy')
-    model.Q_Sto_Power_max=Var(time, within=Reals, name='Q_Sto_Power_max')#, bounds=(0,10000))
+    model.Q_Sto_Power_max=Var(time, within=NonNegativeReals, name='Q_Sto_Power_max')#, bounds=(0,10000))
     model.Q_Hou_Dem     = Var(time, within=Reals, name='Q_Hou_Dem')
     model.Q_HP_1        = Var(time, within=NonNegativeReals, name='Q_HP_1')
     model.Q_HP_2        = Var(time, within=NonNegativeReals, name='Q_HP_2')
@@ -261,6 +270,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     model.B_Hou = Var(time, within=Binary, name='B_Hou')
     model.T_Strafe = Var(time, within=NonNegativeReals, name='T_Strafe')
     model.Q_Penalty_TWW = Var(time, within= NonNegativeReals, name='Q_Penalty_TWW')
+    model.B_Power = Var(time, within=Binary, name='B_Power')
 
 
 
@@ -301,12 +311,22 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
             return (m.B_Hou[t] == 0)
         model.House_Power_Binary = Constraint(time, rule=House_Power_Binary, name='House_Power_Binary')
 
-        def Sto_House_Summer(m, t):
-            return (m.T_Sto[t] >= T_Sto_Env)
-        model.Sto_House_Summer = Constraint(time, rule=Sto_House_Summer, name='Sto_House_Summer')
+
+        if T_Mean_Next >= T_Hou_Gre:
+            def Sto_House_Summer(m, t):
+                return (m.T_Sto[t] >= T_Sto_Env)
+            model.Sto_House_Summer = Constraint(time, rule=Sto_House_Summer, name='Sto_House_Summer')
+        else:
+            def Sto_House_Summer(m, t):
+                if t >= 22:
+                    return (m.T_Sto[t] >= T_Sto_Ersatz - 5)
+                else:
+                    return (m.T_Sto[t] >= T_Sto_Env)
+            model.Sto_House_Summer = Constraint(time, rule=Sto_House_Summer)
+
     else:
         def Sto_House_Summer(m, t):
-            return (m.T_Sto[t] >= T_Sto_Ersatz) # Todo: hier kann die Straftemperatur im Speicher mit rein)
+            return (m.T_Sto[t] >= T_Sto_Ersatz)
         model.Sto_House_Summer = Constraint(time, rule=Sto_House_Summer, name='Sto_House_Summer')
 
         def House_Power_Binary(m, t):
@@ -424,7 +444,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     # Calculation of Temperature in Storage in current time step: [K] # todo Einheiten
     def Temp_Sto(m, t):
         if t >= 1:
-            return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) * time_step / sek_in_hour == ((m.Q_HP[t] * (1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
+            return(((m.T_Sto[t] - m.T_Sto[t-1]) * m_Sto_water * c_w_water) *time_step/ sek_in_hour == ((m.Q_HP[t] * (1 - m.HP_TWW[t]))- m.Q_Hou[t] - m.Q_Sto_Loss[t]))
         else:
             if iter == 0:
                 return(m.T_Sto[t] == T_Sto_Init)
@@ -444,8 +464,13 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
     # Maximum Power by Storage per hour: [Wh] # todo die Temperaturklammer mal gscheit)
     def Maximum_Storage_Power(m, t):
-        return(m.Q_Sto_Power_max[t] == m_Sto_water * c_w_water * (m.T_Sto[t] - (T_Sto_Use)) * time_step / sek_in_hour)
+        return(m.Q_Sto_Power_max[t] == (m_Sto_water * c_w_water * (m.T_Sto[t] - (T_Sto_Use)) * time_step / sek_in_hour) * m.B_Power[t])
     model.Maximum_Storage_Power = Constraint(time, rule=Maximum_Storage_Power, name='Maximum_Storage_Power')
+
+    def MaximumPower_Above_Zero(m,t):
+        return(m.Q_Sto_Power_max[t] * m.B_Power[t] >= 0)
+    model.MaximumPower_Above_Zero = Constraint(time, rule= MaximumPower_Above_Zero, name='MaximumPower_Above_Zero')
+
 
     ####################---5. Calculate HP_Mode depending on the TWW-Demand and Delivery Data---####################
 
@@ -530,13 +555,12 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         # Set any value to avoid a python failure
         def TWW_Demand_Import(m, t):
             return (m.Q_TWW_Dem[t] == 0)
-
         model.TWW_Demand_Import = Constraint(time, rule=TWW_Demand_Import, name='TWW_Demand_Import')
 
     ####################---6. Linking of all Systems ---####################
 
     def power_balance(m, t):
-        return(m.P_EL[t] == (m.P_EL_Dem[t] + m.P_EL_HP[t] - m.P_PV[t]))
+        return(m.P_EL[t] == (m.P_EL_Dem[t] + m.P_EL_HP[t]) - m.P_PV[t])
     model.power_balance = Constraint(time, rule = power_balance, name = 'Power_balance')
 
     def Define_Feed_Binary(m, t):
@@ -547,15 +571,15 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
 
     # Calculation of Cost for Power: [€]
     def Cost_for_Power(m, t):
-        return (m.c_el_power[t] == m.No_Feed_In[t] * c_grid[t + start_time] * m.P_EL_Dem[t] )
+        return (m.c_el_power[t] == m.No_Feed_In[t] * c_grid[t + start_time] * m.P_EL[t] )
     model.Cost_for_Power = Constraint(time, rule= Cost_for_Power, name= 'Cost_for_Power')
 
-    def Cost_for_HP_Power(m, t):
-        return(m.c_heat_power[t] == c_grid[t + start_time] * m.P_EL_HP[t])
-    model.Cost_for_HP_Power = Constraint(time, rule=Cost_for_HP_Power, name='Cost_for_HP_Power')
+#    def Cost_for_HP_Power(m, t):
+#        return(m.c_heat_power[t] == c_grid[t + start_time] * m.P_EL_HP[t] * m.No_Feed_In[t])
+#    model.Cost_for_HP_Power = Constraint(time, rule=Cost_for_HP_Power, name='Cost_for_HP_Power')
 
     def Real_Power_Cost(m, t):
-        return(m.c_el_cost_ch == sum(m.c_heat_power[t] + m.c_el_power[t] - m.c_revenue[t] for t in sum_control))
+        return(m.c_el_cost_ch == sum(m.c_el_power[t] - m.c_revenue[t] for t in sum_control))
     model.Real_Power_Cost = Constraint(time, rule=Real_Power_Cost, name='Real_Power_Cost')
 
     # Calculation of Revenue for PV-Power: [€]
@@ -569,16 +593,16 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
     model.Costs_of_Penalty = Constraint(time, rule=Costs_of_Penalty, name='Costs_of_Penalty')
 
     def Costs_in_timestep(m,t):
-        return (m.c_cost[t] == m.c_el_power[t] + m.c_revenue[t] + m.c_penalty[t] + m.c_heat_power[t])
+        return (m.c_cost[t] == m.c_el_power[t] + m.c_revenue[t] + m.c_penalty[t])
     model.Costs_in_timestep = Constraint(time, rule=Costs_in_timestep, name='Costs_in_timestep')
 
     # Calculation of sum of all costs per control-horizon: [€]
     def Cost_in_Prediction_horizon(m, t):
-        return (m.costs_total_ph == sum(m.c_el_power[t] + m.c_heat_power[t] + m.c_revenue[t] + m.c_penalty[t] for t in time))
+        return (m.costs_total_ph == sum(m.c_el_power[t] + m.c_revenue[t] + m.c_penalty[t] for t in time))
     model.Cost_in_Prediction_horizon = Constraint(time, rule=Cost_in_Prediction_horizon, name ='Cost_in_Prediction_horizon')
 
     def Unreal_Cost_in_Control_horizon(m, t):
-        return(m.costs_total_ch == sum(m.c_el_power[t] + m.c_heat_power[t] + m.c_revenue[t] + m.c_penalty[t] for t in sum_control))
+        return(m.costs_total_ch == sum(m.c_el_power[t]  + m.c_revenue[t] + m.c_penalty[t] for t in sum_control))
     model.Unreal_Cost_in_Control_horizon = Constraint(time, rule=Unreal_Cost_in_Control_horizon, name='Unreal_Cost_in_Control_horizon')
 
     ####################---8. Zielfunktion ---####################
@@ -635,7 +659,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         'total_costs_ph'    : [],
         'c_grid'            : [],
         'c_el_power'        : [],
-        'c_heat_power'      : [],
+#        'c_heat_power'      : [],
         'c_penalty'         : [],
         'c_revenue'         : [],
         'c_cost'            : [],
@@ -659,6 +683,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         'Q_TWW_Loss'        : [],
         'Q_Penalty_TWW'     : [],
         'TWW_Penalty'       : [],
+        'T_Mean_Next'       : [],
         }
 
     status = 'feasible'
@@ -694,7 +719,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         res_control_horizon['total_costs_ph'].append(round(value(model.costs_total_ph)  ,3))
         res_control_horizon['total_costs_ch'].append(round(value(model.costs_total_ch)  ,3))
         res_control_horizon['c_el_power'].append(round(value(model.c_el_power[t]), 3))
-        res_control_horizon['c_heat_power'].append(round(value(model.c_heat_power[t]), 3))
+#        res_control_horizon['c_heat_power'].append(round(value(model.c_heat_power[t]), 3))
         res_control_horizon['c_penalty'].append(round(value(model.c_penalty[t]), 3))
         res_control_horizon['c_revenue'].append(round(value(model.c_revenue[t]), 3))
         res_control_horizon['c_grid'].append(c_grid[t + start_time] * 1000)
@@ -718,6 +743,7 @@ def runeasyModell(params, options, eco, time_series, devs, iter, T_Sto_Init, T_T
         res_control_horizon['Q_TWW_Loss'].append(int(value(model.Q_TWW_Loss[t])))
         res_control_horizon['Q_Penalty_TWW'].append(round(value(model.Q_Penalty_TWW[t]), 2))
         res_control_horizon['TWW_Penalty'].append(int(value(model.TWW_Penalty[t])))
+        res_control_horizon['T_Mean_Next'].append(round(T_Mean_Next, 2))
 
 
     #    model.display

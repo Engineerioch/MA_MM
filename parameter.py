@@ -37,7 +37,7 @@ def load_params(options, params):
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio' : 2,                            # [-] Ratio of Heat/Diameter
             'S_Wall'    : 0.15,
-            'T_Sto_Use' : 25 + 273.15
+            'T_Sto_Use' : 32 + 273.15
         },
 
 
@@ -49,7 +49,6 @@ def load_params(options, params):
             'S_Wall': 0.15,
             'T_TWW_Max' : 65 + 273.15,
             'T_TWW_Soll' : 50 + 273.15
-
         },
 
     # Set Heat Pump parameter
@@ -58,7 +57,7 @@ def load_params(options, params):
             'T_HP_VL_1'     : 40 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
             'T_HP_VL_2'     : 70 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 2
             'T_HP_VL_3'     : 65 + 273.15,
-            'm_flow_HP'     : 1230 / 3600,                   # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg(s zu bekommen)
+            'm_flow_HP'     : 1230 / 3600,                   # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg/s zu bekommen)
             'eta_HP'        : 0.4,                          # [-]   Gütegrad HP
             'Q_HP_Min'      : 0,                            # [W]   Minimum Heat power of HP
             'T_Spreiz_HP'      : 7,                            # [K]   Maximum Change of Temperature between Vorlauf and Rücklauf
@@ -98,7 +97,7 @@ def load_params(options, params):
     elif options['Sto']['Size'] == 'Medium':
         devs['Sto']['Volume'] = 0.5            # [m³] Medium Storage has a capacity of 500l
     elif options['Sto']['Size'] == 'Large':
-        devs['Sto']['Volume'] = 1.0         # [m³] Large Storage has a capacity of 1000l
+        devs['Sto']['Volume'] = 0.7         # [m³] Large Storage has a capacity of 1000l
     else:
         print('Please set a supported Storage Size in EasyMPC -> options')
 
@@ -235,7 +234,7 @@ def load_time_series(params, options):
         elif options['WeatherData']['TRY'] == 'normal':
             File = pd.read_csv('input_data/ClusteredYear/ClusteredYear_normal.csv')
             time_series['T_Air']    = File.iloc[:, 0] + 273.15
-            time_series['Q_Hou_Dem']= File.iloc[:,1]
+            time_series['Q_Hou_Dem']= File.iloc[:,1] / 4
             time_series['P_PV']     = File.iloc[:,2]
             time_series['P_EL_Dem'] = File.iloc[:,3]
             time_series['Q_TWW_Dem']= File.iloc[:,4] * 1000

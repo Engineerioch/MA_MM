@@ -171,17 +171,6 @@ import pickle as pickle
 #
 
 
-
-
-
-
-
-
-
-
-
-
-
 #dT = pd.read_csv('input_data/Opti_Input/Temperature_Berlin.csv', skiprows=0)
 ##T_Air = (dT.iloc[:, 2] + 273.15)
 #T = (dT.iloc[:, 2] + 273.15)
@@ -333,10 +322,10 @@ from sklearn import tree
 
 
 ##############################################
-
+TRY = 'cold'
 
 header = ['Tair','QHouDem','PPV','PELDem','QTWW','Tp','Tmin','f']
-myfile= "D://lma-mma/Repos/MA_MM/Cluster/Cluster_Alle_8_8_1_3421_001_normal.pkl"
+myfile = "D://lma-mma/Repos/MA_MM/Cluster/Cluster_Alle_8_8_1_3421_001_"+TRY+".pkl"
 ## Load the data from the pickle file
 with open(myfile, 'rb') as f:
     data = pickle.load(f)
@@ -352,7 +341,7 @@ Q_Dem = data['Q_Hou_Dem_8']
 print(Temp)
 
 T = Temp[0].tolist()
-T_Input = np.interp(xnew, xp, T) #Liste1)
+#T_Input = np.interp(xnew, xp, T) #Liste1)
 
 
 P_PV = data['P_PV_8']
@@ -360,7 +349,7 @@ P_EL_Dem = data['P_EL_Dem_8']
 
 Endliste = []
 #Endliste.append(Q_Dem)
-print(len(Q_Dem))
+#print(len(Q_Dem))
 
 #print(len(Endliste[0]))
 
@@ -372,7 +361,7 @@ for i in range(0,8):
     Drei =[]
     Vier =[]
     #print(Test)
-    with open("input_data/Medoid/TWW/outcome_"+ str(i+1)+ ".csv", 'r') as file:
+    with open("input_data/Medoid/TWW/"+TRY+"/outcome_"+ str(i+1)+ ".csv", 'r') as file:
         reader = csv.reader(file)
 
         for row in reader:
@@ -401,8 +390,8 @@ for i in range(0,8):
 #    Test = list(zip(T_Input, Q_Dem[i], P_PV[i], P_EL_Dem[i], Wasser, Zwei, Drei, Vier))
 #    print(Test)
 
-
-    with open(f"DreiClusterTage_normal_" + str(i) + ".csv", "w", newline="") as f:
+    #print(T_Input)
+    with open(f"DreiClusterTage_"+TRY+"_" + str(i) + ".csv", "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow([g for g in header])
         for j in range(0,3):

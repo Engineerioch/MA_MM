@@ -22,14 +22,14 @@ print(locale.getlocale(locale.LC_NUMERIC))
 
 
 
-latex_base = {'figure.figsize'   : [6.220, 3.5]    # figure size in inches
+latex_base = {'figure.figsize'   : [6.220, 2.5]    # figure size in inches
                 ,'figure.dpi'       : 80      # figure dots per inch
                 # Eigenschaften der Achsen
                 ,'axes.linewidth'      : 0.5     # edge linewidth
                 ,'axes.grid'           : False   # display grid or not
                 ,'axes.titlesize'      : 11.0   # fontsize of the axes title
                 ,'axes.labelsize'      : 11.0  # fontsize of the x any y labels
-                ,'axes.prop_cycle'    : (cycler('color',['#EC635C', '#4B81C4', '#F49961', '#8768B4', '#B45955','#CB74F4','#6EBB96'])+ cycler(linestyle=['solid','dashed','dotted','dashdot',(5,(10,3)),(0,(3,10,1,10,1,10)),(0,(3,1,1,1,1,1))]))  # color cycle for plot lines
+                ,'axes.prop_cycle'    : (cycler('color',['#EC635C', '#4B81C4','#F49961','grey',  '#8768B4','#B45955','#CB74F4','#6EBB96'])+ cycler(linestyle=['solid','dashed','dashdot','dotted',(5,(10,3)),(1,(3,1,2,1,2,1)),(0,(3,5,1,5,1,5)),(0,(5,5))]))  # color cycle for plot lines
                 ,'axes.formatter.use_locale': True  # use decimal point or comma depending on locale.setlocale()
 
                 # Eigenschaften der Tick-Marker
@@ -56,7 +56,7 @@ latex_base = {'figure.figsize'   : [6.220, 3.5]    # figure size in inches
                 ,'font.sans-serif'     : ['Arial', 'Helvetica','sans-serif']
                 # Eigenschaften fürs Speichern
                 ,'savefig.dpi'         : 600      # figure dots per inch
-                ,'savefig.format'      : 'svg'      # png, ps, pdf, svg
+                ,'savefig.format'      : 'pdf'      # png, ps, pdf, svg
                 , 'figure.autolayout' : True,
 
 
