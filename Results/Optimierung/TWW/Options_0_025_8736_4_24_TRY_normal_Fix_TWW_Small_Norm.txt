@@ -1,0 +1,16 @@
+optionsoptions
+Solve={'MIP_gap': 0.03, 'TimeLimit': 30, 'TimeLimitMax': 120, 'type': 'gurobi'}
+PV={'PV_factor': 1.0}
+Tariff={'Variable': False}
+WeatherData={'TRY': 'normal', 'Input_Data': 'TRY', 'DayNumber': 7}
+Sto={'Size': 'Small', 'Type': 'Seperated'}
+TWW={'Size': 'Norm'}
+
+params_optiparams_opti
+prediction_horizon=24
+control_horizon=4
+time_step=0.25
+start_time=8736
+total_runtime=8736
+safe_start_time=0
+

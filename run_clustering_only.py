@@ -13,16 +13,17 @@ import matplotlib.pyplot as plt
 import csv
 import pandas as pd
 import pickle as pickle
+from plot_results_to_files import pp_figure
 
 import tikzplotlib
 
 from plot_results_to_files import latex_base
 import clustering_medoid as clustering
 from sklearn.metrics import r2_score
-plt.rcParams.update(latex_base)
+from rwth_colors import colors
+plt.rcParams.update(pp_figure)
 
 
-#from EasyMPC import options
 # Set the TRY-Type here
 TRY = 'normal'
 Tariff = 'Fix'
@@ -63,16 +64,16 @@ data = [abs_T_Air, abs_Q_Hou_Dem, abs_P_PV, abs_P_EL_Dem]
 
 
 
-#%% Clustering Inputdata
+# Clustering Inputdata
 #set the range of typedays you want to analyse here!
-first = 8
-last = 9
+first = 1
+last = 15
 distance = 1
 
 #Different weight-Factors
-w_T = 3
-w_Q = 4
-w_PPV = 2
+w_T = 1
+w_Q = 1
+w_PPV = 1
 w_PEL = 1
 Mip_Gap = 0.01
 typedays = range(first,last,distance)
@@ -199,7 +200,7 @@ for i in typedays:
     ##Summe der Gewichtungsfaktoren
     Sum_weights = w_T + w_Q + w_PPV + w_PEL
     R_Ges1 = (R_T_Air * w_T + R_Q_Hou_Dem * w_Q + R_P_PV * w_PPV + R_P_EL_Dem * w_PEL) / Sum_weights
-    R_Ges2 = (R_T_Air / 4) + (R_Q_Hou_Dem / 4) + (R_P_PV / 4) + (R_P_EL_Dem / 4)
+#    R_Ges2 = (R_T_Air / 4) + (R_Q_Hou_Dem / 4) + (R_P_PV / 4) + (R_P_EL_Dem / 4)
 
     # Append to dictionary
     R_Square["R_T_Air"] = np.append(R_Square["R_T_Air"], R_T_Air)
@@ -207,50 +208,50 @@ for i in typedays:
     R_Square["R_P_PV"] = np.append(R_Square["R_P_PV"], R_P_PV)
     R_Square["R_P_EL_Dem"] = np.append(R_Square["R_P_EL_Dem"], R_P_EL_Dem)
     R_Square["R_Gesamt"] = np.append(R_Square["R_Gesamt"], R_Ges1)
-    R_Square["R_Gesamt2"] = np.append(R_Square["R_Gesamt2"], R_Ges2)
+#    R_Square["R_Gesamt2"] = np.append(R_Square["R_Gesamt2"], R_Ges2)
 
 plt.xlabel('Anzahl der Typtage')
 plt.ylabel('Abweichung von den TRY-Daten in %')
-plt.rcParams.update(latex_base)
-plt.plot (typedays, diff["T_Air"][1:len(typedays)+1]/ abs_T_Air * 100, label="T_Außen")
-plt.plot (typedays, diff["Q_Hou_Dem"][1:len(typedays)+1]/abs_Q_Hou_Dem*100, label="Q_Haus,Bed")
-plt.plot (typedays, diff["P_PV"][1:len(typedays)+1]/abs_P_PV*100, label="P_PV")
-plt.plot (typedays, diff["P_EL_Dem"][1:len(typedays)+1]/abs_P_EL_Dem*100, label="P_El,Bed")
+#plt.rcParams.update(latex_base)
+plt.plot(typedays, diff["T_Air"][1:len(typedays)+1]/ abs_T_Air * 100, label="$T_\mathrm{Außen}$")
+plt.plot(typedays, diff["Q_Hou_Dem"][1:len(typedays)+1]/abs_Q_Hou_Dem*100, label="$Q_\mathrm{Haus,Bed}$")
+plt.plot(typedays, diff["P_PV"][1:len(typedays)+1]/abs_P_PV*100, label="$P_\mathrm{PV}$")
+plt.plot(typedays, diff["P_EL_Dem"][1:len(typedays)+1]/abs_P_EL_Dem*100, label="$P_\mathrm{El,Bed}$")
 #plt.style.use("D://lma-mma/Repos/MA_MM/ebc.paper.mplstyle")
 plt.legend()
-filename = "D://lma-mma/Repos/MA_MM/Cluster/Dev" + dataname
+#Set saving location:
+filename = "results/" + dataname
 #plt.savefig(filename+".svg")
 #plt.savefig(filename+".pdf")
 #tikzplotlib.save(filename+'.tex')
-#plt.show()
+plt.show()
 
 plt.ylabel('Determinationskoeffizient R²')
-plt.plot (typedays, R_Square["R_T_Air"][1:(len(typedays)+1)], label="T_Außen")
-plt.plot (typedays, R_Square["R_Q_Hou_Dem"][1:(len(typedays)+1)], label="Q_Haus,Bed")
-plt.plot (typedays, R_Square["R_P_PV"][1:(len(typedays)+1)], label="P_PV")
-plt.plot (typedays, R_Square["R_P_EL_Dem"][1:(len(typedays)+1)], label="P_El,Bed")
-plt.plot (typedays, R_Square["R_Gesamt"][1:(len(typedays)+1)], label="R_Gesamt,Gewichtet")
-plt.plot (typedays, R_Square["R_Gesamt2"][1:(len(typedays)+1)], label="R-Gesamt")
+plt.plot (typedays, R_Square["R_T_Air"][1:(len(typedays)+1)], label="$T_\mathrm{Außen}$", color=colors)
+plt.plot (typedays, R_Square["R_Q_Hou_Dem"][1:(len(typedays)+1)], label="$R_{Q_\mathrm{Haus,Bed}}$")
+plt.plot (typedays, R_Square["R_P_PV"][1:(len(typedays)+1)], label="$R_{P_\mathrm{PV}}$")
+plt.plot (typedays, R_Square["R_P_EL_Dem"][1:(len(typedays)+1)], label="$R_{P_\mathrm{El,Bed}}$")
+plt.plot (typedays, R_Square["R_Gesamt"][1:(len(typedays)+1)], label="$R_\mathrm{Gesamt,Gewichtet}$")
+#plt.plot (typedays, R_Square["R_Gesamt2"][1:(len(typedays)+1)], label="R-Gesamt")
 
-filename = "D://lma-mma/Repos/MA_MM/Cluster/" + dataname
-plt.rcParams.update(latex_base)
+plt.rcParams.update(pp_figure)
 #rc('font', **{'family':'san-serif','sans-serif':['Times']})
 #rc('text', usetex = True)
 #plt.rcParams
 #plt.rcParams["font.family"] = "Helvetica"
 #plt.rcParams["font.efficiency"] = 22
 
-#plt.legend()
+plt.legend()
 #plt.savefig(filename+".pdf")
 #plt.savefig(filename+".svg")
 #tikzplotlib.save(filename+'.tex')
-#plt.show()
+plt.show()
 
 with open(filename+".pkl", 'wb') as f_in:
-   pickle.dump(clustered, f_in, pickle.HIGHEST_PROTOCOL)
+#   pickle.dump(clustered, f_in, pickle.HIGHEST_PROTOCOL)
 #   pickle.dump(diff, f_in, pickle.HIGHEST_PROTOCOL)
 #   pickle.dump(deviation_diff, f_in, pickle.HIGHEST_PROTOCOL)
-#   pickle.dump(R_Square, f_in, pickle.HIGHEST_PROTOCOL)
+   pickle.dump(R_Square, f_in, pickle.HIGHEST_PROTOCOL)
 
 
 #c_grid = []
@@ -269,7 +270,7 @@ PEL= np.interp(xnew, xp, clustered_P_EL_Dem)
 #c =  np.interp(xnew, xp, c_grid)
 
 
-
+# Create a timeline of one year and append DHW-Data according to the typedays
 print(len(T_Air.tolist()))
 print(clustered["T_Air_8"])
 clustered_TWW = []
@@ -385,12 +386,13 @@ for i in range(0,len(clustered_T_Air)):
 
 print(T_Air.tolist())
 
+#Save Clustered Year:
 header = 'T_Air', 'Q_Hou', 'PPV', 'PEL', 'QTWW','Tp','Tmin','f',
 
-data = list(zip(T_Air, Q_Hou, PPV, PEL, clustered_TWW, clustered_TWW1, clustered_TWW2, clustered_TWW3))
-with open(f"input_data/ClusteredYear/ClusteredYear_"+TRY+".csv", "w", newline="") as f:
-    writer = csv.writer(f)
-    writer.writerow([g for g in header])
-    for values in data:
-        writer.writerow(values)
+#data = list(zip(T_Air, Q_Hou, PPV, PEL, clustered_TWW, clustered_TWW1, clustered_TWW2, clustered_TWW3))
+#with open(f"input_data/ClusteredYear/ClusteredYear_"+TRY+".csv", "w", newline="") as f:
+#    writer = csv.writer(f)
+#    writer.writerow([g for g in header])
+#    for values in data:
+#        writer.writerow(values)
 

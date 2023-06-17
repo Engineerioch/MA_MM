@@ -5,19 +5,25 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import tikzplotlib
+from plot_results_to_files import pp_figure
 
-#Data_0_025_48_4_24_Clusterday_0_normal_Var_TWW_Medium_Norm
-TRY = 'warm'
+######## In this file, the results from the Typedays are put together to create a clustered year
+# First the data is red in
+# Therefore you should define the first two variables of the data you want to use
+TRY = 'normal'
 Strompreis = 'Fix'
 Ordner = 'Results/Optimierung/TWW/Clusterday/'
 Dataname= Ordner + 'Data_0_025_48_4_24_Clusterday_'
 Modesname= Ordner + 'Modes_0_025_48_4_24_Clusterday_'
+# Change the last part of the following line, if the storage sizes are not Small and Norm
 filename_rest = '_' + TRY + '_' + Strompreis +'_TWW_Small_Norm.csv'
-
+#
 #
 #
 Savename = '_0_025_8760_4_24_Clusteryear' + filename_rest
 
+
+# Create Lists of the data from the file for each variable and typeday
 
 Year = pd.read_csv(f"input_data/ClusteredYear/ClusteredYear_"+TRY+".csv", skiprows=0)
 T_Year0 = Year.iloc[:,0] + 273.15
@@ -118,6 +124,7 @@ Cel_7 = List_7.iloc[:,5].tolist()
 HP_7 = List_7.iloc[:,6].tolist()
 Pen_7 = List_7.iloc[:,7].tolist()
 
+#
 #print(Cel_7)
 if Ordner == 'Results/Optimierung/TWW/Clusterday/':
     Q_TWW_0 = List_0.iloc[:,6].tolist()
@@ -132,11 +139,6 @@ if Ordner == 'Results/Optimierung/TWW/Clusterday/':
 else:
     pass
 
-
-#
-#
-#
-
 T_Reihe = []
 Q_Reihe = []
 PV_Reihe = []
@@ -148,6 +150,8 @@ TM_Reihe = []
 HP_Reihe = []
 Pen_Reihe = []
 Days_Reihe = []
+
+# If the first temperature of a day is equel to the first temperature of a typeday, then the data of the second optimized day are appended to the list
 
 for i in range(0, len(T_Year)):
     if i % 96 == 0:
@@ -272,9 +276,7 @@ for i in range(0, len(T_Year)):
                 else:
                     pass
             Days_Reihe.append([7])
-            #print(i)
-            #print(T_6[0])
-            #print(T_Year[i])
+
         elif (round(T_Year[i],1)) == round(T_7[0], 1):
             for j in range(96, 192):
                 T_Reihe.append(T_7[j])
@@ -297,7 +299,8 @@ for i in range(0, len(T_Year)):
             pass
 else:
     pass
-#print(List_3)
+
+# Create zipped lists to save the lists
 if Ordner == 'Results/Optimierung/TWW/Clusterday/':
     Data = list(zip(T_Reihe, Q_Reihe, PV_Reihe, PEL_Reihe, TM_Reihe, Cel_Reihe, QTWW_Reihe))
     Save_path = 'Results/Optimierung/TWW/'
@@ -306,15 +309,11 @@ else:
     Save_path = 'Results/Optimierung/Puffer/'
 Modes = list(Modes_Zeitreihe)
 Days = list(Days_Reihe)
-#print(T_Reihe)
-#print(max(Q_Reihe))
-print(len(T_Reihe))
-#print(len(Q_Reihe))
 
+# Save the new lists of data in Data and Modesfile
 
 Datafile = Save_path + 'Data' + Savename
 Modesfile = Save_path + 'Modes' + Savename
-Daysfile = Save_path + 'Days' + Savename
 
 
 with open(Datafile, "w", newline="") as I:
@@ -327,145 +326,7 @@ with open(Modesfile, "w", newline="") as I:
     for values in Modes:
         writer.writerow(values)
 
-#with open(Daysfile, "w", newline="") as I:
-#    writer = csv.writer(I)
-#    for values in Days:
-#        writer.writerow(values)
 
-#print((T_Reihe))
-
-#T_Cluster = Year.iloc[:,0]
-#with open('file_1.csv', 'r') as f:
-#    first_value_file_1 = next(f).split(',')[0]
-#
-## Create a new csv file
-#with open('new_file.csv', mode='w', newline='') as new_file:
-#
-#    # Loop through the 8 files
-#    for i in range(1, 9):
-#
-#        # Read the first value of the current file
-#        with open(f'file_{i}.csv', 'r') as f:
-#            first_value_current_file = next(f).split(',')[0]
-#
-#        # Check if the first value of the current file matches the first value of file_1
-#        if first_value_file_1 == first_value_current_file:
-#
-#            # Append the current file to the new csv file
-#            with open(f'file_{i}.csv', 'r') as f:
-#                next(f) # Skip the first line (we already checked it)
-#                for line in f:
-#                    new_file.write(line)
-#
-#print(T_Cluster)
-from plot_results_to_files import latex_base
-plt.rcParams.update(latex_base)
-
-#print(Days)
-count = {}
-for sublist in Days:
-    for num in sublist:
-        if num in count:
-            count[num] += 1
-        else:
-            count[num] = 1
-
-#print(count)
+plt.rcParams.update(pp_figure)
 
 
-#x = range(1, 9)
-#keys = sorted(count.keys())
-#values = [count[key] for key in keys]
-#
-#plt.bar(keys, values, width=0.5)
-#plt.xlabel('Nummer des Typtages')
-#plt.ylabel('Häufigkeit des Typtages')
-Safeordner = 'D://lma-mma/Repos/MA_MM/Datensicherung/Plots/'
-#plt.savefig(Safeordner + 'HaeufigkeitClustertage_' + TRY + '.svg')
-#plt.savefig(Safeordner + 'HaeufigkeitClustertage_' + TRY + '.pdf')
-#tikzplotlib.save(Safeordner + 'HaeufigkeitClustertage_' + TRY + '.tex')
-#plt.show()
-#print(values)
-#Januar = range(1,32)
-#x = list(range(1, len(Days)+1))
-#y = [d[0] for d in Days]
-#
-#plt.plot(x[0:31], y[0:31], drawstyle='steps', label= 'Januar')
-##plt.plot(x[0:30], y[31:61], drawstyle='steps', label= 'Februar')
-#plt.plot(x[0:30], y[91:121], drawstyle='steps', label= 'April')
-#plt.plot(x[0:31], y[182:213], drawstyle='steps', label= 'Juli')
-#plt.plot(x[0:30], y[273:303], drawstyle='steps', label= 'Oktober')
-##plt.plot(x[0:31], y[334:366], drawstyle='steps', label= 'Oktober')
-##plt.plot(x[0:31], y[121:152], drawstyle='steps', label='Mai')
-#
-#plt.ylim([0.7, 8.3])
-#plt.xlim([0.3, 31.7])
-##plt.yticks(np.arange(0.5, 9, step=1))
-#plt.legend()
-#plt.xlabel('Tag im Monat')
-#plt.ylabel('Typtag')
-#plt.legend(loc='center left', bbox_to_anchor=(1, 0.82))
-#plt.savefig(Safeordner + 'Clustertage4Monatsverlauf_' + TRY + '.svg')
-#plt.savefig(Safeordner + 'Clustertage4Monatsverlauf_' + TRY + '.pdf')
-#tikzplotlib.save(Safeordner + 'Clustertage4Monatsverlauf_' + TRY + '.tex')
-##plt.title('Data Plot')
-#plt.show()
-#
-#
-#
-#
-#x = range(1, 9)
-#keys = sorted(count.keys())
-#values = [count[key] for key in keys]
-#warm = [16, 42, 36, 32, 47, 65, 63, 64]
-#kalt= [61, 34, 34, 19, 77, 62, 53, 25]
-#normal = [36, 51, 67, 16, 72, 46, 41, 36]
-## Define the x values
-#x = np.arange(1,len(warm)+1)
-#
-## Set the width of the bars
-#width = 0.25
-#
-## Create the figure and axes objects
-#fig, ax = plt.subplots()
-## Plot the data
-#ax.bar(x - width, warm, width=width, label='warm')
-#ax.bar(x, normal, width=width, label='normal')
-#ax.bar(x + width, kalt, width=width, label='kalt')
-#ax.set_ylim(0,95)
-## Set the axis labels and legend
-#ax.set_xlabel('Nummer des Typtages')
-#ax.set_ylabel('Häufigkeit des Typtages im Jahr')
-#ax.legend(loc ='upper left')
-## Show the plot
-#plt.savefig(Safeordner + 'HaeufigkeitClustertage_Alle_TRY.svg')
-#plt.savefig(Safeordner + 'HaeufigkeitClustertage_Alle_TRY.pdf')
-#tikzplotlib.save(Safeordner + 'HaeufigkeitClustertage_Alle_TRY.tex')
-#plt.show()
-T_0_neu = [x - 273.15 for x in T_0[:96]]
-T_1_neu = [x - 273.15 for x in T_1[:96]]
-T_2_neu = [x - 273.15 for x in T_2[:96]]
-T_3_neu = [x - 273.15 for x in T_3[:96]]
-T_4_neu = [x - 273.15 for x in T_4[:96]]
-T_5_neu = [x - 273.15 for x in T_5[:96]]
-T_6_neu = [x - 273.15 for x in T_6[:96]]
-T_7_neu = [x - 273.15 for x in T_7[:96]]
-#
-fig, ax = plt.subplots()
-x2 = np.arange(len(T_0))
-ax.plot(x2[0:96]/4, T_0_neu, label='kalter Wintertag') #1
-ax.plot(x2[0:96]/4, T_2_neu, label='Wintertag') #3
-ax.plot(x2[0:96]/4, T_1_neu, label='Regentag') #2
-ax.plot(x2[0:96]/4, T_3_neu, label='Frühlingstag') #4
-ax.plot(x2[0:96]/4, T_6_neu, label='Sommertag') #7
-ax.plot(x2[0:96]/4, T_4_neu, label='Hochsommertag') #5
-ax.plot(x2[0:96]/4, T_5_neu, label='Herbsttag') #6
-ax.plot(x2[0:96]/4, T_7_neu, label='kühler Herbsttag', color='grey', linestyle=(0,(5,5))) #8
-plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-plt.ylabel('Temperatur in °C')
-plt.xlabel('Tageszeit in h')
-#plt.savefig(Safeordner + 'Temperaturverlauf_'+TRY+'.svg')
-#plt.savefig(Safeordner + 'Temperaturverlauf_'+TRY+'.pdf')
-#tikzplotlib.save(Safeordner + 'Temperaturverlauf_'+TRY+'.tex')
-plt.show()
-#print(sum(T_0_neu)/96)

@@ -21,30 +21,28 @@ import tikzplotlib
 
 plt.rcParams.update(latex_base)
 
+### tSe Variant here: DB: use the original disturbances, GB: clustered disturbances
 Variante= 'DB'
 
+## File-stem to get the data from
 if Variante == 'GB':
     File_Stem = '0_025_8760_4_24_Clusteryear_normal_Fix_TWW_Small_Norm'
 else:
     File_Stem = '0_025_8736_4_24_TRY_normal_Fix_TWW_Small_Norm'
 
-#File_Stem_Test = '0_025_8760_4_24_Clusteryear_cold_Fix_TWW_Small_Norm'
-Speicherort = "D:/lma-mma/Repos/MA_MM/Datensicherung/Plots/DT/"
+
+#Set location to save the results
+Speicherort = "/Datensicherung/Plots/DT/"
 
 # Import Data to create DT
-    # Set if the Input-Data considers TWW
 TWW = True
 
 if TWW == True:
     fn = ('T_Air', 'Q_Hou_Dem', 'P_PV', 'P_EL_Dem', 'c_grid' ,'Q_TWW')
-#so wird Data TRY gespeichert:    T_Air, Q_Hou, P_PV, P_EL_Dem, T_Mean, c_grid, Q_TWW, T_Sto, T_TWW, COP_1, COP_2
-#so wird Data Clusteryear gespeichert: T_Reihe, Q_Reihe, PV_Reihe, PEL_Reihe, TM_Reihe, Cel_Reihe, QTWW_Reihe
     cn = ('Modus 0', 'Modus 1', 'Modus 2', 'Modus 3')
     Pfad = 'D:/lma-mma/Repos/MA_MM/Results/Optimierung/TWW/'
 else:
     fn = ('T_Air', 'Q_Hou_Dem', 'P_PV', 'P_EL_Dem', 'T_Mean' , 'c_grid')
-#so wird Data TRY gespeichert:    T_Air, Q_Hou, P_PV, P_EL_Dem, T_Mean, c_grid, T_Sto, COP_1, COP_2
-#so wird Data Clusteryear gespeichert:    T_Reihe, Q_Reihe, PV_Reihe, PEL_Reihe, TM_Reihe, Cel_Reihe
     cn = ('Modus 0', 'Modus 1', 'Modus 2')
     Pfad = 'D:/lma-mma/Repos/MA_MM/Results/Optimierung/Puffer/'
 
@@ -74,12 +72,12 @@ with open (Pfad + "Data_" + Testdatei + '.csv') as file:
 y_Testdata = np.loadtxt(Pfad + "Modes_" + Testdatei + '.csv', skiprows=0)
 
 filtered = [row[0]] + [str(float(row[i])) for i in range(1, 4)]+ [row[5]] + [str(float(row[6]))]
+
 ########################################################################################################################
 ######################################### Create Decision Trees ########################################################
 
 X_train, X_test, y_train, y_test = train_test_split(data, y_Opti, random_state=0)
 clf = tree.DecisionTreeClassifier(criterion="gini", max_depth=9, max_features=None, splitter="best")
-
 clf = clf.fit(data, y_Opti)
 dot_data = tree.export_graphviz(clf, out_file=None,
                      feature_names= fn,
@@ -99,15 +97,16 @@ plt.savefig(Speicherort + 'UrsprünglicherBaum'+Variante+'.svg')
 tikzplotlib.save((Speicherort + 'UrsprünglicherBaum'+Variante+'.tex'))
 plt.show()
 
+# Predict Modes from decision tree
 y_predTestdata = clf.predict(testdata)
 y_pred1 = clf.predict(X_test)
 
 ################################# Predict outcome with other parts of Splitted Data from Decision Tree ##################
-
 score1 = clf.score(X_test, y_test)
 print('Genauigkeit mit dem Validierungsset ist: '+ str(score1))
 score2 = clf.score(testdata, y_Testdata)
 print('Genauigkeit mit dem Testset ist: '+ str(score2))
+
 ################################ Create Confusion Matrix before CV #####################################################
 Con_PrePun_Training = ConfusionMatrixDisplay.from_predictions(y_test, y_pred1, cmap=plt.cm.YlOrRd)
 plt.xlabel("Prognostizierter Modus")
@@ -125,20 +124,17 @@ tikzplotlib.save(Speicherort + 'CM_Vor_CV_TestsetTRY_BT9'+Variante+'.tex')
 plt.savefig(Speicherort + 'CM_Vor_CV_TestsetTRY_BT9'+Variante+'.pdf')
 plt.show()
 
-##### Plot both CM next to each other
+##### Plot both Confusion Matrixes next to each other
 fig, axs = plt.subplots(1, 2, figsize=(6.5, 2.9), sharey=True)#, gridspec_kw={'width_ratios': [1, 1]})
-#labels = "Modus 0", "Modus 1", "Modus 2", "Modus 3"
 C1 = confusion_matrix(y_test, y_pred1)
 C2 = confusion_matrix(y_Testdata, y_predTestdata)
-
-
 disp = ConfusionMatrixDisplay(C1).plot(cmap=plt.cm.YlOrRd, ax=axs[0])
 disp.im_.colorbar.remove()
 disp.ax_.set_xlabel('Validierungsset')
 disp.ax_.set_ylabel('Wahrer Modus')
 disp.ax_.set_aspect('equal')#, adjustable='box')
-##
-##
+
+
 disp2 = ConfusionMatrixDisplay(C2).plot(cmap=plt.cm.YlOrRd, ax=axs[1])
 disp2.ax_.set_xlabel('Testset')
 disp2.ax_.set_ylabel('')
@@ -153,16 +149,13 @@ plt.savefig(Speicherort + 'CM_Vor_CV_Doppel_BT9'+Variante+'.pdf')
 plt.show()
 
 
-
-
-
-#print(score)
 print('Genauigkeit des einfachen Baumes mit dem Validierungsset ist: ' + str(accuracy_score(y_test, y_pred1)))
 print('Genauigkeit des einfachen Baumes mit dem Testset TRY ist: ' + str(accuracy_score(y_Testdata, y_predTestdata)))
-#
 
 
-################################### Cross Validaton mit GridSearch #####################################################
+
+###################################GridSearch mit Cross-Validation#####################################################
+#Set parameters you want to test here:
 params_tree = {
     'criterion':  ['gini'],
     'max_depth':  [8],
@@ -171,7 +164,7 @@ params_tree = {
     'min_samples_split': [25, 30, 50, 100, 120, 150],
     'min_samples_leaf': [15, 20, 50,100]
 }
-#
+#Set parameters for Cross Validation
 clf = GridSearchCV(
     estimator=tree.DecisionTreeClassifier(),
     param_grid=params_tree,
@@ -179,7 +172,6 @@ clf = GridSearchCV(
     n_jobs=-1,
     verbose=1,
 )
-
 
 Baum = clf.fit(X_train, y_train)
 print(Baum.best_params_)
@@ -200,17 +192,14 @@ plt.show()
 y_predTestdataACV = dt.predict(testdata)
 y_pred2 = dt.predict(X_test)
 
-################################ Create Confusion Matrix after CV #####################################################
+################################ Create Confusion Matrix after Grid-Search #####################################################
 
 print('Genauigkeit nach dem Pre-Puning ist mit dem Validierungsset: ' + str(accuracy_score(y_test, y_pred2)))
 print('Genauigkeit nach dem Pre-Puning ist mit dem Testset: ' + str(accuracy_score(y_Testdata, y_predTestdataACV)))
 Con_Pruning = ConfusionMatrixDisplay.from_predictions(y_Testdata, y_predTestdataACV, cmap=plt.cm.YlOrRd)
 
-
 plt.xlabel("Prognostizierter Modus nach dem Pre-Puning")
 plt.ylabel("Wahrer Modus")
-
-
 
 
 fig, axs = plt.subplots(1, 2, figsize=(6.5, 2.9), sharey=True)#, gridspec_kw={'width_ratios': [1, 1]})
@@ -242,8 +231,6 @@ plt.show()
 
 
 ###################################### Alpha über Unreinheit ###########################################################
-
-
 path = dt.cost_complexity_pruning_path(X_train, y_train)
 ccp_alphas, impurities = path.ccp_alphas, path.impurities
 #
@@ -259,9 +246,6 @@ tikzplotlib.save(Speicherort + 'Alpha_Unreinheit_Val'+Variante+'.tex')
 plt.savefig(Speicherort + 'Alpha_Unreinheit_Val'+Variante+'.pdf')
 plt.show()
 
-#
-#
-#
 tree.DecisionTreeClassifier(criterion=best_params['criterion'], max_depth=best_params['max_depth'], max_features=best_params['max_features'],
 min_samples_leaf=best_params['min_samples_leaf'], min_samples_split=best_params['min_samples_split'], splitter= best_params['splitter'])
 ##
@@ -278,8 +262,7 @@ print(
     "Anzahl der Knoten im letzten Baum ist: {} with ccp_alpha: {}".format(
         clfs[-1].tree_.node_count, ccp_alphas[-1])
         )
-##
-##
+
 clfs = clfs[:-1]
 ccp_alphas = ccp_alphas[:-1]
 ##
@@ -289,11 +272,9 @@ fig, ax = plt.subplots(2, 1)
 ax[0].plot(ccp_alphas, node_counts,  drawstyle="steps-post")
 ax[0].set_xlabel(r'$\alpha$')
 ax[0].set_ylabel("Anzahl der Knoten")
-#ax[0].set_title("Number of nodes vs alpha")
 ax[1].plot(ccp_alphas, depth, drawstyle='steps-post')
 ax[1].set_xlabel(r'$\alpha$')
 ax[1].set_ylabel("Baumtiefe")
-#ax[1].set_title("Baumtiefe vs " + r"$\alpha$")
 fig.tight_layout()
 
 plt.savefig(Speicherort + 'AnzahlKnoten_BT_ueber_Alpha'+Variante+'.svg')
@@ -341,25 +322,4 @@ tikzplotlib.save(Speicherort + 'Genauigkeit_ueber_Alpha_TV_zoom'+Variante+'.tex'
 plt.savefig(Speicherort + 'Genauigkeit_ueber_Alpha_TV_zoom'+Variante+'.pdf')
 plt.show()
 
-########################## Create final DT ############################################################################
-
-
-##
-##
-##dt
-#
-## NOCHT NICHT FERTIG GECODED!!
-##Parameter_file = File_Stem
-##all_devs = [clf, ]
-##all_devs_names = [clf, ]
-##pickle.dump(all_devs, open(Parameter_file, "wb"))
-##with open(devs_file, "w") as file_devs:
-##    for key in all_devs:
-##        file_devs.write(all_devs_names[all_devs.index(key)])
-##        file_devs.write('\n')
-##        for x in key:
-##            file_devs.write(str(x) + "=")
-##            file_devs.write(str(key[x]))
-##            file_devs.write('\n')
-##        file_devs.write('\n')
-##    file_devs.close()
+### Now take the parameters from this file and create the final tree in the file 'Final_DT'

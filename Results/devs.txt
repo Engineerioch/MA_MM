@@ -1,5 +1,5 @@
 devs
-Sto={'T_Sto_Ersatz': 308.15, 'T_Sto_min': 291.15, 'T_Sto_max': 368.15, 'T_Sto_Env': 291.15, 'T_Sto_Init': 313.15, 'U_Sto': 0.3, 'T_Kalt': 291.15, 'h_d_ratio': 2, 'S_Wall': 0.15, 'Volume': 0.3}
+Sto={'T_Sto_Ersatz': 306.15, 'T_Sto_min': 291.15, 'T_Sto_max': 368.15, 'T_Sto_Env': 291.15, 'T_Sto_Init': 309.15, 'U_Sto': 0.3, 'T_Kalt': 291.15, 'h_d_ratio': 2, 'S_Wall': 0.15, 'Volume': 0.5}
 TWW={'T_TWW_Min': 323.15, 'T_TWW_Init': 333.15, 'U_TWW': 0.3, 'h_d_ratio': 2, 'S_Wall': 0.15, 'Volume': 0.2}
 HP={'Q_HP_Max': 10000, 'T_HP_VL_1': 313.15, 'T_HP_VL_2': 343.15, 'T_HP_VL_3': 295.15, 'm_flow_HP': 0.3416666666666667, 'eta_HP': 0.4, 'Q_HP_Min': 0, 'T_Spreiz_HP': 7}
 PV={'n_mod': 20, 'eta_nom_PV': 0.97, 'P_PV_Min': 0, 'P_PV_Module': 300, 'a_PV': [0.02409, 0.00561, 0.01228]}

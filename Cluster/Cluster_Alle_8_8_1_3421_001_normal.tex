@@ -1,0 +1,62 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{gray}{RGB}{128,128,128}
+\definecolor{indianred1808985}{RGB}{180,89,85}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{sandybrown24415397}{RGB}{244,153,97}
+\definecolor{slateblue135104180}{RGB}{135,104,180}
+\definecolor{steelblue75129196}{RGB}{75,129,196}
+\definecolor{tomato2369992}{RGB}{236,99,92}
+
+\begin{axis}[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=lightgray204},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=7.56, xmax=8.44,
+xtick style={color=black},
+xtick={7.5,7.6,7.7,7.8,7.9,8,8.1,8.2,8.3,8.4,8.5},
+xticklabels={{7,5},{7,6},{7,7},{7,8},{7,9},{8,0},{8,1},{8,2},{8,3},{8,4},{8,5}},
+y grid style={darkgray176},
+ylabel={Determinationskoeffizient R≤},
+ymin=-0.0635478156677597, ymax=0.98841194276846,
+ytick style={color=black},
+ytick={-0.2,0,0.2,0.4,0.6,0.8,1},
+yticklabels={{\ensuremath{-}0,2},{0,0},{0,2},{0,4},{0,6},{0,8},{1,0}}
+]
+\addplot [semithick, tomato2369992]
+table {%
+8 0.878308928762009
+};
+\addlegendentry{T_Auﬂen}
+\addplot [semithick, steelblue75129196, dashed]
+table {%
+8 0.940595590112269
+};
+\addlegendentry{Q_Haus,Bed}
+\addplot [semithick, sandybrown24415397, dash pattern=on 1pt off 3pt on 3pt off 3pt]
+table {%
+8 0.829851359339614
+};
+\addlegendentry{P_PV}
+\addplot [semithick, gray, dotted]
+table {%
+8 -0.0157314630115679
+};
+\addlegendentry{P_El,Bed}
+\addplot [semithick, slateblue135104180, dash pattern=on 10pt off 3pt, dash phase=5pt]
+table {%
+8 0.804128040240276
+};
+\addlegendentry{R_Gesamt,Gewichtet}
+\addplot [semithick, indianred1808985, dash pattern=on 3pt off 1pt on 2pt off 1pt on 2pt off 1pt, dash phase=1pt]
+table {%
+8 0.658256103800581
+};
+\addlegendentry{R-Gesamt}
+\end{axis}
+
+\end{tikzpicture}

@@ -1,0 +1,18 @@
+digraph Tree {
+node [shape=box, style="filled, rounded", color="black", fontname="serif"] ;
+edge [fontname="serif"] ;
+rankdir=LR ;
+0 [label=<Q_Hou_Dem &le; 481.66<br/>gini = 0.684<br/>samples = 35040<br/>value = [15014, 4574, 11052, 4400]<br/>class = Modus 0>, fillcolor="#fbeade"] ;
+1 [label=<Q_TWW &le; 2502.5<br/>gini = 0.431<br/>samples = 18257<br/>value = [13408, 1720, 526, 2603]<br/>class = Modus 0>, fillcolor="#eda876"] ;
+0 -> 1 [labeldistance=2.5, labelangle=-45, headlabel="True"] ;
+2 [label=<gini = 0.41<br/>samples = 17835<br/>value = [13408, 1720, 526, 2181]<br/>class = Modus 0>, fillcolor="#eca571"] ;
+1 -> 2 ;
+3 [label=<gini = 0.0<br/>samples = 422<br/>value = [0, 0, 0, 422]<br/>class = Modus 3>, fillcolor="#d739e5"] ;
+1 -> 3 ;
+4 [label=<T_Air &le; 279.125<br/>gini = 0.557<br/>samples = 16783<br/>value = [1606, 2854, 10526, 1797]<br/>class = Modus 2>, fillcolor="#92c9f1"] ;
+0 -> 4 [labeldistance=2.5, labelangle=45, headlabel="False"] ;
+5 [label=<gini = 0.415<br/>samples = 12169<br/>value = [1144, 598, 9125, 1302]<br/>class = Modus 2>, fillcolor="#70b8ec"] ;
+4 -> 5 ;
+6 [label=<gini = 0.647<br/>samples = 4614<br/>value = [462, 2256, 1401, 495]<br/>class = Modus 1>, fillcolor="#cef8ca"] ;
+4 -> 6 ;
+}

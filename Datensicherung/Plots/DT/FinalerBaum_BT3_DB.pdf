@@ -1,0 +1,34 @@
+digraph Tree {
+node [shape=box, style="filled, rounded", color="black", fontname="serif"] ;
+edge [fontname="serif"] ;
+rankdir=LR ;
+0 [label=<Q_Hou_Dem &le; 385.71<br/>gini = 0.695<br/>samples = 34944<br/>value = [14593, 5408, 10568, 4375]<br/>class = Modus 0>, fillcolor="#fbeade"] ;
+1 [label=<Q_TWW &le; 525.0<br/>gini = 0.418<br/>samples = 18047<br/>value = [13411, 1463, 471, 2702]<br/>class = Modus 0>, fillcolor="#eda775"] ;
+0 -> 1 [labeldistance=2.5, labelangle=-45, headlabel="True"] ;
+2 [label=<Q_Hou_Dem &le; 135.22<br/>gini = 0.385<br/>samples = 17290<br/>value = [13314, 1441, 463, 2072]<br/>class = Modus 0>, fillcolor="#eca26d"] ;
+1 -> 2 ;
+3 [label=<gini = 0.268<br/>samples = 13319<br/>value = [11287, 234, 242, 1556]<br/>class = Modus 0>, fillcolor="#e9975b"] ;
+2 -> 3 ;
+4 [label=<gini = 0.627<br/>samples = 3971<br/>value = [2027, 1207, 221, 516]<br/>class = Modus 0>, fillcolor="#f7dac4"] ;
+2 -> 4 ;
+5 [label=<Q_TWW &le; 1067.5<br/>gini = 0.29<br/>samples = 757<br/>value = [97, 22, 8, 630]<br/>class = Modus 3>, fillcolor="#df5fea"] ;
+1 -> 5 ;
+6 [label=<gini = 0.547<br/>samples = 180<br/>value = [61, 11, 4, 104]<br/>class = Modus 3>, fillcolor="#f1b7f6"] ;
+5 -> 6 ;
+7 [label=<gini = 0.165<br/>samples = 577<br/>value = [36, 11, 4, 526]<br/>class = Modus 3>, fillcolor="#db4ce7"] ;
+5 -> 7 ;
+8 [label=<Q_Hou_Dem &le; 783.3<br/>gini = 0.574<br/>samples = 16897<br/>value = [1182, 3945, 10097, 1673]<br/>class = Modus 2>, fillcolor="#a1d0f3"] ;
+0 -> 8 [labeldistance=2.5, labelangle=45, headlabel="False"] ;
+9 [label=<Q_TWW &le; 2502.5<br/>gini = 0.569<br/>samples = 6272<br/>value = [676, 3858, 1112, 626]<br/>class = Modus 1>, fillcolor="#9df196"] ;
+8 -> 9 ;
+10 [label=<gini = 0.553<br/>samples = 6131<br/>value = [676, 3858, 1112, 485]<br/>class = Modus 1>, fillcolor="#9af193"] ;
+9 -> 10 ;
+11 [label=<gini = 0.0<br/>samples = 141<br/>value = [0, 0, 0, 141]<br/>class = Modus 3>, fillcolor="#d739e5"] ;
+9 -> 11 ;
+12 [label=<Q_TWW &le; 2502.5<br/>gini = 0.273<br/>samples = 10625<br/>value = [506, 87, 8985, 1047]<br/>class = Modus 2>, fillcolor="#5baee9"] ;
+8 -> 12 ;
+13 [label=<gini = 0.247<br/>samples = 10419<br/>value = [506, 87, 8985, 841]<br/>class = Modus 2>, fillcolor="#57ace9"] ;
+12 -> 13 ;
+14 [label=<gini = 0.0<br/>samples = 206<br/>value = [0, 0, 0, 206]<br/>class = Modus 3>, fillcolor="#d739e5"] ;
+12 -> 14 ;
+}

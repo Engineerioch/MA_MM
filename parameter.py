@@ -29,38 +29,38 @@ def load_params(options, params):
     # Set Heat Storage parameter
         'Sto'   : {
             'T_Sto_Ersatz' : 32 + 273.15,
-            'T_Sto_min' : 18 + 273.15,                   # [K] Minimum temperature of storage
+            'T_Sto_min' : 18 + 273.15,                  # [K] Minimum temperature of storage
             'T_Sto_max' : 95 + 273.15,                  # [K] Maximum temperature of storage
             'T_Sto_Env' : 18 + 273.15,                  # [K] Environmental temperature of storage in basement or utility room
             'T_Sto_Init': 36 + 273.15,                  # [K] initial Storage Temperature for Optimization
             'U_Sto'     : 0.3,                          # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)
             'T_Kalt'    : 18 + 273.15,                  # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
             'h_d_ratio' : 2,                            # [-] Ratio of Heat/Diameter
-            'S_Wall'    : 0.15,
-            'T_Sto_Use' : 32 + 273.15
+            'S_Wall'    : 0.15,                         # [m] Depth of wall
+            'T_Sto_Use' : 32 + 273.15                   # Usaeble Temperature
         },
 
 
         'TWW': {
-            'T_TWW_Min': 40 + 273.15,  # [K] Minimum Temperature of TWW-Storage
-            'T_TWW_Init': 60 + 273.15,  # [K] initial Storage Temperature for Optimization
-            'U_TWW': 0.3,  # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)            # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
-            'h_d_ratio': 2,  # [-] Ratio of Heat/Diameter
-            'S_Wall': 0.15,
-            'T_TWW_Max' : 65 + 273.15,
-            'T_TWW_Soll' : 50 + 273.15
+            'T_TWW_Min': 40 + 273.15,                   # [K] Minimum Temperature of TWW-Storage
+            'T_TWW_Init': 60 + 273.15,                  # [K] initial Storage Temperature for Optimization
+            'U_TWW': 0.3,                               # [W/m²K] Heat Transfer Coefficient of Storage (Wärmeübergangkoeffizient des Speichers)            # [K] Coldest Temperature of Water in Storage as this is the constant Basement Temperature
+            'h_d_ratio': 2,                             # [-] Ratio of Heat/Diameter
+            'S_Wall': 0.15,                             # [m] Depth of wall
+            'T_TWW_Max' : 65 + 273.15,                  # [K] Maximum Temperature of TWW-Storage
+            'T_TWW_Soll' : 50 + 273.15                  # [K] Temperature that should not be fallen below
         },
 
     # Set Heat Pump parameter
         'HP'    : {
-            'Q_HP_Max'      : 10000,                        # [W]   Maximum Heat Power of Heat Pump
-            'T_HP_VL_1'     : 40 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 1
-            'T_HP_VL_2'     : 70 + 273.15,                  # [K]   Constant Flow Temperature from HP to Storage in Mode 2
-            'T_HP_VL_3'     : 65 + 273.15,
-            'm_flow_HP'     : 1230 / 3600,                   # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg/s zu bekommen)
-            'eta_HP'        : 0.4,                          # [-]   Gütegrad HP
-            'Q_HP_Min'      : 0,                            # [W]   Minimum Heat power of HP
-            'T_Spreiz_HP'      : 7,                            # [K]   Maximum Change of Temperature between Vorlauf and Rücklauf
+            'Q_HP_Max'      : 10000,                    # [W]   Maximum Heat Power of Heat Pump
+            'T_HP_VL_1'     : 40 + 273.15,              # [K]   Constant Flow Temperature from HP to Storage in Mode 1
+            'T_HP_VL_2'     : 70 + 273.15,              # [K]   Constant Flow Temperature from HP to Storage in Mode 2
+            'T_HP_VL_3'     : 65 + 273.15,              # [K]   Constant Flow Temperature from HP to Storage in Mode 2
+            'm_flow_HP'     : 1230 / 3600,              # [kg/h] Constant Heat flow of HP if HP is running -> Dividieren um kg/s zu bekommen)
+            'eta_HP'        : 0.4,                      # [-]   Gütegrad HP
+            'Q_HP_Min'      : 0,                        # [W]   Minimum Heat power of HP
+            'T_Spreiz_HP'      : 7,                     # [K]   Maximum Change of Temperature between Vorlauf and Rücklauf
 
         },
 
@@ -70,16 +70,16 @@ def load_params(options, params):
             'eta_nom_PV'    : 0.97,                         # [-]    Nominal efficiency of PV inverter
             'P_PV_Min'      : 0,                            # [W]    Minimum Power of PV-System = 0 kW
             'P_PV_Module'   : 300,                          # [W]    Nominal Power of one PV-Module = 300
-            'a_PV'          : [0.02409, 0.00561, 0.01228]
+            'a_PV'          : [0.02409, 0.00561, 0.01228]   # Effektives for Simulation
         },
 
     # Set Consumer parameters (House = Hou)
         'Hou'   : {
             'T_Hou_delta_max'   :    20 + 273.15,           # [K]    Maximum Difference between T_Hou_Vl and T_Hou_RL
             'm_flow_Hou'        :    1107 / 3600,           # [kg/s] Constant Mass flow from Storage to House
-            'T_Hou_Gre'         : 273.15 + 15,               # [K] Heizgrenztemperatur (Mittelwert über den Tag)
-            'T_Spreiz_Hou'      : 7 + 273.15,
-            'T_Hou_VL_min'      : 35 + 273.15,
+            'T_Hou_Gre'         : 273.15 + 15,              # [K] Heizgrenztemperatur (Mittelwert über den Tag)
+            'T_Spreiz_Hou'      : 7 + 273.15,               # [K] Maximum Temperaturechange of heat water
+            'T_Hou_VL_min'      : 32 + 273.15,              # [K] Minimum input Temperature for heating
 
         },
 
@@ -87,37 +87,33 @@ def load_params(options, params):
         'Nature'    : {
             'c_w_water'         : 4.18 * 1000,              # [Ws/kgK] Spezifische Wärmekapazität von Wasser 1.163WH/kgK
             'Roh_water'         : 995,                      # [kg/m^3] konstante Dichte von Wasser irgendwo zwischen 30 und 40 Grad
-            'T_Ref'             : 0,
+            'T_Ref'             : 0,                        # [K] Reference Temparuture (should be below -30°C)
 
         },
     }
 
     if options['Sto']['Size'] == 'Small':
-        devs['Sto']['Volume'] = 0.3          # [m³] Small Storage has a capacity of 300l
+        devs['Sto']['Volume'] = 0.3         # [m³] Small Storage has a capacity of 300l
     elif options['Sto']['Size'] == 'Medium':
-        devs['Sto']['Volume'] = 0.5            # [m³] Medium Storage has a capacity of 500l
+        devs['Sto']['Volume'] = 0.5         # [m³] Medium Storage has a capacity of 500l
     elif options['Sto']['Size'] == 'Large':
         devs['Sto']['Volume'] = 0.7         # [m³] Large Storage has a capacity of 1000l
     else:
         print('Please set a supported Storage Size in EasyMPC -> options')
 
     if options['TWW']['Size'] == 'Medium':
-        devs['TWW']['Volume'] = 0.3  # [m³] Medium TWW-Storage has a capacity of 300l
+        devs['TWW']['Volume'] = 0.3         # [m³] Medium TWW-Storage has a capacity of 300l
     elif options['TWW']['Size'] == 'Norm':
-        devs['TWW']['Volume'] = 0.2  # [m³] Norm TWW-Storage has a capacity of 200l
+        devs['TWW']['Volume'] = 0.2         # [m³] Norm TWW-Storage has a capacity of 200l
     elif options['TWW']['Size'] == 'Large':
-        devs['TWW']['Volume'] = 0.5  # [m³] Large TWW-Storage has a capacity of 500l
+        devs['TWW']['Volume'] = 0.5         # [m³] Large TWW-Storage has a capacity of 500l
     else:
         print('Please set a supported TWW-Storage Size in EasyMPC -> options')
 
     return eco, devs, year
 
-
-
+# Input of disturbances
 def load_time_series(params, options):
-    time_step           = params['time_step']
-    start_time          = params['start_time']
-    prediction_horizon  = params['prediction_horizon']
 
     # Load inputs
     time_series         = {}
@@ -131,9 +127,6 @@ def load_time_series(params, options):
     else:
         dC = pd.read_csv('input_data/Opti_Input/FixPowerPrice.csv', skiprows=0)
         time_series['c_grid'] = dC.iloc[:, 0]
-
-
-
 
     # This is the Input-Data if the Optimization is running with the Original TRY-Data
     if options['WeatherData']['Input_Data'] == 'TRY':
@@ -219,7 +212,7 @@ def load_time_series(params, options):
         TWW     = pd.read_csv('input_data/Opti_Input/TWW_Opti.csv', skiprows=0) * 1000
         time_series["Q_TWW_Dem"] = TWW.iloc[:,0]
 
-
+    # Input of Clustered Year Data
     elif options['WeatherData']['Input_Data'] == 'Cluster':
         if options['WeatherData']['TRY'] == 'cold':
 #            with open("input_data/ClusteredYear/ALT_ClusteredYear_cold.csv", 'r') as file:
@@ -247,7 +240,7 @@ def load_time_series(params, options):
             time_series['P_EL_Dem'] = File.iloc[:, 3]
             time_series['Q_TWW_Dem']= File.iloc[:, 4] * 1000
 
-
+    # Input of Data of the Typedays
     elif options['WeatherData']['Input_Data'] == 'Clusterday':
         Tagesnummer = str(options['WeatherData']['DayNumber'])
         if options['WeatherData']['TRY'] == 'cold':
@@ -287,9 +280,6 @@ def load_time_series(params, options):
             pass
 
         time_series["Q_TWW_Dem"] = TWW.iloc[:, 4] * 1000
-
-
-
 
     return time_series
 

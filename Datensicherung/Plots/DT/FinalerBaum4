@@ -1,0 +1,333 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{tomato2369992}{RGB}{236,99,92}
+
+\begin{axis}[
+hide x axis,
+hide y axis,
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=0, xmax=1,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0, ymax=1,
+ytick style={color=black}
+]
+\draw (axis cs:0.0416666666666667,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.528
+samples = 3841
+value = [2295, 1282, 52, 212]};
+\draw (axis cs:0.125,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.721
+samples = 364
+value = [80, 68, 72, 144]};
+\draw (axis cs:0.208333333333333,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.314
+samples = 13486
+value = [11033, 370, 402, 1681]};
+\draw (axis cs:0.291666666666667,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.0
+samples = 144
+value = [0, 0, 0, 144]};
+\draw (axis cs:0.375,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.691
+samples = 2957
+value = [462, 1246, 907, 342]};
+\draw (axis cs:0.458333333333333,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.0
+samples = 102
+value = [0, 0, 0, 102]};
+\draw (axis cs:0.541666666666667,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.0
+samples = 1541
+value = [0, 1541, 0, 0]};
+\draw (axis cs:0.625,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.0
+samples = 51
+value = [0, 0, 51, 0]};
+\draw (axis cs:0.708333333333333,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.181
+samples = 4491
+value = [170, 0, 4053, 268]};
+\draw (axis cs:0.791666666666667,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.421
+samples = 7373
+value = [773, 67, 5448, 1085]};
+\draw (axis cs:0.875,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.5
+samples = 134
+value = [67, 0, 67, 0]};
+\draw (axis cs:0.958333333333333,0.1) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.0
+samples = 134
+value = [134, 0, 0, 0]};
+\draw (axis cs:0.0833333333333333,0.3) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[2] <= 451.015
+gini = 0.57
+samples = 4205
+value = [2375, 1350, 124, 356]};
+\draw (axis cs:0.25,0.3) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[0] <= 298.06
+gini = 0.325
+samples = 13630
+value = [11033, 370, 402, 1825]};
+\draw (axis cs:0.416666666666667,0.3) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[5] <= 2502.5
+gini = 0.702
+samples = 3059
+value = [462, 1246, 907, 444]};
+\draw (axis cs:0.583333333333333,0.3) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[2] <= 373.955
+gini = 0.062
+samples = 1592
+value = [0, 1541, 51, 0]};
+\draw (axis cs:0.75,0.3) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[3] <= 40.84
+gini = 0.339
+samples = 11864
+value = [943, 67, 9501, 1353]};
+\draw (axis cs:0.916666666666667,0.3) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[2] <= 208.765
+gini = 0.375
+samples = 268
+value = [201, 0, 67, 0]};
+\draw (axis cs:0.166666666666667,0.5) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[0] <= 285.53
+gini = 0.41
+samples = 17835
+value = [13408, 1720, 526, 2181]};
+\draw (axis cs:0.25,0.5) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.0
+samples = 422
+value = [0, 0, 0, 422]};
+\draw (axis cs:0.5,0.5) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[1] <= 583.805
+gini = 0.58
+samples = 4651
+value = [462, 2787, 958, 444]};
+\draw (axis cs:0.833333333333333,0.5) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[2] <= 203.115
+gini = 0.357
+samples = 12132
+value = [1144, 67, 9568, 1353]};
+\draw (axis cs:0.208333333333333,0.7) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[5] <= 2502.5
+gini = 0.431
+samples = 18257
+value = [13408, 1720, 526, 2603]};
+\draw (axis cs:0.666666666666667,0.7) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[1] <= 771.555
+gini = 0.557
+samples = 16783
+value = [1606, 2854, 10526, 1797]};
+\draw (axis cs:0.4375,0.9) node[
+  scale=0.0926696703139526,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[1] <= 481.66
+gini = 0.684
+samples = 35040
+value = [15014, 4574, 11052, 4400]};
+\end{axis}
+
+\end{tikzpicture}
