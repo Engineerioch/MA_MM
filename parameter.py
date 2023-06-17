@@ -81,6 +81,13 @@ def load_params(options, params):
             'T_Spreiz_Hou'      : 7 + 273.15,               # [K] Maximum Temperaturechange of heat water
             'T_Hou_VL_min'      : 32 + 273.15,              # [K] Minimum input Temperature for heating
 
+
+            'm_flow_Hou'        : 1107 / 3600,          # [kg/s] Constant Mass flow from Storage to House
+            'T_Hou_Gre'         : 273.15 + 15,          # [K] Heizgrenztemperatur (Mittelwert über den Tag)
+            'T_Spreiz_Hou'      : 7,
+            'T_Hou_VL_min'      : 35 + 273.15,          # [K] Minimum Temperature to House
+            'T_Hou_VL_max'      : 40 + 273.15,          # Maximum Temperature to House
+
         },
 
         # Set natural Constant and other constants given by nature

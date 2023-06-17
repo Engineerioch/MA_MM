@@ -25,6 +25,7 @@ options = {
     'Tariff'        :   {'Variable'          : False},   # [-] TRUE = 'variable' or FALSE = 'fix' -> Decides if Powerprice is variable or fix
 
 
+
     'WeatherData':   {'TRY'                  : 'normal',       # [-] 'warm'    -> warmes TRY 2015
                                                             # [-] 'normal'  -> normales TRY 2015
                                                             # [-] 'cold' -> kaltes TRY 2015
@@ -57,6 +58,25 @@ else:
 
 params_opti = {
     'prediction_horizon'    : prediction_horizon,
+    'Sto'           : {'Size'                   : 'Small',   # Define Storage size: Small = 300l, Medium = 500l, Large = 1000l
+                        'Type'                  : 'Puffer',  # Define what type of storage one has (Puffer, Kombi, Seperated)
+                       },
+### Location of the Single Family House ###
+    'Location'      :   {'lat'                  : 52.519*2*3.14/360,            # [°]   Latitude Berlin
+                         'lon'                  : 13.408*2*3.14/360,            # [°]   Longitude Berlin
+                         'roof_area'            : 35,                           # [m²]  Roof Area
+                         'til'                  : 15 * 2 * 3.14 / 360,          # [°]   Dachneigung
+                         'azi_1'                : 90 * (2 * 3.14) / (360),      # [°]   Orientation of roof sides (0: south, -: East, +: West)
+                         'azi_2'                : -90 * (2 * 3.14) / (360)      # [°]   Orientation of roof sides (0: south, -: East, +: West)
+                         },
+}
+#prediction_horizon = 72
+start_time = 0
+time_step = 1
+total_runtime = 96           # Iterationsschritte       -> Sollte durch 24 teilbar sein
+control_horizon = 2
+params_opti = {
+    'prediction_horizon'    : 4,
     'control_horizon'       : control_horizon,
     'time_step'             : time_step,
     'start_time'            : start_time,
