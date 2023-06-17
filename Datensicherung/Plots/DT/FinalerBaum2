@@ -1,0 +1,108 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{tomato2369992}{RGB}{236,99,92}
+
+\begin{axis}[
+hide x axis,
+hide y axis,
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=0, xmax=1,
+xtick style={color=black},
+y grid style={darkgray176},
+ymin=0, ymax=1,
+ytick style={color=black}
+]
+\draw (axis cs:0.125,0.166666666666667) node[
+  scale=0.278009010941858,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.41
+samples = 17835
+value = [13408, 1720, 526, 2181]};
+\draw (axis cs:0.375,0.166666666666667) node[
+  scale=0.278009010941858,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.0
+samples = 422
+value = [0, 0, 0, 422]};
+\draw (axis cs:0.625,0.166666666666667) node[
+  scale=0.278009010941858,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.415
+samples = 12169
+value = [1144, 598, 9125, 1302]};
+\draw (axis cs:0.875,0.166666666666667) node[
+  scale=0.278009010941858,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{gini = 0.647
+samples = 4614
+value = [462, 2256, 1401, 495]};
+\draw (axis cs:0.25,0.5) node[
+  scale=0.278009010941858,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[5] <= 2502.5
+gini = 0.431
+samples = 18257
+value = [13408, 1720, 526, 2603]};
+\draw (axis cs:0.75,0.5) node[
+  scale=0.278009010941858,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[0] <= 279.125
+gini = 0.557
+samples = 16783
+value = [1606, 2854, 10526, 1797]};
+\draw (axis cs:0.5,0.833333333333333) node[
+  scale=0.278009010941858,
+  fill=white,
+  draw=tomato2369992,
+  line width=0.6pt,
+  inner sep=3.6pt,
+  text=black,
+  rotate=0.0,
+  align=center
+]{X[1] <= 481.66
+gini = 0.684
+samples = 35040
+value = [15014, 4574, 11052, 4400]};
+\end{axis}
+
+\end{tikzpicture}

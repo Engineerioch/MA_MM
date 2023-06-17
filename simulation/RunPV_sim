@@ -16,7 +16,7 @@ import time
 import fmpy
 import datetime
 #import AMPC.ModelTuning as MT
-import get_AMPC_data
+#import get_AMPC_data
 #import pyo_run_optim as run_optim
 from typing import final
 from ipython_genutils.py3compat import input

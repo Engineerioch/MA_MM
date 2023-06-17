@@ -1,0 +1,29 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{tomato2369992}{RGB}{236,99,92}
+
+\begin{axis}[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={Nummer des Typtages},
+xmin=0.375, xmax=8.625,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Häufigkeit des Typtages},
+ymin=0, ymax=68.25,
+ytick style={color=black}
+]
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:0.75,0) rectangle (axis cs:1.25,16);
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:1.75,0) rectangle (axis cs:2.25,42);
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:2.75,0) rectangle (axis cs:3.25,36);
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:3.75,0) rectangle (axis cs:4.25,32);
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:4.75,0) rectangle (axis cs:5.25,47);
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:5.75,0) rectangle (axis cs:6.25,65);
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:6.75,0) rectangle (axis cs:7.25,63);
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:7.75,0) rectangle (axis cs:8.25,64);
+\end{axis}
+
+\end{tikzpicture}

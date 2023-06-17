@@ -1,0 +1,65 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{sandybrown24415397}{RGB}{244,153,97}
+\definecolor{steelblue75129196}{RGB}{75,129,196}
+\definecolor{tomato2369992}{RGB}{236,99,92}
+
+\begin{groupplot}[group style={group size=2 by 1}]
+\nextgroupplot[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=lightgray204},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=0.5, xmax=2.3,
+xtick style={color=black},
+xtick={0.9,1.9},
+xticklabels={Januarwoche,Juliwoche},
+y grid style={darkgray176},
+ylabel={Energie in kWh},
+ymin=-155.0575, ymax=467.7075,
+ytick style={color=black}
+]
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:0.6,0) rectangle (axis cs:0.8,439.4);
+\addlegendimage{ybar,ybar legend,draw=none,fill=tomato2369992,semithick}
+\addlegendentry{DB}
+
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:1.6,0) rectangle (axis cs:1.8,-118.4);
+\draw[draw=none,fill=steelblue75129196,semithick] (axis cs:0.8,0) rectangle (axis cs:1,438.9);
+\addlegendimage{ybar,ybar legend,draw=none,fill=steelblue75129196,semithick}
+\addlegendentry{GB}
+
+\draw[draw=none,fill=steelblue75129196,semithick] (axis cs:1.8,0) rectangle (axis cs:2,-122.6);
+\draw[draw=none,fill=sandybrown24415397,semithick] (axis cs:1,0) rectangle (axis cs:1.2,435.25);
+\addlegendimage{ybar,ybar legend,draw=none,fill=sandybrown24415397,semithick}
+\addlegendentry{MILP}
+
+\draw[draw=none,fill=sandybrown24415397,semithick] (axis cs:2,0) rectangle (axis cs:2.2,-126.75);
+\addplot [semithick, black, forget plot]
+table {%
+0.5 -5.6843418860808e-14
+2.3 -5.6843418860808e-14
+};
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=0.505, xmax=1.495,
+xtick style={color=black},
+xtick={1},
+xticklabels={Januarwoche},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \overline{COP}\)},
+ymin=0, ymax=3.087,
+ytick style={color=black}
+]
+\draw[draw=none,fill=tomato2369992,semithick] (axis cs:0.55,0) rectangle (axis cs:0.85,2.65);
+\draw[draw=none,fill=steelblue75129196,semithick] (axis cs:0.85,0) rectangle (axis cs:1.15,2.65);
+\draw[draw=none,fill=sandybrown24415397,semithick] (axis cs:1.15,0) rectangle (axis cs:1.45,2.94);
+\end{groupplot}
+
+\end{tikzpicture}

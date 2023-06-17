@@ -1,0 +1,68 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{crimson204730}{RGB}{204,7,30}
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{orange2461680}{RGB}{246,168,0}
+\definecolor{steelblue64127183}{RGB}{64,127,183}
+
+\begin{groupplot}[group style={group size=2 by 1}]
+\nextgroupplot[
+legend cell align={left},
+legend style={fill opacity=0.8, draw opacity=1, text opacity=1, draw=lightgray204},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=0.5, xmax=2.3,
+xtick style={color=black},
+xtick={0.9,1.9},
+xticklabels={Januar,Juli},
+y grid style={darkgray176},
+ylabel={Energiebedarf in kWh},
+ymin=-155.0575, ymax=467.7075,
+ytick style={color=black}
+]
+\draw[draw=none,fill=steelblue64127183,thick] (axis cs:0.6,0) rectangle (axis cs:0.8,439.4);
+\addlegendimage{ybar,ybar legend,draw=none,fill=steelblue64127183,thick}
+\addlegendentry{DB}
+
+\draw[draw=none,fill=steelblue64127183,thick] (axis cs:1.6,0) rectangle (axis cs:1.8,-118.4);
+\draw[draw=none,fill=crimson204730,thick] (axis cs:0.8,0) rectangle (axis cs:1,438.9);
+\addlegendimage{ybar,ybar legend,draw=none,fill=crimson204730,thick}
+\addlegendentry{GB}
+
+\draw[draw=none,fill=crimson204730,thick] (axis cs:1.8,0) rectangle (axis cs:2,-122.6);
+\draw[draw=none,fill=orange2461680,thick] (axis cs:1,0) rectangle (axis cs:1.2,435.25);
+\addlegendimage{ybar,ybar legend,draw=none,fill=orange2461680,thick}
+\addlegendentry{MILP}
+
+\draw[draw=none,fill=orange2461680,thick] (axis cs:2,0) rectangle (axis cs:2.2,-126.75);
+\addplot [thick, black, forget plot]
+table {%
+0.5 0
+2.3 0
+};
+
+\nextgroupplot[
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xmin=0.52, xmax=2.28,
+xtick style={color=black},
+xtick={0.9,1.9},
+xticklabels={Januar,Juli},
+y grid style={darkgray176},
+ylabel={\(\displaystyle \overline{COP}\)},
+ymin=0, ymax=3.087,
+ytick style={color=black}
+]
+\draw[draw=none,fill=steelblue64127183,thick] (axis cs:0.6,0) rectangle (axis cs:0.8,2.65);
+\draw[draw=none,fill=steelblue64127183,thick] (axis cs:1.6,0) rectangle (axis cs:1.8,2.66);
+\draw[draw=none,fill=crimson204730,thick] (axis cs:0.8,0) rectangle (axis cs:1,2.65);
+\draw[draw=none,fill=crimson204730,thick] (axis cs:1.8,0) rectangle (axis cs:2,2.79);
+\draw[draw=none,fill=orange2461680,thick] (axis cs:1,0) rectangle (axis cs:1.2,2.94);
+\draw[draw=none,fill=orange2461680,thick] (axis cs:2,0) rectangle (axis cs:2.2,2.94);
+\end{groupplot}
+
+\end{tikzpicture}

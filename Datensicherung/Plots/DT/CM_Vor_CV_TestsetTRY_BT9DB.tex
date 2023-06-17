@@ -1,0 +1,119 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{lemonchiffon255255204}{RGB}{255,255,204}
+\definecolor{maroon128038}{RGB}{128,0,38}
+
+\begin{axis}[
+colorbar,
+colorbar style={ytick={0,500,1000,1500,2000,2500},yticklabels={0,500,1.000,1.500,2.000,2.500},ylabel={}},
+colormap={mymap}{[1pt]
+  rgb(0pt)=(1,1,0.8);
+  rgb(1pt)=(1,0.929411764705882,0.627450980392157);
+  rgb(2pt)=(0.996078431372549,0.850980392156863,0.462745098039216);
+  rgb(3pt)=(0.996078431372549,0.698039215686274,0.298039215686275);
+  rgb(4pt)=(0.992156862745098,0.552941176470588,0.235294117647059);
+  rgb(5pt)=(0.988235294117647,0.305882352941176,0.164705882352941);
+  rgb(6pt)=(0.890196078431372,0.101960784313725,0.109803921568627);
+  rgb(7pt)=(0.741176470588235,0,0.149019607843137);
+  rgb(8pt)=(0.501960784313725,0,0.149019607843137)
+},
+point meta max=2084,
+point meta min=1,
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={Prognostizierter Modus},
+xmin=-0.5, xmax=3.5,
+xtick style={color=black},
+y dir=reverse,
+y grid style={darkgray176},
+ylabel={Wahrer Modus},
+ymin=-0.5, ymax=3.5,
+ytick style={color=black}
+]
+\addplot graphics [includegraphics cmd=\pgfimage,xmin=-0.5, xmax=3.5, ymin=3.5, ymax=-0.5] {CM_Vor_CV_TestsetTRY_BT9DB-006.png};
+\draw (axis cs:0,0) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{3};
+\draw (axis cs:1,0) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{18};
+\draw (axis cs:2,0) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{131};
+\draw (axis cs:3,0) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{1};
+\draw (axis cs:0,1) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{1};
+\draw (axis cs:1,1) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{72};
+\draw (axis cs:2,1) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{17};
+\draw (axis cs:3,1) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{3};
+\draw (axis cs:0,2) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{7};
+\draw (axis cs:1,2) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{33};
+\draw (axis cs:2,2) node[
+  scale=0.55,
+  text=lemonchiffon255255204,
+  rotate=0.0
+]{2084};
+\draw (axis cs:3,2) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{17};
+\draw (axis cs:0,3) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{5};
+\draw (axis cs:1,3) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{9};
+\draw (axis cs:2,3) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{220};
+\draw (axis cs:3,3) node[
+  scale=0.55,
+  text=maroon128038,
+  rotate=0.0
+]{67};
+\end{axis}
+
+\end{tikzpicture}

@@ -1,0 +1,34 @@
+digraph Tree {
+node [shape=box, style="filled, rounded", color="black", fontname="serif"] ;
+edge [fontname="serif"] ;
+rankdir=LR ;
+0 [label=<Q_Hou_Dem &le; 481.66<br/>gini = 0.684<br/>samples = 35040<br/>value = [15014, 4574, 11052, 4400]<br/>class = Modus 0>, fillcolor="#fbeade"] ;
+1 [label=<Q_TWW &le; 2502.5<br/>gini = 0.431<br/>samples = 18257<br/>value = [13408, 1720, 526, 2603]<br/>class = Modus 0>, fillcolor="#eda876"] ;
+0 -> 1 [labeldistance=2.5, labelangle=-45, headlabel="True"] ;
+2 [label=<T_Air &le; 285.53<br/>gini = 0.41<br/>samples = 17835<br/>value = [13408, 1720, 526, 2181]<br/>class = Modus 0>, fillcolor="#eca571"] ;
+1 -> 2 ;
+3 [label=<gini = 0.57<br/>samples = 4205<br/>value = [2375, 1350, 124, 356]<br/>class = Modus 0>, fillcolor="#f6d2b8"] ;
+2 -> 3 ;
+4 [label=<gini = 0.325<br/>samples = 13630<br/>value = [11033, 370, 402, 1825]<br/>class = Modus 0>, fillcolor="#eb9d65"] ;
+2 -> 4 ;
+5 [label=<gini = 0.0<br/>samples = 422<br/>value = [0, 0, 0, 422]<br/>class = Modus 3>, fillcolor="#d739e5"] ;
+1 -> 5 ;
+6 [label=<Q_Hou_Dem &le; 771.555<br/>gini = 0.557<br/>samples = 16783<br/>value = [1606, 2854, 10526, 1797]<br/>class = Modus 2>, fillcolor="#92c9f1"] ;
+0 -> 6 [labeldistance=2.5, labelangle=45, headlabel="False"] ;
+7 [label=<Q_Hou_Dem &le; 583.805<br/>gini = 0.58<br/>samples = 4651<br/>value = [462, 2787, 958, 444]<br/>class = Modus 1>, fillcolor="#a4f29d"] ;
+6 -> 7 ;
+8 [label=<gini = 0.702<br/>samples = 3059<br/>value = [462, 1246, 907, 444]<br/>class = Modus 1>, fillcolor="#e2fbe0"] ;
+7 -> 8 ;
+9 [label=<gini = 0.062<br/>samples = 1592<br/>value = [0, 1541, 51, 0]<br/>class = Modus 1>, fillcolor="#4de640"] ;
+7 -> 9 ;
+10 [label=<P_PV &le; 203.115<br/>gini = 0.357<br/>samples = 12132<br/>value = [1144, 67, 9568, 1353]<br/>class = Modus 2>, fillcolor="#68b4eb"] ;
+6 -> 10 ;
+11 [label=<Q_TWW &le; 2502.5<br/>gini = 0.339<br/>samples = 11864<br/>value = [943, 67, 9501, 1353]<br/>class = Modus 2>, fillcolor="#66b3eb"] ;
+10 -> 11 ;
+12 [label=<gini = 0.32<br/>samples = 11658<br/>value = [943, 67, 9501, 1147]<br/>class = Modus 2>, fillcolor="#62b1ea"] ;
+11 -> 12 ;
+13 [label=<gini = 0.0<br/>samples = 206<br/>value = [0, 0, 0, 206]<br/>class = Modus 3>, fillcolor="#d739e5"] ;
+11 -> 13 ;
+14 [label=<gini = 0.375<br/>samples = 268<br/>value = [201, 0, 67, 0]<br/>class = Modus 0>, fillcolor="#eeab7b"] ;
+10 -> 14 ;
+}

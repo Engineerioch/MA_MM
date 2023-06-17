@@ -1,0 +1,172 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{sandybrown24415397}{RGB}{244,153,97}
+\definecolor{slateblue135104180}{RGB}{135,104,180}
+\definecolor{steelblue75129196}{RGB}{75,129,196}
+\definecolor{tomato2369992}{RGB}{236,99,92}
+
+\begin{axis}[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(1,0.82)},
+  anchor=west,
+  draw=lightgray204
+},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={Tag im Monat},
+xmin=0.3, xmax=31.7,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Typtag},
+ymin=0.7, ymax=8.3,
+ytick style={color=black}
+]
+\addplot [semithick, tomato2369992, const plot mark right]
+table {%
+1 1
+2 3
+3 3
+4 3
+5 2
+6 3
+7 3
+8 3
+9 3
+10 3
+11 3
+12 3
+13 1
+14 1
+15 1
+16 1
+17 3
+18 3
+19 3
+20 3
+21 1
+22 1
+23 1
+24 1
+25 1
+26 1
+27 1
+28 1
+29 1
+30 1
+31 3
+};
+\addlegendentry{Januar}
+\addplot [semithick, steelblue75129196, const plot mark right, dashed]
+table {%
+1 6
+2 6
+3 4
+4 6
+5 7
+6 8
+7 2
+8 2
+9 4
+10 8
+11 2
+12 4
+13 4
+14 8
+15 8
+16 8
+17 2
+18 8
+19 4
+20 8
+21 4
+22 6
+23 7
+24 6
+25 6
+26 6
+27 6
+28 6
+29 6
+30 6
+};
+\addlegendentry{April}
+\addplot [semithick, sandybrown24415397, const plot mark right, dotted]
+table {%
+1 5
+2 5
+3 5
+4 5
+5 5
+6 5
+7 5
+8 6
+9 7
+10 6
+11 5
+12 5
+13 5
+14 5
+15 7
+16 7
+17 6
+18 5
+19 5
+20 5
+21 5
+22 5
+23 5
+24 5
+25 5
+26 5
+27 5
+28 5
+29 5
+30 7
+31 7
+};
+\addlegendentry{Juli}
+\addplot [semithick, slateblue135104180, const plot mark right, dash pattern=on 1pt off 3pt on 3pt off 3pt]
+table {%
+1 8
+2 8
+3 8
+4 8
+5 7
+6 6
+7 7
+8 7
+9 8
+10 8
+11 2
+12 2
+13 8
+14 8
+15 8
+16 2
+17 8
+18 8
+19 8
+20 7
+21 8
+22 2
+23 2
+24 2
+25 2
+26 8
+27 2
+28 2
+29 8
+30 2
+};
+\addlegendentry{Oktober}
+\end{axis}
+
+\end{tikzpicture}

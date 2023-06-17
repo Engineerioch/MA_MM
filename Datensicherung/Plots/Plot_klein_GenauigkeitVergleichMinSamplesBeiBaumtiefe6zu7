@@ -1,0 +1,70 @@
+% This file was created with tikzplotlib v0.10.1.
+\begin{tikzpicture}
+
+\definecolor{darkgray176}{RGB}{176,176,176}
+\definecolor{lightgray204}{RGB}{204,204,204}
+\definecolor{steelblue75129196}{RGB}{75,129,196}
+\definecolor{tomato2369992}{RGB}{236,99,92}
+
+\begin{axis}[
+legend cell align={left},
+legend style={
+  fill opacity=0.8,
+  draw opacity=1,
+  text opacity=1,
+  at={(0.03,0.97)},
+  anchor=north west,
+  draw=lightgray204
+},
+tick align=outside,
+tick pos=left,
+x grid style={darkgray176},
+xlabel={Baumtiefe},
+xmin=0.35, xmax=14.65,
+xtick style={color=black},
+y grid style={darkgray176},
+ylabel={Genauigkeit},
+ymin=0.585108447488584, ymax=1.01066780821918,
+ytick style={color=black},
+ytick={0.5,0.6,0.7,0.8,0.9,1,1.1},
+yticklabels={{0,5},{0,6},{0,7},{0,8},{0,9},{1,0},{1,1}}
+]
+\addplot [semithick, tomato2369992]
+table {%
+1 0.604452054794521
+2 0.794977168949772
+3 0.830365296803653
+4 0.837328767123288
+5 0.851255707762557
+6 0.871803652968037
+7 0.888013698630137
+8 0.910616438356164
+9 0.933561643835616
+10 0.954908675799087
+11 0.96541095890411
+12 0.979223744292237
+13 0.984703196347032
+14 0.991324200913242
+};
+\addlegendentry{Testset}
+\addplot [semithick, steelblue75129196, dashed]
+table {%
+1 0.681115591397849
+2 0.715389784946237
+3 0.78864247311828
+4 0.78864247311828
+5 0.774529569892473
+6 0.787298387096774
+7 0.763440860215054
+8 0.731518817204301
+9 0.744623655913978
+10 0.712701612903226
+11 0.715389784946237
+12 0.733870967741935
+13 0.71505376344086
+14 0.707325268817204
+};
+\addlegendentry{Validierungsset}
+\end{axis}
+
+\end{tikzpicture}
